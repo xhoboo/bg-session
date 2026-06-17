@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { formatDateTime } from '../lib/format'
+import Avatar from '../components/Avatar'
 
 export default function SessionDetail() {
   const { id } = useParams()
@@ -134,7 +135,8 @@ export default function SessionDetail() {
           {session.session_type === 'open' ? 'Open' : 'Approval'}
         </span>
       </div>
-      <p className="subtitle" style={{ marginTop: 8 }}>
+      <p className="subtitle" style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Avatar name={session.host?.display_name || 'Host'} src={session.host?.avatar_url} size={24} />
         Hosted by {session.host?.display_name || 'Host'}
       </p>
 
@@ -222,9 +224,12 @@ export default function SessionDetail() {
           {pending.map((r) => (
             <div className="card" key={r.id}>
               <div className="row-between">
-                <div>
-                  <strong>{r.guest?.display_name || 'Guest'}</strong>
-                  {r.message && <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>“{r.message}”</div>}
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <Avatar name={r.guest?.display_name || 'Guest'} src={r.guest?.avatar_url} size={32} />
+                  <div>
+                    <strong>{r.guest?.display_name || 'Guest'}</strong>
+                    {r.message && <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>“{r.message}”</div>}
+                  </div>
                 </div>
                 <span className="badge badge-pending">Pending</span>
               </div>
@@ -254,7 +259,10 @@ export default function SessionDetail() {
               <div className="stack">
                 {approved.map((r) => (
                   <div className="row-between" key={r.id}>
-                    <span>{r.guest?.display_name || 'Guest'}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                      <Avatar name={r.guest?.display_name || 'Guest'} src={r.guest?.avatar_url} size={28} />
+                      {r.guest?.display_name || 'Guest'}
+                    </span>
                     <span className="badge badge-approved">Approved</span>
                   </div>
                 ))}

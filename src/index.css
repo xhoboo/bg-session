@@ -224,9 +224,22 @@ textarea { resize: vertical; min-height: 80px; }
 .game-row { display: flex; gap: 8px; align-items: center; }
 .game-row input { flex: 1; }
 
+/* ---------- Avatars ---------- */
+.avatar-img, .avatar-fallback {
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  border: 1px solid var(--slate-200);
+  overflow: hidden;
+}
+.avatar-img { object-fit: cover; }
+.avatar-fallback { color: #fff; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+
 /* ---------- Profile header ---------- */
 .profile-header { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
-.avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 1px solid var(--slate-200); }
 
 .spinner { width: 28px; height: 28px; border: 3px solid var(--slate-200); border-top-color: var(--teal-700); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 48px auto; }
 @keyframes spin { to { transform: rotate(360deg); } }

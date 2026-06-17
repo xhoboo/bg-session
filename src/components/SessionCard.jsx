@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { formatDateTime } from '../lib/format'
+import Avatar from './Avatar'
 
 export default function SessionCard({ session }) {
   const navigate = useNavigate()
@@ -25,7 +26,10 @@ export default function SessionCard({ session }) {
         <span>🎲 {session.board_games ? truncate(session.board_games, 40) : 'TBD'}</span>
       </div>
 
-      <div className="muted" style={{ fontSize: 13 }}>Hosted by {hostName}</div>
+      <div className="muted" style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 7 }}>
+        <Avatar name={hostName} src={session.host?.avatar_url} size={22} />
+        Hosted by {hostName}
+      </div>
     </div>
   )
 }

@@ -12,11 +12,14 @@ export default function MySessions() {
 
   useEffect(() => {
     let active = true
+    const now = new Date().toISOString()
     Promise.all([
+      // Only upcoming sessions here; past ones live in the Profile archive.
       supabase
         .from('sessions')
         .select('*')
         .eq('host_id', user.id)
+        .gte('starts_at', now)
         .order('starts_at', { ascending: true }),
       supabase
         .from('join_requests')
@@ -26,7 +29,7 @@ export default function MySessions() {
     ]).then(([hostRes, joinRes]) => {
       if (!active) return
       setHosting(hostRes.data ?? [])
-      setJoined((joinRes.data ?? []).filter((r) => r.session))
+      setJoined((joinRes.data ?? []).filter((r) => r.session && r.session.starts_at >= now))
       setLoading(false)
     })
     return () => {
