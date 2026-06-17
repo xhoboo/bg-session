@@ -1,0 +1,35 @@
+import { useNavigate } from 'react-router-dom'
+import { formatDateTime } from '../lib/format'
+
+export default function SessionCard({ session }) {
+  const navigate = useNavigate()
+  const hostName = session.host?.display_name || 'Host'
+  const spots = `${session.confirmed_count}/${session.max_players}`
+  const isFull = session.confirmed_count >= session.max_players
+
+  return (
+    <div className="card session-card" onClick={() => navigate(`/sessions/${session.id}`)}>
+      <div className="row-between">
+        <span className="session-card-title">{session.title}</span>
+        <span className={'badge ' + (session.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
+          {session.session_type === 'open' ? 'Open' : 'Approval'}
+        </span>
+      </div>
+
+      <div className="session-meta">
+        <span>📅 {formatDateTime(session.starts_at)}</span>
+      </div>
+      <div className="session-meta">
+        <span><span className="badge badge-area">{session.area}</span></span>
+        <span>👥 {spots} players{isFull ? ' · full' : ''}</span>
+        <span>🎲 {session.board_games ? truncate(session.board_games, 40) : 'TBD'}</span>
+      </div>
+
+      <div className="muted" style={{ fontSize: 13 }}>Hosted by {hostName}</div>
+    </div>
+  )
+}
+
+function truncate(s, n) {
+  return s.length > n ? s.slice(0, n - 1) + '…' : s
+}
