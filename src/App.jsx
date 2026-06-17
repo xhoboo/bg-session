@@ -15,6 +15,8 @@ import EditSession from './pages/EditSession'
 import SessionDetail from './pages/SessionDetail'
 import MySessions from './pages/MySessions'
 import Profile from './pages/Profile'
+import EditProfile from './pages/EditProfile'
+import UserProfile from './pages/UserProfile'
 
 export default function App() {
   const { loading } = useAuth()
@@ -36,6 +38,8 @@ export default function App() {
             <Route path="/create" element={<CreateSession />} />
             <Route path="/my-sessions" element={<MySessions />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/edit" element={<EditProfile />} />
+            <Route path="/users/:id" element={<UserProfile />} />
             <Route path="/sessions/:id" element={<SessionDetail />} />
             <Route path="/sessions/:id/edit" element={<EditSession />} />
           </Route>

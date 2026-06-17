@@ -39,7 +39,7 @@ export default function EditSession() {
       // Host can read the address (RLS allows it).
       const { data: addr } = await supabase
         .from('session_addresses')
-        .select('full_address')
+        .select('full_address, maps_url')
         .eq('session_id', id)
         .maybeSingle()
 
@@ -48,6 +48,7 @@ export default function EditSession() {
         startsAt: toDatetimeLocalValue(s.starts_at),
         area: s.area,
         fullAddress: addr?.full_address ?? '',
+        mapsUrl: addr?.maps_url ?? '',
         maxPlayers: s.max_players,
         boardGames: s.board_games,
         sessionType: s.session_type,
@@ -89,7 +90,7 @@ export default function EditSession() {
     // Upsert the address (it may not exist yet for older sessions).
     const { error: aErr } = await supabase
       .from('session_addresses')
-      .upsert({ session_id: id, full_address: form.fullAddress.trim() })
+      .upsert({ session_id: id, full_address: form.fullAddress.trim(), maps_url: form.mapsUrl.trim() || null })
 
     setBusy(false)
     if (aErr) return setError(`Saved, but address update failed: ${aErr.message}`)

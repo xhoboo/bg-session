@@ -47,3 +47,19 @@ export function toDatetimeLocalValue(iso) {
   const pad = (n) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
+
+// The host counts as a player, so total players = approved guests + 1.
+export function playerCount(s) {
+  return `${(s.confirmed_count ?? 0) + 1}/${s.max_players}`
+}
+
+export function isSessionFull(s) {
+  return (s.confirmed_count ?? 0) + 1 >= s.max_players
+}
+
+// Directions link: use the host's pinned Google Maps link if given, else search
+// Google Maps by the address text.
+export function mapsLink(address, mapsUrl) {
+  if (mapsUrl) return mapsUrl
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address || '')}`
+}

@@ -78,6 +78,19 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
       </div>
 
       <div className="form-group">
+        <label className="field-label" htmlFor="mapsUrl">
+          Google Maps link <span className="field-hint">— optional, pin the exact spot so guests can navigate</span>
+        </label>
+        <input
+          id="mapsUrl"
+          type="url"
+          placeholder="https://maps.app.goo.gl/…"
+          value={form.mapsUrl}
+          onChange={update('mapsUrl')}
+        />
+      </div>
+
+      <div className="form-group">
         <label className="field-label" htmlFor="games">
           Board games <span className="field-hint">— what you plan to bring/play</span>
         </label>

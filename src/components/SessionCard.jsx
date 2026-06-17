@@ -1,12 +1,12 @@
 import { useNavigate } from 'react-router-dom'
-import { formatDateTime } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFull } from '../lib/format'
 import Avatar from './Avatar'
 
 export default function SessionCard({ session }) {
   const navigate = useNavigate()
   const hostName = session.host?.display_name || 'Host'
-  const spots = `${session.confirmed_count}/${session.max_players}`
-  const isFull = session.confirmed_count >= session.max_players
+  const spots = playerCount(session)
+  const isFull = isSessionFull(session)
 
   return (
     <div className="card session-card" onClick={() => navigate(`/sessions/${session.id}`)}>

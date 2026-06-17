@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import GameListInput from './GameListInput'
+import AvatarUpload from './AvatarUpload'
 
 const GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say']
 
 // Build the form state shape from a profile row (or empty for a new user).
 export function profileToForm(p) {
   return {
+    avatarUrl: p?.avatar_url || '',
+    photoUrl: p?.photo_url || '',
     realName: p?.real_name || '',
     nickname: p?.nickname || p?.display_name || '',
     gender: p?.gender || '',
@@ -24,6 +27,8 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     onSubmit({
+      avatarUrl: form.avatarUrl,
+      photoUrl: form.photoUrl,
       realName: form.realName.trim(),
       nickname: form.nickname.trim(),
       gender: form.gender,
@@ -34,6 +39,22 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
 
   return (
     <form className="card" onSubmit={handleSubmit}>
+      <AvatarUpload
+        label="Avatar"
+        hint="public — shown on your profile and sessions"
+        value={form.avatarUrl}
+        name={form.nickname}
+        onChange={(url) => setForm((f) => ({ ...f, avatarUrl: url }))}
+      />
+
+      <AvatarUpload
+        label="In-person photo"
+        hint="recommended — only shown to confirmed participants so they recognize you"
+        value={form.photoUrl}
+        name={form.nickname}
+        onChange={(url) => setForm((f) => ({ ...f, photoUrl: url }))}
+      />
+
       <div className="form-group">
         <label className="field-label" htmlFor="realName">Real name</label>
         <input id="realName" type="text" value={form.realName} onChange={set('realName')} placeholder="e.g. Andi Wijaya" />

@@ -36,12 +36,20 @@ export function AuthProvider({ children }) {
 
   const loadProfile = useCallback(async (uid) => {
     setProfileLoaded(false)
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, display_name, avatar_url, real_name, nickname, gender, favorite_games, owned_games, onboarded')
-      .eq('id', uid)
-      .maybeSingle()
-    setProfile(data ?? null)
+    // Public profile + the user's own private fields (real name, gender, photo).
+    const [{ data: pub }, { data: priv }] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url, nickname, favorite_games, owned_games, onboarded')
+        .eq('id', uid)
+        .maybeSingle(),
+      supabase
+        .from('profile_private')
+        .select('real_name, gender, photo_url')
+        .eq('id', uid)
+        .maybeSingle(),
+    ])
+    setProfile(pub ? { ...pub, ...(priv ?? {}) } : null)
     setProfileLoaded(true)
   }, [])
 

@@ -2,8 +2,9 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { formatDateTime } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFull, mapsLink } from '../lib/format'
 import Avatar from '../components/Avatar'
+import StarRating from '../components/StarRating'
 
 export default function SessionDetail() {
   const { id } = useParams()
@@ -15,6 +16,9 @@ export default function SessionDetail() {
   const [myRequest, setMyRequest] = useState(null)
   const [requests, setRequests] = useState([]) // host view
   const [message, setMessage] = useState('')
+  const [ratings, setRatings] = useState([])
+  const [ratingValue, setRatingValue] = useState(0)
+  const [reviewText, setReviewText] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -41,10 +45,10 @@ export default function SessionDetail() {
     // Address — RLS returns a row only if we're the host or an approved guest.
     const { data: addr } = await supabase
       .from('session_addresses')
-      .select('full_address')
+      .select('full_address, maps_url')
       .eq('session_id', id)
       .maybeSingle()
-    setAddress(addr?.full_address ?? null)
+    setAddress(addr ?? null)
 
     if (s.host_id === user.id) {
       // Host: load every request with the guest's public name.
@@ -64,6 +68,17 @@ export default function SessionDetail() {
         .maybeSingle()
       setMyRequest(mine ?? null)
     }
+
+    // Ratings — RLS returns rows only to participants of this session.
+    const { data: rts } = await supabase
+      .from('session_ratings')
+      .select('id, user_id, rating, review, created_at, rater:profiles(display_name, avatar_url)')
+      .eq('session_id', id)
+      .order('created_at', { ascending: false })
+    setRatings(rts ?? [])
+    const own = (rts ?? []).find((r) => r.user_id === user.id)
+    setRatingValue(own?.rating ?? 0)
+    setReviewText(own?.review ?? '')
 
     setLoading(false)
   }, [id, user.id])
@@ -111,6 +126,21 @@ export default function SessionDetail() {
     navigate('/my-sessions', { replace: true })
   }
 
+  const submitRating = async () => {
+    if (ratingValue < 1) return setError('Please pick a star rating from 1 to 10.')
+    setBusy(true)
+    setError('')
+    const { error } = await supabase
+      .from('session_ratings')
+      .upsert(
+        { session_id: id, user_id: user.id, rating: ratingValue, review: reviewText.trim() },
+        { onConflict: 'session_id,user_id' },
+      )
+    setBusy(false)
+    if (error) return setError(error.message)
+    await loadAll()
+  }
+
   if (loading) return <div className="spinner" aria-label="Loading session" />
   if (error && !session) {
     return (
@@ -121,9 +151,16 @@ export default function SessionDetail() {
     )
   }
 
-  const isFull = session.confirmed_count >= session.max_players
+  const isFull = isSessionFull(session)
   const pending = requests.filter((r) => r.status === 'pending')
   const approved = requests.filter((r) => r.status === 'approved')
+
+  const isPast = new Date(session.starts_at) < new Date()
+  const isParticipant = isHost || myRequest?.status === 'approved'
+  const myRating = ratings.find((r) => r.user_id === user.id)
+  const avgRating = ratings.length
+    ? (ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length).toFixed(1)
+    : null
 
   return (
     <div className="container container-narrow">
@@ -135,9 +172,12 @@ export default function SessionDetail() {
           {session.session_type === 'open' ? 'Open' : 'Approval'}
         </span>
       </div>
-      <p className="subtitle" style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Avatar name={session.host?.display_name || 'Host'} src={session.host?.avatar_url} size={24} />
-        Hosted by {session.host?.display_name || 'Host'}
+      <p className="subtitle" style={{ marginTop: 8 }}>
+        Hosted by{' '}
+        <Link to={`/users/${session.host_id}`} className="user-link">
+          <Avatar name={session.host?.display_name || 'Host'} src={session.host?.avatar_url} size={24} />
+          {session.host?.display_name || 'Host'}
+        </Link>
       </p>
 
       {error && <div className="alert alert-error">{error}</div>}
@@ -146,7 +186,7 @@ export default function SessionDetail() {
         <div className="stack">
           <div className="row-between"><span className="muted">When</span><strong>{formatDateTime(session.starts_at)}</strong></div>
           <div className="row-between"><span className="muted">Area</span><span className="badge badge-area">{session.area}</span></div>
-          <div className="row-between"><span className="muted">Players</span><strong>{session.confirmed_count}/{session.max_players}{isFull ? ' · full' : ''}</strong></div>
+          <div className="row-between"><span className="muted">Players</span><strong>{playerCount(session)}{isFull ? ' · full' : ''}</strong></div>
           <div>
             <div className="muted" style={{ marginBottom: 4 }}>Board games</div>
             <div>{session.board_games || 'To be decided'}</div>
@@ -155,7 +195,18 @@ export default function SessionDetail() {
           <div>
             <div className="muted" style={{ marginBottom: 4 }}>Address</div>
             {address ? (
-              <div className="address-box">📍 {address}</div>
+              <div className="address-box">
+                <div>📍 {address.full_address}</div>
+                <a
+                  className="btn btn-secondary btn-sm"
+                  style={{ marginTop: 10 }}
+                  href={mapsLink(address.full_address, address.maps_url)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  🗺️ Open in Google Maps
+                </a>
+              </div>
             ) : (
               <div className="address-locked">🔒 The full address is revealed once the host confirms your spot.</div>
             )}
@@ -163,10 +214,64 @@ export default function SessionDetail() {
         </div>
       </div>
 
+      {/* ---------------- Ratings & reviews (past sessions) ---------------- */}
+      {isPast && isParticipant && (
+        <>
+          <h2 className="section-title">Ratings & reviews</h2>
+          <div className="card stack">
+            {avgRating ? (
+              <div className="rating-row">
+                <StarRating value={Math.round(avgRating)} showvalue={false} />
+                <strong>{avgRating}/10</strong>
+                <span className="muted">· {ratings.length} {ratings.length === 1 ? 'rating' : 'ratings'}</span>
+              </div>
+            ) : (
+              <p className="muted" style={{ margin: 0 }}>No ratings yet — be the first.</p>
+            )}
+
+            <div style={{ borderTop: '1px solid var(--slate-100)', paddingTop: 14 }}>
+              <div className="field-label" style={{ marginBottom: 8 }}>
+                {myRating ? 'Your rating' : 'Rate this session'}
+                {!myRating && <span className="field-hint"> — required for participants</span>}
+              </div>
+              <div className="rating-row" style={{ marginBottom: 10 }}>
+                <StarRating value={ratingValue} onChange={setRatingValue} />
+              </div>
+              <textarea
+                placeholder="Add a review (optional)…"
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+              />
+              <div className="spacer" />
+              <button className="btn btn-primary" onClick={submitRating} disabled={busy}>
+                {myRating ? 'Update my rating' : 'Submit rating'}
+              </button>
+            </div>
+
+            {ratings.filter((r) => r.user_id !== user.id).length > 0 && (
+              <div>
+                {ratings.filter((r) => r.user_id !== user.id).map((r) => (
+                  <div className="review-item" key={r.id}>
+                    <div className="rating-row">
+                      <Link to={`/users/${r.user_id}`} className="user-link">
+                        <Avatar name={r.rater?.display_name || 'Player'} src={r.rater?.avatar_url} size={24} />
+                        {r.rater?.display_name || 'Player'}
+                      </Link>
+                      <StarRating value={r.rating} size={15} />
+                    </div>
+                    {r.review && <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>{r.review}</div>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
       {/* ---------------- Guest actions ---------------- */}
-      {!isHost && (
+      {!isHost && (myRequest || !isPast) && (
         <div className="card">
-          {!myRequest && (
+          {!myRequest && !isPast && (
             <>
               <h2 style={{ marginTop: 0, fontSize: 18 }}>Want to join?</h2>
               {isFull ? (
@@ -225,9 +330,11 @@ export default function SessionDetail() {
             <div className="card" key={r.id}>
               <div className="row-between">
                 <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  <Avatar name={r.guest?.display_name || 'Guest'} src={r.guest?.avatar_url} size={32} />
+                  <Link to={`/users/${r.guest_id}`} className="user-link">
+                    <Avatar name={r.guest?.display_name || 'Guest'} src={r.guest?.avatar_url} size={32} />
+                  </Link>
                   <div>
-                    <strong>{r.guest?.display_name || 'Guest'}</strong>
+                    <Link to={`/users/${r.guest_id}`} className="user-link"><strong>{r.guest?.display_name || 'Guest'}</strong></Link>
                     {r.message && <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>“{r.message}”</div>}
                   </div>
                 </div>
@@ -259,10 +366,10 @@ export default function SessionDetail() {
               <div className="stack">
                 {approved.map((r) => (
                   <div className="row-between" key={r.id}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                    <Link to={`/users/${r.guest_id}`} className="user-link">
                       <Avatar name={r.guest?.display_name || 'Guest'} src={r.guest?.avatar_url} size={28} />
                       {r.guest?.display_name || 'Guest'}
-                    </span>
+                    </Link>
                     <span className="badge badge-approved">Approved</span>
                   </div>
                 ))}

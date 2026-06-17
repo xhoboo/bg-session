@@ -9,6 +9,7 @@ const initialForm = {
   startsAt: '',
   area: '',
   fullAddress: '',
+  mapsUrl: '',
   maxPlayers: 4,
   boardGames: '',
   sessionType: 'approval',
@@ -54,7 +55,7 @@ export default function CreateSession() {
     // 2) Store the private address in its own protected table.
     const { error: addrErr } = await supabase
       .from('session_addresses')
-      .insert({ session_id: session.id, full_address: form.fullAddress.trim() })
+      .insert({ session_id: session.id, full_address: form.fullAddress.trim(), maps_url: form.mapsUrl.trim() || null })
 
     setBusy(false)
     if (addrErr) return setError(`Session created but address failed to save: ${addrErr.message}`)

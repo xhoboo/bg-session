@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { formatDateTime } from '../lib/format'
+import { formatDateTime, playerCount } from '../lib/format'
 
 export default function MySessions() {
   const { user } = useAuth()
@@ -63,7 +63,7 @@ export default function MySessions() {
               <div className="session-meta">
                 <span>📅 {formatDateTime(s.starts_at)}</span>
                 <span><span className="badge badge-area">{s.area}</span></span>
-                <span>👥 {s.confirmed_count}/{s.max_players}</span>
+                <span>👥 {playerCount(s)}</span>
               </div>
             </Link>
           ))}

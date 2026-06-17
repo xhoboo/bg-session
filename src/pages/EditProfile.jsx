@@ -1,23 +1,18 @@
 import { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import ProfileForm, { profileToForm } from '../components/ProfileForm'
 
-// Required one-time profile setup, shown right after a user's first signup.
-// The OnboardingGate sends users here until profiles.onboarded = true.
-export default function Onboarding() {
-  const { user, profile, profileLoaded, refreshProfile, signOut } = useAuth()
+export default function EditProfile() {
+  const { user, profile, refreshProfile } = useAuth()
   const navigate = useNavigate()
-  const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-
-  // Already done? Don't show onboarding again.
-  if (profileLoaded && profile?.onboarded) return <Navigate to="/" replace />
+  const [error, setError] = useState('')
 
   const handleSubmit = async (vals) => {
     setError('')
-    if (!vals.nickname) return setError('Please enter a nickname.')
+    if (!vals.nickname) return setError('Nickname cannot be empty.')
     if (vals.favoriteGames.length < 1) return setError('Add at least one favorite board game.')
 
     setBusy(true)
@@ -26,10 +21,9 @@ export default function Onboarding() {
       .update({
         avatar_url: vals.avatarUrl || null,
         nickname: vals.nickname,
-        display_name: vals.nickname, // keep the public name in sync
+        display_name: vals.nickname,
         favorite_games: vals.favoriteGames,
         owned_games: vals.ownedGames,
-        onboarded: true,
       })
       .eq('id', user.id)
     if (pubErr) {
@@ -49,32 +43,24 @@ export default function Onboarding() {
 
     if (privErr) return setError(privErr.message)
     await refreshProfile()
-    navigate('/', { replace: true })
+    navigate('/profile')
   }
 
   return (
     <div className="container container-narrow">
-      <div className="spacer" />
-      <div className="center" style={{ marginBottom: 20 }}>
-        <h1 style={{ color: 'var(--teal-700)' }}>Welcome to BG Session 🎲</h1>
-        <p className="subtitle" style={{ margin: 0 }}>
-          Tell us a bit about yourself to finish setting up your account.
-        </p>
-      </div>
+      <Link to="/profile" className="muted" style={{ fontSize: 14 }}>← Back to profile</Link>
+      <h1 style={{ marginTop: 12 }}>Edit profile</h1>
+      <p className="subtitle">Update your details and photo.</p>
 
       {error && <div className="alert alert-error">{error}</div>}
 
       <ProfileForm
+        key={profile?.id || 'loading'}
         initial={profileToForm(profile)}
-        submitLabel="Get started"
+        submitLabel="Save changes"
         busy={busy}
         onSubmit={handleSubmit}
       />
-
-      <p className="center muted" style={{ marginTop: 16 }}>
-        Not you?{' '}
-        <a href="#" onClick={(e) => { e.preventDefault(); signOut() }}>Sign out</a>
-      </p>
     </div>
   )
 }
