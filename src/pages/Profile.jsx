@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { isSessionFinished } from '../lib/format'
 import ProfileView from '../components/ProfileView'
 
 export default function Profile() {
   const { user, profile } = useAuth()
   const [history, setHistory] = useState([])
 
-  // Past sessions (hosted + joined) for this user's history, with avg ratings.
+  // Finished sessions (hosted + joined) for this user's history, with avg
+  // ratings. "Finished" is start + duration, so in-progress sessions don't show.
   useEffect(() => {
     let active = true
     const now = new Date().toISOString()
@@ -16,19 +18,21 @@ export default function Profile() {
       const [hostRes, joinRes] = await Promise.all([
         supabase
           .from('sessions')
-          .select('id, title, starts_at, area, confirmed_count, max_players, session_type')
+          .select('id, title, starts_at, duration_minutes, area, confirmed_count, max_players, session_type')
           .eq('host_id', user.id)
           .lt('starts_at', now)
           .order('starts_at', { ascending: false }),
         supabase
           .from('join_requests')
-          .select('id, session:sessions(id, title, starts_at, area, confirmed_count, max_players, session_type)')
+          .select('id, session:sessions(id, title, starts_at, duration_minutes, area, confirmed_count, max_players, session_type)')
           .eq('guest_id', user.id)
           .eq('status', 'approved'),
       ])
-      const hosted = (hostRes.data ?? []).map((s) => ({ key: 'h' + s.id, session: s, role: 'Hosted' }))
+      const hosted = (hostRes.data ?? [])
+        .filter(isSessionFinished)
+        .map((s) => ({ key: 'h' + s.id, session: s, role: 'Hosted' }))
       const joined = (joinRes.data ?? [])
-        .filter((r) => r.session && r.session.starts_at < now)
+        .filter((r) => r.session && isSessionFinished(r.session))
         .map((r) => ({ key: 'j' + r.id, session: r.session, role: 'Joined' }))
       let combined = [...hosted, ...joined].sort((a, b) => (a.session.starts_at < b.session.starts_at ? 1 : -1))
 

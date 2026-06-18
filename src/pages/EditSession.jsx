@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import SessionForm from '../components/SessionForm'
-import { toDatetimeLocalValue } from '../lib/format'
+import { toDatetimeLocalValue, hasSessionStarted } from '../lib/format'
 
 export default function EditSession() {
   const { id } = useParams()
@@ -32,6 +32,11 @@ export default function EditSession() {
       }
       if (s.host_id !== user.id) {
         setError('Only the host can edit this session.')
+        setLoading(false)
+        return
+      }
+      if (hasSessionStarted(s)) {
+        setError('This session has already started and can no longer be edited.')
         setLoading(false)
         return
       }

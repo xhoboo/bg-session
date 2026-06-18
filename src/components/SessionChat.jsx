@@ -5,8 +5,9 @@ import { useAuth } from '../context/AuthContext'
 import Avatar from './Avatar'
 import { timeAgo } from '../lib/format'
 
-// Group chat for a session, shown to confirmed participants (RLS-gated).
-export default function SessionChat({ sessionId }) {
+// Group chat for a session, shown to confirmed participants (RLS-gated). Once
+// the session is finished the thread becomes read-only history (`readOnly`).
+export default function SessionChat({ sessionId, readOnly = false }) {
   const { user } = useAuth()
   const [messages, setMessages] = useState([])
   const [authors, setAuthors] = useState({}) // userId -> profile
@@ -73,6 +74,7 @@ export default function SessionChat({ sessionId }) {
 
   const send = async (e) => {
     e.preventDefault()
+    if (readOnly) return
     const body = text.trim()
     if (!body) return
     setText('')
@@ -119,10 +121,16 @@ export default function SessionChat({ sessionId }) {
           <div ref={endRef} />
         </div>
 
-        <form className="chat-input-row" onSubmit={send}>
-          <input type="text" value={text} onChange={(e) => setText(e.target.value)} placeholder="Message participants…" maxLength={2000} />
-          <button className="btn btn-primary" type="submit" disabled={!text.trim()}>Send</button>
-        </form>
+        {readOnly ? (
+          <p className="muted center" style={{ margin: '12px 0 0', fontSize: 13 }}>
+            This session has ended — chat is now read-only.
+          </p>
+        ) : (
+          <form className="chat-input-row" onSubmit={send}>
+            <input type="text" value={text} onChange={(e) => setText(e.target.value)} placeholder="Message participants…" maxLength={2000} />
+            <button className="btn btn-primary" type="submit" disabled={!text.trim()}>Send</button>
+          </form>
+        )}
       </div>
     </>
   )

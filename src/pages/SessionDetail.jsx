@@ -2,10 +2,11 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration, hasSessionStarted, isSessionFinished } from '../lib/format'
 import Avatar from '../components/Avatar'
 import StarRating from '../components/StarRating'
 import SessionChat from '../components/SessionChat'
+import SessionParticipants from '../components/SessionParticipants'
 
 export default function SessionDetail() {
   const { id } = useParams()
@@ -154,9 +155,9 @@ export default function SessionDetail() {
 
   const isFull = isSessionFull(session)
   const pending = requests.filter((r) => r.status === 'pending')
-  const approved = requests.filter((r) => r.status === 'approved')
 
-  const isPast = new Date(session.starts_at) < new Date()
+  const started = hasSessionStarted(session)
+  const finished = isSessionFinished(session)
   const isParticipant = isHost || myRequest?.status === 'approved'
   const myRating = ratings.find((r) => r.user_id === user.id)
   const avgRating = ratings.length
@@ -218,8 +219,8 @@ export default function SessionDetail() {
         </div>
       </div>
 
-      {/* ---------------- Ratings & reviews (past sessions) ---------------- */}
-      {isPast && isParticipant && (
+      {/* ---------------- Ratings & reviews (finished sessions) ---------------- */}
+      {finished && isParticipant && (
         <>
           <h2 className="section-title">Ratings & reviews</h2>
           <div className="card stack">
@@ -273,9 +274,9 @@ export default function SessionDetail() {
       )}
 
       {/* ---------------- Guest actions ---------------- */}
-      {!isHost && (myRequest || !isPast) && (
+      {!isHost && (myRequest || !started) && (
         <div className="card">
-          {!myRequest && !isPast && (
+          {!myRequest && !started && (
             <>
               <h2 style={{ marginTop: 0, fontSize: 18 }}>Want to join?</h2>
               {isFull ? (
@@ -362,38 +363,26 @@ export default function SessionDetail() {
             </div>
           ))}
 
-          <h2 className="section-title">Confirmed guests ({approved.length})</h2>
-          {approved.length === 0 ? (
-            <p className="muted">No confirmed guests yet.</p>
-          ) : (
-            <div className="card">
-              <div className="stack">
-                {approved.map((r) => (
-                  <div className="row-between" key={r.id}>
-                    <Link to={`/users/${r.guest_id}`} className="user-link">
-                      <Avatar name={r.guest?.display_name || 'Guest'} src={r.guest?.avatar_url} size={28} />
-                      {r.guest?.display_name || 'Guest'}
-                    </Link>
-                    <span className="badge badge-approved">Approved</span>
-                  </div>
-                ))}
+          {/* A started/finished session is in the past — no longer editable. */}
+          {!started && (
+            <>
+              <h2 className="section-title">Manage session</h2>
+              <div className="form-row">
+                <button className="btn btn-secondary" onClick={() => navigate(`/sessions/${id}/edit`)} disabled={busy}>
+                  Edit details
+                </button>
+                <button className="btn btn-danger" onClick={cancelSession} disabled={busy}>
+                  Cancel session
+                </button>
               </div>
-            </div>
+            </>
           )}
-
-          <h2 className="section-title">Manage session</h2>
-          <div className="form-row">
-            <button className="btn btn-secondary" onClick={() => navigate(`/sessions/${id}/edit`)} disabled={busy}>
-              Edit details
-            </button>
-            <button className="btn btn-danger" onClick={cancelSession} disabled={busy}>
-              Cancel session
-            </button>
-          </div>
         </>
       )}
 
-      {isParticipant && <SessionChat sessionId={id} />}
+      {isParticipant && <SessionParticipants sessionId={id} hostId={session.host_id} />}
+
+      {isParticipant && <SessionChat sessionId={id} readOnly={finished} />}
     </div>
   )
 }

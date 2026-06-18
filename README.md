@@ -28,10 +28,13 @@ notice instead of crashing.
 
 ## 3. Database schema
 
-In the Supabase dashboard open **SQL Editor → New query**, paste the contents of
-[`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), and run it.
+In the Supabase dashboard open **SQL Editor → New query** and run each file in
+[`supabase/migrations/`](supabase/migrations/) **in order**, from
+`0001_init.sql` through the latest (`0011_…`). They're incremental and safe to
+re-run. Later migrations add richer profiles, private profile fields, avatar
+storage, ratings, the board-game/domicile catalogs, chat, and rating reminders.
 
-This creates:
+The base migration creates:
 
 | Table | Purpose |
 |-------|---------|

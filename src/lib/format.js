@@ -48,6 +48,22 @@ export function toDatetimeLocalValue(iso) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+// When a session has no explicit duration we assume this many minutes so we can
+// still tell when it's "finished" (a typical board-game evening).
+export const FALLBACK_DURATION_MIN = 180
+
+// A session has started once its start time has passed…
+export function hasSessionStarted(s) {
+  return new Date(s.starts_at).getTime() <= Date.now()
+}
+
+// …and is "finished" once start + (duration or fallback) has passed. We treat
+// the whole app's "past / history" concept off this, not just the start time.
+export function isSessionFinished(s) {
+  const mins = s.duration_minutes || FALLBACK_DURATION_MIN
+  return new Date(s.starts_at).getTime() + mins * 60_000 <= Date.now()
+}
+
 // The host counts as a player, so total players = approved guests + 1.
 export function playerCount(s) {
   return `${(s.confirmed_count ?? 0) + 1}/${s.max_players}`

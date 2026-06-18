@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { formatDateTime, playerCount } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFinished } from '../lib/format'
 
 export default function MySessions() {
   const { user } = useAuth()
@@ -12,24 +12,26 @@ export default function MySessions() {
 
   useEffect(() => {
     let active = true
-    const now = new Date().toISOString()
+    // Active = not yet finished (upcoming + in progress). Finished sessions move
+    // to the Profile archive. We fetch from a little before "now" so in-progress
+    // sessions (started but not finished) are still included, then filter exactly.
+    const cutoff = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
     Promise.all([
-      // Only upcoming sessions here; past ones live in the Profile archive.
       supabase
         .from('sessions')
         .select('*')
         .eq('host_id', user.id)
-        .gte('starts_at', now)
+        .gte('starts_at', cutoff)
         .order('starts_at', { ascending: true }),
       supabase
         .from('join_requests')
-        .select('id, status, session:sessions(id, title, starts_at, area, max_players, confirmed_count, session_type)')
+        .select('id, status, session:sessions(id, title, starts_at, duration_minutes, area, max_players, confirmed_count, session_type)')
         .eq('guest_id', user.id)
         .order('created_at', { ascending: false }),
     ]).then(([hostRes, joinRes]) => {
       if (!active) return
-      setHosting(hostRes.data ?? [])
-      setJoined((joinRes.data ?? []).filter((r) => r.session && r.session.starts_at >= now))
+      setHosting((hostRes.data ?? []).filter((s) => !isSessionFinished(s)))
+      setJoined((joinRes.data ?? []).filter((r) => r.session && !isSessionFinished(r.session)))
       setLoading(false)
     })
     return () => {
