@@ -2,14 +2,13 @@ import { useEffect, useState } from 'react'
 import { useParams, Link, Navigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { isSessionFinished } from '../lib/format'
 import ProfileView from '../components/ProfileView'
 
 // Public, read-only view of another player's profile (linked from sessions).
 // Only public fields are shown — real name / gender / in-person photo are
 // never displayed here; they appear only to confirmed co-participants inside a
-// session. We can list this player's finished HOSTED sessions (public); their
-// joined sessions stay private (gated by join_requests RLS).
+// session. Session history (finished sessions hosted AND joined) comes from the
+// user_session_history() function, which exposes only public session fields.
 export default function UserProfile() {
   const { id } = useParams()
   const { user } = useAuth()
@@ -20,27 +19,18 @@ export default function UserProfile() {
   useEffect(() => {
     let active = true
     setLoading(true)
-    const now = new Date().toISOString()
     Promise.all([
       supabase
         .from('profiles')
         .select('id, display_name, nickname, avatar_url, domicile, favorite_games, owned_games')
         .eq('id', id)
         .maybeSingle(),
-      supabase
-        .from('sessions')
-        .select('id, title, starts_at, duration_minutes, area, confirmed_count, max_players, session_type')
-        .eq('host_id', id)
-        .lt('starts_at', now)
-        .order('starts_at', { ascending: false }),
-    ]).then(([pubRes, hostRes]) => {
+      supabase.rpc('user_session_history', { uid: id }),
+    ]).then(([pubRes, histRes]) => {
       if (!active) return
       setProfile(pubRes.data ?? null)
-      setHistory(
-        (hostRes.data ?? [])
-          .filter(isSessionFinished)
-          .map((s) => ({ key: s.id, session: s, role: 'Hosted' })),
-      )
+      const rows = (histRes.data ?? []).sort((a, b) => (a.starts_at < b.starts_at ? 1 : -1))
+      setHistory(rows.map((s) => ({ key: s.role + s.id, session: s, role: s.role })))
       setLoading(false)
     })
     return () => {

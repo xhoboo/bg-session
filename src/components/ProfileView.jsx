@@ -73,7 +73,7 @@ export default function ProfileView({ profile, email, history = [], headerAction
               >
                 <div className="row-between">
                   <span className="session-card-title">{session.title}</span>
-                  {role && <span className={'badge ' + (role === 'Hosted' ? 'badge-approval' : 'badge-approved')}>{role}</span>}
+                  {role && <span className={'badge ' + (role === 'Host' ? 'badge-approval' : 'badge-approved')}>{role}</span>}
                 </div>
                 <div className="session-meta">
                   <span>📅 {formatDateTime(session.starts_at)}</span>

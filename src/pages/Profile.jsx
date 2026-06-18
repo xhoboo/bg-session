@@ -30,10 +30,10 @@ export default function Profile() {
       ])
       const hosted = (hostRes.data ?? [])
         .filter(isSessionFinished)
-        .map((s) => ({ key: 'h' + s.id, session: s, role: 'Hosted' }))
+        .map((s) => ({ key: 'h' + s.id, session: s, role: 'Host' }))
       const joined = (joinRes.data ?? [])
         .filter((r) => r.session && isSessionFinished(r.session))
-        .map((r) => ({ key: 'j' + r.id, session: r.session, role: 'Joined' }))
+        .map((r) => ({ key: 'j' + r.id, session: r.session, role: 'Participant' }))
       let combined = [...hosted, ...joined].sort((a, b) => (a.session.starts_at < b.session.starts_at ? 1 : -1))
 
       const ids = combined.map((i) => i.session.id)
