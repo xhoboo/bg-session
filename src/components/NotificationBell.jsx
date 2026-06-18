@@ -33,7 +33,7 @@ export default function NotificationBell() {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
-        (payload) => setItems((prev) => [payload.new, ...prev]),
+        (payload) => setItems((prev) => (prev.some((n) => n.id === payload.new.id) ? prev : [payload.new, ...prev])),
       )
       .subscribe()
 

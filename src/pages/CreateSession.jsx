@@ -10,7 +10,9 @@ const initialForm = {
   area: '',
   fullAddress: '',
   mapsUrl: '',
+  minPlayers: 2,
   maxPlayers: 4,
+  durationMinutes: '',
   boardGames: '',
   sessionType: 'approval',
 }
@@ -26,6 +28,7 @@ export default function CreateSession() {
 
     if (!form.area) return setError('Please choose a neighborhood area.')
     if (!form.fullAddress.trim()) return setError('Please enter the full address (kept private until you confirm a guest).')
+    if (Number(form.minPlayers) > Number(form.maxPlayers)) return setError('Min players cannot be greater than max players.')
 
     const startsAtIso = new Date(form.startsAt).toISOString()
     if (Number.isNaN(Date.parse(startsAtIso))) return setError('Please pick a valid date and time.')
@@ -40,7 +43,9 @@ export default function CreateSession() {
         title: form.title.trim(),
         starts_at: startsAtIso,
         area: form.area,
+        min_players: Number(form.minPlayers),
         max_players: Number(form.maxPlayers),
+        duration_minutes: form.durationMinutes ? Number(form.durationMinutes) : null,
         board_games: form.boardGames.trim(),
         session_type: form.sessionType,
       })

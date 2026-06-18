@@ -63,3 +63,10 @@ export function mapsLink(address, mapsUrl) {
   if (mapsUrl) return mapsUrl
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address || '')}`
 }
+
+export function formatDuration(minutes) {
+  if (!minutes) return null
+  if (minutes >= 360) return '6+ hours'
+  const h = minutes / 60
+  return `~${h} hour${h > 1 ? 's' : ''}`
+}

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import GameListInput from './GameListInput'
+import GameTagInput from './GameTagInput'
+import DomicileInput from './DomicileInput'
 import AvatarUpload from './AvatarUpload'
 
 const GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say']
@@ -12,8 +13,9 @@ export function profileToForm(p) {
     realName: p?.real_name || '',
     nickname: p?.nickname || p?.display_name || '',
     gender: p?.gender || '',
-    favoriteGames: p?.favorite_games?.length ? p.favorite_games : [''],
-    ownedGames: p?.owned_games?.length ? p.owned_games : [''],
+    domicile: p?.domicile || '',
+    favoriteGames: p?.favorite_games || [],
+    ownedGames: p?.owned_games || [],
   }
 }
 
@@ -22,7 +24,7 @@ export function profileToForm(p) {
 export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
   const [form, setForm] = useState(initial)
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
-  const setGames = (key) => (arr) => setForm((f) => ({ ...f, [key]: arr }))
+  const setField = (key) => (val) => setForm((f) => ({ ...f, [key]: val }))
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -32,6 +34,7 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
       realName: form.realName.trim(),
       nickname: form.nickname.trim(),
       gender: form.gender,
+      domicile: form.domicile,
       favoriteGames: form.favoriteGames.map((s) => s.trim()).filter(Boolean),
       ownedGames: form.ownedGames.map((s) => s.trim()).filter(Boolean),
     })
@@ -44,7 +47,7 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
         hint="public — shown on your profile and sessions"
         value={form.avatarUrl}
         name={form.nickname}
-        onChange={(url) => setForm((f) => ({ ...f, avatarUrl: url }))}
+        onChange={setField('avatarUrl')}
       />
 
       <AvatarUpload
@@ -52,7 +55,7 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
         hint="recommended — only shown to confirmed participants so they recognize you"
         value={form.photoUrl}
         name={form.nickname}
-        onChange={(url) => setForm((f) => ({ ...f, photoUrl: url }))}
+        onChange={setField('photoUrl')}
       />
 
       <div className="form-group">
@@ -77,22 +80,22 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
         </select>
       </div>
 
-      <GameListInput
+      <DomicileInput value={form.domicile} onChange={setField('domicile')} />
+
+      <GameTagInput
         label="Favorite board games"
-        hint="at least 1, up to 10"
+        hint="at least 1, up to 10 — type to search the catalog"
         items={form.favoriteGames}
-        onChange={setGames('favoriteGames')}
+        onChange={setField('favoriteGames')}
         max={10}
-        placeholder="e.g. Brass Birmingham"
       />
 
-      <GameListInput
+      <GameTagInput
         label="Board games you own"
         hint="optional — it's fine to own none"
         items={form.ownedGames}
-        onChange={setGames('ownedGames')}
+        onChange={setField('ownedGames')}
         max={30}
-        placeholder="e.g. Wingspan"
       />
 
       <button className="btn btn-primary btn-block" type="submit" disabled={busy}>

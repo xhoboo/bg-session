@@ -56,7 +56,11 @@ export default function UserProfile() {
       <Link to="/" className="muted" style={{ fontSize: 14 }}>← Back to browse</Link>
       <div className="spacer" />
       {profile ? (
-        <ProfileView profile={profile} history={history} />
+        <>
+          <ProfileView profile={profile} history={history} />
+          <div className="spacer" />
+          <Link to={`/messages/${id}`} className="btn btn-primary btn-block">💬 Message {profile.nickname || profile.display_name || 'player'}</Link>
+        </>
       ) : (
         <div className="alert alert-error">Player not found.</div>
       )}

@@ -17,6 +17,9 @@ import MySessions from './pages/MySessions'
 import Profile from './pages/Profile'
 import EditProfile from './pages/EditProfile'
 import UserProfile from './pages/UserProfile'
+import GameDetail from './pages/GameDetail'
+import Messages from './pages/Messages'
+import Conversation from './pages/Conversation'
 
 export default function App() {
   const { loading } = useAuth()
@@ -40,6 +43,9 @@ export default function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/edit" element={<EditProfile />} />
             <Route path="/users/:id" element={<UserProfile />} />
+            <Route path="/games/:name" element={<GameDetail />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/messages/:userId" element={<Conversation />} />
             <Route path="/sessions/:id" element={<SessionDetail />} />
             <Route path="/sessions/:id/edit" element={<EditSession />} />
           </Route>

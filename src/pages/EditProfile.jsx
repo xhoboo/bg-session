@@ -22,6 +22,7 @@ export default function EditProfile() {
         avatar_url: vals.avatarUrl || null,
         nickname: vals.nickname,
         display_name: vals.nickname,
+        domicile: vals.domicile || null,
         favorite_games: vals.favoriteGames,
         owned_games: vals.ownedGames,
       })

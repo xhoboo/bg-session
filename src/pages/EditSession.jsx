@@ -49,7 +49,9 @@ export default function EditSession() {
         area: s.area,
         fullAddress: addr?.full_address ?? '',
         mapsUrl: addr?.maps_url ?? '',
+        minPlayers: s.min_players ?? 1,
         maxPlayers: s.max_players,
+        durationMinutes: s.duration_minutes ? String(s.duration_minutes) : '',
         boardGames: s.board_games,
         sessionType: s.session_type,
       })
@@ -64,6 +66,7 @@ export default function EditSession() {
     setError('')
     if (!form.area) return setError('Please choose a neighborhood area.')
     if (!form.fullAddress.trim()) return setError('Please enter the full address.')
+    if (Number(form.minPlayers) > Number(form.maxPlayers)) return setError('Min players cannot be greater than max players.')
 
     const startsAtIso = new Date(form.startsAt).toISOString()
     if (Number.isNaN(Date.parse(startsAtIso))) return setError('Please pick a valid date and time.')
@@ -76,7 +79,9 @@ export default function EditSession() {
         title: form.title.trim(),
         starts_at: startsAtIso,
         area: form.area,
+        min_players: Number(form.minPlayers),
         max_players: Number(form.maxPlayers),
+        duration_minutes: form.durationMinutes ? Number(form.durationMinutes) : null,
         board_games: form.boardGames.trim(),
         session_type: form.sessionType,
       })

@@ -2,9 +2,10 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { formatDateTime, playerCount, isSessionFull, mapsLink } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration } from '../lib/format'
 import Avatar from '../components/Avatar'
 import StarRating from '../components/StarRating'
+import SessionChat from '../components/SessionChat'
 
 export default function SessionDetail() {
   const { id } = useParams()
@@ -185,8 +186,11 @@ export default function SessionDetail() {
       <div className="card">
         <div className="stack">
           <div className="row-between"><span className="muted">When</span><strong>{formatDateTime(session.starts_at)}</strong></div>
+          {formatDuration(session.duration_minutes) && (
+            <div className="row-between"><span className="muted">Duration</span><strong>{formatDuration(session.duration_minutes)}</strong></div>
+          )}
           <div className="row-between"><span className="muted">Area</span><span className="badge badge-area">{session.area}</span></div>
-          <div className="row-between"><span className="muted">Players</span><strong>{playerCount(session)}{isFull ? ' · full' : ''}</strong></div>
+          <div className="row-between"><span className="muted">Players</span><strong>{playerCount(session)}{isFull ? ' · full' : ''}{session.min_players > 1 ? ` · min ${session.min_players}` : ''}</strong></div>
           <div>
             <div className="muted" style={{ marginBottom: 4 }}>Board games</div>
             <div>{session.board_games || 'To be decided'}</div>
@@ -388,6 +392,8 @@ export default function SessionDetail() {
           </div>
         </>
       )}
+
+      {isParticipant && <SessionChat sessionId={id} />}
     </div>
   )
 }

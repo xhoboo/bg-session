@@ -27,6 +27,7 @@ export default function Onboarding() {
         avatar_url: vals.avatarUrl || null,
         nickname: vals.nickname,
         display_name: vals.nickname, // keep the public name in sync
+        domicile: vals.domicile || null,
         favorite_games: vals.favoriteGames,
         owned_games: vals.ownedGames,
         onboarded: true,
@@ -65,6 +66,7 @@ export default function Onboarding() {
       {error && <div className="alert alert-error">{error}</div>}
 
       <ProfileForm
+        key={profile?.id || 'loading'}
         initial={profileToForm(profile)}
         submitLabel="Get started"
         busy={busy}

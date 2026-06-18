@@ -51,7 +51,7 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
         </div>
 
         <div className="form-group">
-          <label className="field-label" htmlFor="maxPlayers">Max players</label>
+          <label className="field-label" htmlFor="maxPlayers">Max players <span className="field-hint">(incl. host)</span></label>
           <input
             id="maxPlayers"
             type="number"
@@ -61,6 +61,34 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
             onChange={update('maxPlayers')}
             required
           />
+        </div>
+      </div>
+
+      <div className="form-row">
+        <div className="form-group">
+          <label className="field-label" htmlFor="minPlayers">Min players</label>
+          <input
+            id="minPlayers"
+            type="number"
+            min={1}
+            max={50}
+            value={form.minPlayers}
+            onChange={update('minPlayers')}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label className="field-label" htmlFor="duration">Estimated duration</label>
+          <select id="duration" value={form.durationMinutes} onChange={update('durationMinutes')}>
+            <option value="">Not sure</option>
+            <option value="60">~1 hour</option>
+            <option value="120">~2 hours</option>
+            <option value="180">~3 hours</option>
+            <option value="240">~4 hours</option>
+            <option value="300">~5 hours</option>
+            <option value="360">6+ hours</option>
+          </select>
         </div>
       </div>
 

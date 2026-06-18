@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import NotificationBell from './NotificationBell'
+import MessagesLink from './MessagesLink'
 
 export default function Navbar() {
   const { signOut } = useAuth()
@@ -25,9 +26,7 @@ export default function Navbar() {
         <NavLink to="/my-sessions" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
           My Sessions
         </NavLink>
-        <NavLink to="/create" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
-          + Host
-        </NavLink>
+        <MessagesLink />
         <NavLink to="/profile" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
           Profile
         </NavLink>

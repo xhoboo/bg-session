@@ -8,30 +8,42 @@ export default function Profile() {
   const { user, profile } = useAuth()
   const [history, setHistory] = useState([])
 
-  // Past sessions (hosted + joined) for this user's history.
+  // Past sessions (hosted + joined) for this user's history, with avg ratings.
   useEffect(() => {
     let active = true
     const now = new Date().toISOString()
-    Promise.all([
-      supabase
-        .from('sessions')
-        .select('id, title, starts_at, area, confirmed_count, max_players, session_type')
-        .eq('host_id', user.id)
-        .lt('starts_at', now)
-        .order('starts_at', { ascending: false }),
-      supabase
-        .from('join_requests')
-        .select('id, session:sessions(id, title, starts_at, area, confirmed_count, max_players, session_type)')
-        .eq('guest_id', user.id)
-        .eq('status', 'approved'),
-    ]).then(([hostRes, joinRes]) => {
-      if (!active) return
+    ;(async () => {
+      const [hostRes, joinRes] = await Promise.all([
+        supabase
+          .from('sessions')
+          .select('id, title, starts_at, area, confirmed_count, max_players, session_type')
+          .eq('host_id', user.id)
+          .lt('starts_at', now)
+          .order('starts_at', { ascending: false }),
+        supabase
+          .from('join_requests')
+          .select('id, session:sessions(id, title, starts_at, area, confirmed_count, max_players, session_type)')
+          .eq('guest_id', user.id)
+          .eq('status', 'approved'),
+      ])
       const hosted = (hostRes.data ?? []).map((s) => ({ key: 'h' + s.id, session: s, role: 'Hosted' }))
       const joined = (joinRes.data ?? [])
         .filter((r) => r.session && r.session.starts_at < now)
         .map((r) => ({ key: 'j' + r.id, session: r.session, role: 'Joined' }))
-      setHistory([...hosted, ...joined].sort((a, b) => (a.session.starts_at < b.session.starts_at ? 1 : -1)))
-    })
+      let combined = [...hosted, ...joined].sort((a, b) => (a.session.starts_at < b.session.starts_at ? 1 : -1))
+
+      const ids = combined.map((i) => i.session.id)
+      if (ids.length) {
+        const { data: rts } = await supabase.from('session_ratings').select('session_id, rating').in('session_id', ids)
+        const byId = {}
+        ;(rts ?? []).forEach((r) => { (byId[r.session_id] ||= []).push(r.rating) })
+        combined = combined.map((i) => {
+          const arr = byId[i.session.id]
+          return { ...i, rating: arr ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : null }
+        })
+      }
+      if (active) setHistory(combined)
+    })()
     return () => {
       active = false
     }
