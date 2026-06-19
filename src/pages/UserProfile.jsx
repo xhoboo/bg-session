@@ -38,6 +38,25 @@ export default function UserProfile() {
     }
   }, [id])
 
+  // "Last seen" is relative to now, but we only fetch it once on load and the
+  // page never re-renders on its own — so the status would freeze (e.g. stuck
+  // on "Online now"). Re-fetch last_seen_at periodically (while the tab is
+  // visible) so it decays to "Last seen Xm ago" when they go idle, and bumps
+  // back to "Online now" if they return.
+  useEffect(() => {
+    if (!id) return
+    let active = true
+    const timer = setInterval(async () => {
+      if (document.visibilityState !== 'visible') return
+      const { data } = await supabase.from('profiles').select('last_seen_at').eq('id', id).maybeSingle()
+      if (active && data) setProfile((p) => (p ? { ...p, last_seen_at: data.last_seen_at } : p))
+    }, 60_000)
+    return () => {
+      active = false
+      clearInterval(timer)
+    }
+  }, [id])
+
   // Viewing your own id: send to the editable own-profile page.
   if (user && id === user.id) return <Navigate to="/profile" replace />
 
