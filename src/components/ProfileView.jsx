@@ -84,13 +84,15 @@ export default function ProfileView({ profile, email, history = [], headerAction
                   <span className="session-card-title">{session.title}</span>
                   {role && <span className={'badge ' + (role === 'Host' ? 'badge-approval' : 'badge-approved')}>{role}</span>}
                 </div>
-                <div className="session-meta">
-                  {/* Date sits on its own line; area, players and rating line up
-                      below it so every card has the same uniform layout. */}
-                  <span style={{ flexBasis: '100%' }}>📅 {formatDateTime(session.starts_at)}</span>
-                  <span><span className="badge badge-area">{session.area}</span></span>
-                  <span>👥 {playerCount(session)}</span>
-                  {rating && <span><span className="star on">★</span> {rating}/10</span>}
+                <div className="session-history-meta">
+                  {/* Date on its own line; area / players / rating fall into fixed
+                      columns so they line up across every card. */}
+                  <span className="sh-date">📅 {formatDateTime(session.starts_at)}</span>
+                  <div className="session-history-cols">
+                    <span><span className="badge badge-area">{session.area}</span></span>
+                    <span>👥 {playerCount(session)}</span>
+                    {rating && <span><span className="star on">★</span> {rating}/10</span>}
+                  </div>
                 </div>
               </Link>
             ))}

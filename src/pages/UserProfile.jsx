@@ -30,7 +30,14 @@ export default function UserProfile() {
       if (!active) return
       setProfile(pubRes.data ?? null)
       const rows = (histRes.data ?? []).sort((a, b) => (a.starts_at < b.starts_at ? 1 : -1))
-      setHistory(rows.map((s) => ({ key: s.role + s.id, session: s, role: s.role })))
+      // avg_rating is an anonymous aggregate from user_session_history (0022);
+      // show it on the card front, formatted like the own-profile history.
+      setHistory(rows.map((s) => ({
+        key: s.role + s.id,
+        session: s,
+        role: s.role,
+        rating: s.avg_rating != null ? Number(s.avg_rating).toFixed(1) : null,
+      })))
       setLoading(false)
     })
     return () => {

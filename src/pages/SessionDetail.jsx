@@ -262,15 +262,14 @@ export default function SessionDetail() {
         <>
           <h2 className="section-title">Ratings & reviews</h2>
           <div className="card stack">
-            {ratings.length >= 2 ? (
+            {ratings.length >= 1 ? (
               <div className="rating-row">
                 <StarRating value={Math.round(avgRating)} showvalue={false} />
                 <strong>{avgRating}/10</strong>
-                <span className="muted">· {ratings.length} ratings</span>
+                {/* Hide the count below 3 ratings: with only the average shown and
+                    no count, a lone rating can't be singled out. */}
+                {ratings.length >= 3 && <span className="muted">· {ratings.length} ratings</span>}
               </div>
-            ) : ratings.length === 1 ? (
-              // Keep a lone rating anonymous — the average would equal it.
-              <p className="muted" style={{ margin: 0 }}>1 rating so far — the average appears once 2 or more people have rated.</p>
             ) : (
               <p className="muted" style={{ margin: 0 }}>No ratings yet — be the first.</p>
             )}

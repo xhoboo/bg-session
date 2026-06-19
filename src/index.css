@@ -238,6 +238,15 @@ strong { font-weight: 700; }
 .session-meta { display: flex; flex-wrap: wrap; gap: 8px 14px; color: var(--slate-600); font-size: 13px; }
 .session-meta span { display: inline-flex; align-items: center; gap: 6px; }
 
+/* Session-history meta: the date sits on its own line, then area / players /
+   rating line up in fixed columns so they align vertically across every card
+   (an imaginary grid that's quick to scan). */
+.session-history-meta { color: var(--slate-600); font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
+.session-history-meta .sh-date { display: inline-flex; align-items: center; gap: 6px; }
+.session-history-cols { display: grid; grid-template-columns: 150px 64px auto; align-items: center; column-gap: 12px; }
+.session-history-cols > span { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.session-history-cols .badge-area { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
 /* ---------- Badges ---------- */
 .badge {
   display: inline-block;
