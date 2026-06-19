@@ -40,6 +40,23 @@ export function timeAgo(iso) {
   return formatDateShort(iso)
 }
 
+// Coarse "last online" status for a profile. Returns null when unknown (the
+// user has never been stamped). Within 5 minutes counts as currently online.
+export function lastSeen(iso) {
+  if (!iso) return null
+  const diffMin = (Date.now() - new Date(iso).getTime()) / 60_000
+  if (diffMin < 5) return { online: true, label: 'Online now' }
+  return { online: false, label: `Last seen ${timeAgo(iso)}` }
+}
+
+// Link to a board game's BoardGameGeek page. Uses the catalog's stored URL when
+// we have one, else falls back to a BGG search for the name — so freeform games
+// that aren't in the catalog still get a working "view on BGG" link.
+export function bggLink(name, url) {
+  if (url) return url
+  return `https://boardgamegeek.com/geeksearch.php?action=search&objecttype=boardgame&q=${encodeURIComponent(name || '')}`
+}
+
 // Convert a stored ISO timestamp into the value a <input type="datetime-local">
 // expects (local wall-clock, no timezone suffix).
 export function toDatetimeLocalValue(iso) {

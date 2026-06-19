@@ -22,7 +22,7 @@ export default function UserProfile() {
     Promise.all([
       supabase
         .from('profiles')
-        .select('id, display_name, nickname, avatar_url, domicile, favorite_games, owned_games')
+        .select('id, display_name, nickname, avatar_url, domicile, favorite_games, owned_games, last_seen_at')
         .eq('id', id)
         .maybeSingle(),
       supabase.rpc('user_session_history', { uid: id }),

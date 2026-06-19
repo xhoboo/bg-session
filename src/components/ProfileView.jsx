@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Avatar from './Avatar'
-import { formatDateTime, playerCount } from '../lib/format'
+import { formatDateTime, playerCount, lastSeen } from '../lib/format'
 
 const PAGE_SIZE = 10
 
@@ -18,6 +18,7 @@ export default function ProfileView({ profile, email, history = [], headerAction
   const name = profile.nickname || profile.display_name || 'Player'
   const fav = profile.favorite_games || []
   const owned = profile.owned_games || []
+  const seen = lastSeen(profile.last_seen_at)
 
   // Clamp so a stale page (e.g. after switching to a profile with shorter
   // history) can never strand the user on an empty page.
@@ -32,6 +33,11 @@ export default function ProfileView({ profile, email, history = [], headerAction
         <h1 style={{ marginBottom: 2 }}>{name}</h1>
         {profile.domicile && <p className="muted" style={{ margin: '2px 0 0' }}>📍 {profile.domicile}</p>}
         {email && <p className="muted" style={{ margin: '2px 0 0', fontSize: 14 }}>{email}</p>}
+        {seen && (
+          <p className={'last-seen' + (seen.online ? ' is-online' : '')}>
+            <span className="last-seen-dot" />{seen.label}
+          </p>
+        )}
         {headerAction && <div style={{ marginTop: 10 }}>{headerAction}</div>}
       </div>
 

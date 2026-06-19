@@ -40,7 +40,7 @@ export function AuthProvider({ children }) {
     const [{ data: pub }, { data: priv }] = await Promise.all([
       supabase
         .from('profiles')
-        .select('id, display_name, avatar_url, nickname, domicile, favorite_games, owned_games, onboarded')
+        .select('id, display_name, avatar_url, nickname, domicile, favorite_games, owned_games, onboarded, last_seen_at')
         .eq('id', uid)
         .maybeSingle(),
       supabase
@@ -61,6 +61,8 @@ export function AuthProvider({ children }) {
       return
     }
     loadProfile(session.user.id)
+    // Stamp "last online" (fire-and-forget; server sets the clock).
+    supabase.rpc('touch_last_seen')
   }, [session?.user?.id, loadProfile])
 
   const refreshProfile = useCallback(() => {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import Avatar from '../components/Avatar'
+import { bggLink } from '../lib/format'
 
 // Detail page for a board game (by name): its category (if it's in the catalog)
 // plus the members who favorite it and who own it.
@@ -17,7 +18,7 @@ export default function GameDetail() {
     let active = true
     setLoading(true)
     Promise.all([
-      supabase.from('board_games').select('name, category').eq('name', gameName).maybeSingle(),
+      supabase.from('board_games').select('name, category, bgg_url').eq('name', gameName).maybeSingle(),
       supabase.from('profiles').select('id, nickname, display_name, avatar_url').contains('favorite_games', [gameName]),
       supabase.from('profiles').select('id, nickname, display_name, avatar_url').contains('owned_games', [gameName]),
     ]).then(([g, fav, own]) => {
@@ -41,6 +42,15 @@ export default function GameDetail() {
       <p className="subtitle">
         {game ? (game.category === 'expansion' ? 'Expansion' : 'Base game') : 'Not in the catalog yet'}
       </p>
+
+      <a
+        className="btn btn-secondary btn-sm"
+        href={bggLink(gameName, game?.bgg_url)}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        🔗 View on BoardGameGeek ↗
+      </a>
 
       <h2 className="section-title">Favorited by ({favoritedBy.length})</h2>
       <MemberGrid members={favoritedBy} emptyText="No one has favorited this yet." />
