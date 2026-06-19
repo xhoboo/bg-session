@@ -29,8 +29,16 @@ export function AuthProvider({ children }) {
       setLoading(false)
     })
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession)
+      // Stamp last_seen on the canonical auth signals (session restored on load,
+      // fresh sign-in, token refresh) — the most reliable trigger, independent
+      // of render-effect timing. Log failures; it's otherwise silent.
+      if (newSession?.user && ['INITIAL_SESSION', 'SIGNED_IN', 'TOKEN_REFRESHED'].includes(event)) {
+        supabase.rpc('touch_last_seen').then(({ error }) => {
+          if (error) console.warn('[last_seen] touch failed:', error.message)
+        })
+      }
     })
 
     return () => {
@@ -86,7 +94,9 @@ export function AuthProvider({ children }) {
       const now = Date.now()
       if (now - lastPing < 60_000) return
       lastPing = now
-      supabase.rpc('touch_last_seen') // server sets the clock; fire-and-forget
+      supabase.rpc('touch_last_seen').then(({ error }) => { // server sets the clock
+        if (error) console.warn('[last_seen] touch failed:', error.message)
+      })
       setProfile((p) => (p ? { ...p, last_seen_at: new Date().toISOString() } : p))
     }
     ping() // stamp immediately on login / session restore
