@@ -145,35 +145,26 @@ export default function Browse() {
       )}
 
       <div className="toolbar">
-        <div className="filter-group">
-          <label className="field-label" htmlFor="f-region">Region</label>
-          <select id="f-region" value={region} onChange={onRegionChange}>
-            <option value="">All regions</option>
-            {regions.map((r) => (
-              <option key={r} value={r}>{r}</option>
-            ))}
-          </select>
-        </div>
+        <select aria-label="Filter by region" value={region} onChange={onRegionChange}>
+          <option value="">All regions</option>
+          {regions.map((r) => (
+            <option key={r} value={r}>{r}</option>
+          ))}
+        </select>
 
-        <div className="filter-group">
-          <label className="field-label" htmlFor="f-area">Area</label>
-          <select id="f-area" value={area} onChange={onAreaChange} disabled={!region}>
-            <option value="">All areas</option>
-            {areaOptions.map((a) => (
-              <option key={a} value={a}>{a}</option>
-            ))}
-          </select>
-        </div>
+        <select aria-label="Filter by area" value={area} onChange={onAreaChange} disabled={!region}>
+          <option value="">All areas</option>
+          {areaOptions.map((a) => (
+            <option key={a} value={a}>{a}</option>
+          ))}
+        </select>
 
-        <div className="filter-group">
-          <label className="field-label" htmlFor="f-game">Board game</label>
-          <select id="f-game" value={game} onChange={(e) => setGame(e.target.value)} disabled={gameOptions.length === 0}>
-            <option value="">All games</option>
-            {gameOptions.map((g) => (
-              <option key={g} value={g}>{g}</option>
-            ))}
-          </select>
-        </div>
+        <select aria-label="Filter by board game" value={game} onChange={(e) => setGame(e.target.value)} disabled={gameOptions.length === 0}>
+          <option value="">All games</option>
+          {gameOptions.map((g) => (
+            <option key={g} value={g}>{g}</option>
+          ))}
+        </select>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}

@@ -196,10 +196,8 @@ textarea { resize: vertical; min-height: 80px; }
 .stack { display: flex; flex-direction: column; gap: 12px; }
 .empty-state { text-align: center; color: var(--slate-600); padding: 48px 16px; }
 
-.toolbar { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; }
+.toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
 .toolbar select { width: auto; min-width: 180px; }
-.filter-group { display: flex; flex-direction: column; gap: 4px; }
-.filter-group .field-label { margin: 0; }
 
 .address-box { background: var(--teal-50); border: 1px solid #99f6e4; border-radius: 10px; padding: 14px; }
 .address-locked { background: var(--slate-100); border: 1px dashed var(--slate-200); border-radius: 10px; padding: 14px; color: var(--slate-600); }
