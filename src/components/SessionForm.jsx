@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { JAKARTA_AREAS } from '../data/areas'
+import GameTagInput from './GameTagInput'
 
 // Presentational form shared by Create and Edit. It owns the field state
 // (seeded from `initial`) and hands the raw values back via onSubmit — the
@@ -66,7 +67,9 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
 
       <div className="form-row">
         <div className="form-group">
-          <label className="field-label" htmlFor="minPlayers">Min players</label>
+          <label className="field-label" htmlFor="minPlayers">
+            Min players <span className="field-hint">— or it's canceled</span>
+          </label>
           <input
             id="minPlayers"
             type="number"
@@ -76,6 +79,9 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
             onChange={update('minPlayers')}
             required
           />
+          <div className="field-hint" style={{ marginTop: 6 }}>
+            If fewer than this confirm by the start time, the session is automatically canceled and removed.
+          </div>
         </div>
 
         <div className="form-group">
@@ -118,17 +124,13 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
         />
       </div>
 
-      <div className="form-group">
-        <label className="field-label" htmlFor="games">
-          Board games <span className="field-hint">— what you plan to bring/play</span>
-        </label>
-        <textarea
-          id="games"
-          placeholder="e.g. Brass Birmingham, Ark Nova, Wingspan…"
-          value={form.boardGames}
-          onChange={update('boardGames')}
-        />
-      </div>
+      <GameTagInput
+        label="Board games"
+        hint="what you plan to bring/play — type to search the catalog"
+        items={(form.boardGames || '').split(',').map((s) => s.trim()).filter(Boolean)}
+        onChange={(games) => setForm((f) => ({ ...f, boardGames: games.join(', ') }))}
+        max={20}
+      />
 
       <div className="form-group">
         <label className="field-label" htmlFor="type">Joining</label>

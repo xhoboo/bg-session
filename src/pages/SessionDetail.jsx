@@ -129,15 +129,32 @@ export default function SessionDetail() {
   }
 
   const submitRating = async () => {
-    if (ratingValue < 1) return setError('Please pick a star rating from 1 to 10.')
-    setBusy(true)
     setError('')
-    // Ratings are permanent — insert once, never update.
+    // First submission: insert the rating (review optional). Rating is required
+    // and permanent. A guest can rate now and add a review later.
+    if (!ratings.find((r) => r.user_id === user.id)) {
+      if (ratingValue < 1) return setError('Please pick a star rating from 1 to 10.')
+      setBusy(true)
+      const { error } = await supabase
+        .from('session_ratings')
+        .insert({ session_id: id, user_id: user.id, rating: ratingValue, review: reviewText.trim() })
+      setBusy(false)
+      if (error) return setError(error.message)
+      setReviewText('')
+      return loadAll()
+    }
+    // Already rated: add the review to the existing row (rating stays as-is).
+    const body = reviewText.trim()
+    if (!body) return
+    setBusy(true)
     const { error } = await supabase
       .from('session_ratings')
-      .insert({ session_id: id, user_id: user.id, rating: ratingValue, review: reviewText.trim() })
+      .update({ review: body })
+      .eq('session_id', id)
+      .eq('user_id', user.id)
     setBusy(false)
     if (error) return setError(error.message)
+    setReviewText('')
     await loadAll()
   }
 
@@ -196,7 +213,15 @@ export default function SessionDetail() {
           <div className="row-between"><span className="muted">Players</span><strong>{playerCount(session)}{isFull ? ' · full' : ''}{session.min_players > 1 ? ` · min ${session.min_players}` : ''}</strong></div>
           <div>
             <div className="muted" style={{ marginBottom: 4 }}>Board games</div>
-            <div>{session.board_games || 'To be decided'}</div>
+            {session.board_games ? (
+              <div className="chips">
+                {session.board_games.split(',').map((g) => g.trim()).filter(Boolean).map((g) => (
+                  <Link key={g} to={`/games/${encodeURIComponent(g)}`} className="chip chip-link">{g}</Link>
+                ))}
+              </div>
+            ) : (
+              <div>To be decided</div>
+            )}
           </div>
 
           {/* Address is hidden once the session has finished — it's no longer useful. */}
@@ -243,42 +268,38 @@ export default function SessionDetail() {
             )}
 
             <div style={{ borderTop: '1px solid var(--slate-100)', paddingTop: 14 }}>
-              {myRating ? (
-                // Already rated — permanent and read-only. Your score is shown
-                // only to you; to everyone else your rating is anonymous.
-                <>
-                  <div className="field-label" style={{ marginBottom: 8 }}>Your rating</div>
-                  <div className="rating-row" style={{ marginBottom: myRating.review ? 8 : 0 }}>
-                    <StarRating value={myRating.rating} size={18} />
-                  </div>
-                  {myRating.review && <div className="muted" style={{ fontSize: 14 }}>“{myRating.review}”</div>}
-                </>
+              {/* Rating: editable until submitted, then permanent. Your score is
+                  shown only to you; to everyone else your rating is anonymous. */}
+              <div className="field-label" style={{ marginBottom: 8 }}>
+                {myRating ? 'Your rating' : 'Rate this session'}
+                {!myRating && <span className="field-hint"> — required for participants, and can’t be changed once sent</span>}
+              </div>
+              <div className="rating-row" style={{ marginBottom: 12 }}>
+                {myRating
+                  ? <StarRating value={myRating.rating} size={18} />
+                  : <StarRating value={ratingValue} onChange={setRatingValue} />}
+              </div>
+
+              {/* Review: separate from the rating. The box stays until you send a
+                  review (you can rate now and review later); then it's read-only. */}
+              {myRating?.review ? (
+                <div className="muted" style={{ fontSize: 14 }}>“{myRating.review}”</div>
               ) : (
-                // Not rated yet — pick a score + optional review, send once.
-                <>
-                  <div className="field-label" style={{ marginBottom: 8 }}>
-                    Rate this session
-                    <span className="field-hint"> — required for participants, and can’t be changed once sent</span>
-                  </div>
-                  <div className="rating-row" style={{ marginBottom: 10 }}>
-                    <StarRating value={ratingValue} onChange={setRatingValue} />
-                  </div>
-                  <div className="review-input-wrap">
-                    <textarea
-                      placeholder="Add a review (optional)…"
-                      value={reviewText}
-                      onChange={(e) => setReviewText(e.target.value)}
-                    />
-                    <button
-                      className="btn btn-primary btn-sm review-send-btn"
-                      onClick={submitRating}
-                      disabled={busy || ratingValue < 1}
-                      title={ratingValue < 1 ? 'Pick a star rating first' : 'Send rating & review'}
-                    >
-                      Send
-                    </button>
-                  </div>
-                </>
+                <div className="review-input-wrap">
+                  <textarea
+                    placeholder={myRating ? 'Add a review (optional)…' : 'Add a review now (optional)…'}
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                  />
+                  <button
+                    className="btn btn-primary btn-sm review-send-btn"
+                    onClick={submitRating}
+                    disabled={busy || (myRating ? !reviewText.trim() : ratingValue < 1)}
+                    title={!myRating && ratingValue < 1 ? 'Pick a star rating first' : 'Send'}
+                  >
+                    Send
+                  </button>
+                </div>
               )}
             </div>
 
@@ -352,8 +373,8 @@ export default function SessionDetail() {
         </div>
       )}
 
-      {/* ---------------- Host management ---------------- */}
-      {isHost && (
+      {/* ---------------- Host management (only before the session starts) ---------------- */}
+      {isHost && !started && (
         <>
           <h2 className="section-title">Requests to join</h2>
 
@@ -390,20 +411,15 @@ export default function SessionDetail() {
             </div>
           ))}
 
-          {/* A started/finished session is in the past — no longer editable. */}
-          {!started && (
-            <>
-              <h2 className="section-title">Manage session</h2>
-              <div className="form-row">
-                <button className="btn btn-secondary" onClick={() => navigate(`/sessions/${id}/edit`)} disabled={busy}>
-                  Edit details
-                </button>
-                <button className="btn btn-danger" onClick={cancelSession} disabled={busy}>
-                  Cancel session
-                </button>
-              </div>
-            </>
-          )}
+          <h2 className="section-title">Manage session</h2>
+          <div className="form-row">
+            <button className="btn btn-secondary" onClick={() => navigate(`/sessions/${id}/edit`)} disabled={busy}>
+              Edit details
+            </button>
+            <button className="btn btn-danger" onClick={cancelSession} disabled={busy}>
+              Cancel session
+            </button>
+          </div>
         </>
       )}
 

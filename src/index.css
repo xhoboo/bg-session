@@ -288,12 +288,15 @@ textarea { resize: vertical; min-height: 80px; }
 .member-name { white-space: nowrap; }
 
 /* Clickable user (avatar + name) linking to a profile */
-.user-link { display: inline-flex; align-items: center; gap: 8px; color: inherit; text-decoration: none; font-weight: 600; }
+.user-link { display: inline-flex; align-items: center; gap: 8px; line-height: 1; color: inherit; text-decoration: none; font-weight: 600; }
 .user-link:hover { text-decoration: underline; }
 
 /* Participant ("who's coming") cards */
 .participant-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
 .participant-card .user-link { flex-wrap: wrap; }
+/* Tight, thin spacing between participant cards (no extra .card + .card margin). */
+.participants-list { display: flex; flex-direction: column; gap: 6px; }
+.participants-list .card + .card { margin-top: 0; }
 
 /* ---------- Star rating ---------- */
 .stars { display: inline-flex; align-items: center; line-height: 1; }

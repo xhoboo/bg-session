@@ -54,7 +54,7 @@ export default function SessionParticipants({ sessionId, hostId }) {
       <p className="muted" style={{ marginTop: -4, fontSize: 13 }}>
         Extra details below are shared only between confirmed participants so you can recognize each other.
       </p>
-      <div className="stack">
+      <div className="participants-list">
         {people.map((p) => {
           const name = p.nickname || p.display_name || 'Player'
           const extras = [p.real_name, p.gender].filter(Boolean)

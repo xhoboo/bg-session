@@ -20,6 +20,7 @@ export default function Browse() {
     let active = true
     supabase.rpc('enqueue_rating_reminders')
     supabase.rpc('enqueue_session_reminders') // day-before reminder + attendance follow-up
+    supabase.rpc('cancel_understaffed_sessions') // delete sessions that didn't reach min players
     ;(async () => {
       const now = new Date().toISOString()
       const [hostRes, joinRes] = await Promise.all([
