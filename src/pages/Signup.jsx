@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import GoogleButton from '../components/GoogleButton'
+import ThemeToggle from '../components/ThemeToggle'
 
 export default function Signup() {
   const { signUpWithEmail } = useAuth()
@@ -39,6 +40,7 @@ export default function Signup() {
 
   return (
     <div className="container container-narrow">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 8 }}><ThemeToggle /></div>
       <div className="spacer" />
       <div className="center" style={{ marginBottom: 24 }}>
         <h1 style={{ color: 'var(--teal-700)' }}>BG Session</h1>

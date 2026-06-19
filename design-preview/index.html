@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BG Session — Design Preview</title>
+<!-- preview build: structure matches real app -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter+Tight:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin:0; padding:0; }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--backdrop,#d9d5cb); font-family:'Inter Tight',system-ui,sans-serif; transition:background .25s; }
+  button { font-family: inherit; }
+  #app-scroll::-webkit-scrollbar { width:0; height:0; }
+  @keyframes popIn { from { opacity:0; transform:translateY(8px) scale(.98); } to { opacity:1; transform:none; } }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  .phone { position:relative; width:min(430px,100vw); height:min(924px,100vh); background:var(--bg); background-image:radial-gradient(var(--dots) 1px, transparent 1px); background-size:17px 17px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 30px 90px rgba(0,0,0,.28); border-radius:30px; transition:background .25s; }
+  #app-scroll { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; }
+  input, textarea, select { font-family:'Inter Tight',sans-serif; }
+  .fld { width:100%; font:500 14px 'Inter Tight'; padding:12px 13px; border:1px solid var(--border); border-radius:11px; background:var(--field); color:var(--ink); outline:none; }
+  select.fld { appearance:none; -webkit-appearance:none; background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%); background-position:calc(100% - 18px) 19px,calc(100% - 13px) 19px; background-size:5px 5px,5px 5px; background-repeat:no-repeat; padding-right:34px; }
+  select.fld:disabled { opacity:.5; }
+  .lbl { font:600 12px/1.3 'Inter Tight'; color:var(--ink); margin-bottom:7px; display:block; }
+  .hint { color:var(--faint); font-weight:400; }
+  .ac-menu { position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:20; background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:0 12px 30px rgba(0,0,0,.15); }
+  .ac-item { display:block; width:100%; text-align:left; background:none; border:none; padding:11px 13px; font:500 13px 'Inter Tight'; color:var(--ink); cursor:pointer; border-bottom:1px solid var(--border); }
+  .ac-item:last-child { border-bottom:none; }
+  .ac-item:hover { background:var(--accentSoft); }
+</style>
+</head>
+<body>
+  <div class="phone" id="phone">
+    <div id="app-scroll"></div>
+    <div id="chrome"></div>
+    <div id="overlay"></div>
+  </div>
+
+<script>
+//==================== THEMES ====================
+const THEMES = {
+  light: { backdrop:'#d9d5cb', bg:'#F4F1EA', dots:'#ddd6c7', surface:'#ffffff', ink:'#2A2724', muted:'#8A8378', faint:'#b8b1a4', accent:'#C26B4A', accentInk:'#C26B4A', accentSoft:'#f7e7df', neutralSoft:'#e9e6df', border:'#e7e1d5', navbg:'#ffffff', field:'#ffffff', track:'#e9e3d6', good:'#15B886', goodSoft:'#e2f7f0', goodInk:'#15967a', danger:'#c0492f', dangerSoft:'#f7e0da' },
+  dark:  { backdrop:'#0d0c0b', bg:'#1E1B18', dots:'#2e2922', surface:'#28241F', ink:'#F1ECE4', muted:'#a89a8c', faint:'#6f665b', accent:'#C26B4A', accentInk:'#e8b39e', accentSoft:'#3a2a22', neutralSoft:'#2a2620', border:'#34302a', navbg:'#211e1a', field:'#28241F', track:'#2a2620', good:'#4ecf9e', goodSoft:'#13352a', goodInk:'#7ee0a0', danger:'#e08a72', dangerSoft:'#3a221c' },
+};
+
+//==================== CATALOGS (mirror the live Supabase catalog) ====================
+const REGIONS = ['Jakarta Selatan','Jakarta Pusat','Jakarta Barat','Jakarta Timur','Jakarta Utara','Tangerang Selatan','Depok','Bekasi'];
+const AREAS = {
+  'Jakarta Selatan':['Kemang','Blok M','Senopati','Kebayoran Baru','Cilandak','Fatmawati'],
+  'Jakarta Pusat':['Menteng','Thamrin','Sudirman','Kemayoran'],
+  'Jakarta Barat':['Puri Indah','Kebon Jeruk','Grogol'],
+  'Jakarta Timur':['Rawamangun','Cawang'],
+  'Jakarta Utara':['Kelapa Gading','PIK','Sunter'],
+  'Tangerang Selatan':['BSD','Alam Sutera','Bintaro','Gading Serpong'],
+  'Depok':['Margonda','Cinere'],
+  'Bekasi':['Summarecon','Harapan Indah'],
+};
+const GAME_CATALOG = [
+  {name:'7 Wonders',category:'base'},{name:'Azul',category:'base'},{name:'Brass: Birmingham',category:'base'},
+  {name:'Carcassonne',category:'base'},{name:'Catan',category:'base'},{name:'Catan: Seafarers',category:'expansion'},
+  {name:'Everdell',category:'base'},{name:'Gloomhaven',category:'base'},{name:'Root',category:'base'},
+  {name:'Scythe',category:'base'},{name:'Spirit Island',category:'base'},{name:'Sushi Go!',category:'base'},
+  {name:'Terraforming Mars',category:'base'},{name:'Ticket to Ride',category:'base'},{name:'Wingspan',category:'base'},
+  {name:'Wingspan: Oceania',category:'expansion'},
+];
+const DOMICILES = ['Jakarta Selatan · Kebayoran Baru','Jakarta Selatan · Kemang','Jakarta Pusat · Menteng','Jakarta Barat · Puri Indah','Jakarta Utara · Kelapa Gading','Tangerang Selatan · BSD','Tangerang Selatan · Bintaro','Depok · Margonda','Bekasi · Summarecon','Bandung','Surabaya','Yogyakarta'];
+const catGame = (name) => GAME_CATALOG.find(g => g.name.toLowerCase() === name.toLowerCase());
+
+//==================== USERS (real profile shape) ====================
+const USERS = {
+  me:     { id:'me',     nickname:'Putri',  display_name:'Putri',  realName:'Putri Andini',  gender:'Female', color:'#15B886', domicile:'Jakarta Selatan · Kebayoran Baru', seen:'Online now', online:true,  email:'putri@email.com', favorite_games:['Wingspan','Brass: Birmingham','Azul'], owned_games:['Catan','7 Wonders','Azul'] },
+  rangga: { id:'rangga', nickname:'Rangga', display_name:'Rangga', realName:'Rangga Pratama', gender:'Male',   color:'#C26B4A', domicile:'Jakarta Selatan · Kemang',         seen:'Online now', online:true,  favorite_games:['Catan','Azul'], owned_games:['Catan','Azul'] },
+  bima:   { id:'bima',   nickname:'Bima',   display_name:'Bima',   realName:'Bima Sakti',    gender:'Male',   color:'#7C5CFC', domicile:'Jakarta Pusat · Menteng',         seen:'Last seen 2h ago', online:false, favorite_games:['Brass: Birmingham','Terraforming Mars'], owned_games:['Brass: Birmingham'] },
+  sari:   { id:'sari',   nickname:'Sari',   display_name:'Sari',   realName:'Sari Dewi',     gender:'Female', color:'#2C7BE5', domicile:'Tangerang Selatan · BSD',         seen:'Online now', online:true,  favorite_games:['Wingspan','Azul'], owned_games:['Wingspan'] },
+  dimas:  { id:'dimas',  nickname:'Dimas',  display_name:'Dimas',  realName:'Dimas Anggara', gender:'Male',   color:'#F0518B', domicile:'Jakarta Barat · Puri Indah',      seen:'Last seen 5h ago', online:false, favorite_games:['Gloomhaven'], owned_games:['Gloomhaven'] },
+};
+
+//==================== STATE ====================
+let state = {
+  theme:'light', screen:'login', params:{}, stack:[], showNotif:false, focusId:null,
+  // browse filters (mirror Browse.jsx: region -> area -> game, dependent)
+  fRegion:'', fArea:'', fGame:'',
+  // join state for the current user, keyed by session id
+  reqStatus:{ s3:'approved', s4:'pending' },
+  requests:{ s5:[ {id:'r1',guestId:'sari',message:'Hi! Can I join? I play Azul pretty often.',status:'pending'}, {id:'r2',guestId:'dimas',message:'',status:'pending'} ] },
+  chats:{ s3:[ {uid:'sari',body:'I’ll bring Wingspan 🐦',time:'2h ago'}, {uid:'me',body:'Great, see you there!',time:'1h ago'} ] },
+  dms:{ rangga:[ {me:false,body:'Hey Putri, still coming to Catan?',time:'yesterday'}, {me:true,body:'For sure, on my way 🙌',time:'yesterday'} ], sari:[ {me:false,body:'Are you bringing Azul too?',time:'2h ago'} ] },
+  notifs:[ {id:'n1',title:'New join request',body:'Sari wants to join Azul Quickplay',time:'5m',unread:true}, {id:'n2',title:'You were approved ✅',body:'Rangga approved your spot for Catan & Coffee',time:'1h',unread:true}, {id:'n3',title:'Session reminder',body:'Wingspan Beginners is tomorrow at 18:30',time:'3h',unread:false} ],
+  ratings:{ s6:[ {uid:'bima',rating:9,review:'Super tense right to the end — loved it!'} ] },
+  ratingDraft:0, reviewDraft:'',
+  // working copies for forms
+  newSession:{ title:'', startsAt:'', region:'', area:'', maxPlayers:'4', minPlayers:'2', durationMinutes:'180', fullAddress:'', mapsUrl:'', games:[], sessionType:'approval' },
+  profile:{ avatarColor:'#15B886', nickname:'Putri', display_name:'Putri', realName:'Putri Andini', gender:'Female', domicile:'Jakarta Selatan · Kebayoran Baru', favorite_games:['Wingspan','Brass: Birmingham','Azul'], owned_games:['Catan','7 Wonders','Azul'] },
+  profileForm:null,
+  // transient autocomplete UI
+  ac:{ games:{q:'',open:false}, fav:{q:'',open:false}, owned:{q:'',open:false}, dom:{q:'',open:false,committed:true} },
+  // misc drafts
+  chatDraft:'', dmDraft:'', joinMsg:'',
+  sessions:[
+    { id:'s1', title:'Catan & Coffee', host_id:'rangga', dateLabel:'Sat 19 Jun 2026, 19:00 WIB', duration_minutes:180, region:'Jakarta Selatan', area:'Kemang',     max_players:5, min_players:2, confirmed_count:3, board_games:'Catan, Azul', session_type:'open',     full_address:'Senja Coffee, Jl. Kemang Raya No.12', maps_url:'', started:false, finished:false },
+    { id:'s2', title:'Heavy Euro Sunday', host_id:'bima', dateLabel:'Sun 22 Jun 2026, 13:00 WIB', duration_minutes:300, region:'Jakarta Pusat', area:'Menteng',   max_players:5, min_players:3, confirmed_count:4, board_games:'Brass: Birmingham, Terraforming Mars', session_type:'approval', full_address:'Co-Hive Menteng, 3rd floor', maps_url:'', started:false, finished:false },
+    { id:'s3', title:'Wingspan Beginners', host_id:'sari', dateLabel:'Wed 25 Jun 2026, 18:30 WIB', duration_minutes:120, region:'Tangerang Selatan', area:'BSD', max_players:4, min_players:2, confirmed_count:1, board_games:'Wingspan', session_type:'open',     full_address:'The Breeze BSD, unit F-12', maps_url:'https://maps.app.goo.gl/example', started:false, finished:false },
+    { id:'s4', title:'Gloomhaven #4', host_id:'dimas', dateLabel:'Fri 27 Jun 2026, 19:00 WIB', duration_minutes:240, region:'Jakarta Barat', area:'Puri Indah',   max_players:4, min_players:3, confirmed_count:2, board_games:'Gloomhaven', session_type:'approval', full_address:'Puri Indah, Blok C2 No.4', maps_url:'', started:false, finished:false },
+    { id:'s5', title:'Azul Quickplay', host_id:'me', dateLabel:'Sat 28 Jun 2026, 15:00 WIB', duration_minutes:120, region:'Jakarta Selatan', area:'Blok M',       max_players:4, min_players:2, confirmed_count:1, board_games:'Azul, Sushi Go!', session_type:'approval', full_address:'Putri’s place, Jl. Melawai 8', maps_url:'', started:false, finished:false },
+    { id:'s6', title:'Brass Night', host_id:'me', dateLabel:'Thu 12 Jun 2026, 19:00 WIB', duration_minutes:240, region:'Jakarta Selatan', area:'Senopati',         max_players:4, min_players:3, confirmed_count:3, board_games:'Brass: Birmingham', session_type:'approval', full_address:'Senopati, Jl. Suryo 3', maps_url:'', started:true, finished:true },
+  ],
+};
+
+//==================== HELPERS ====================
+const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const user = id => USERS[id] || USERS.me;
+const getSession = id => state.sessions.find(s => s.id === id);
+const parseGames = t => (t||'').split(',').map(g=>g.trim()).filter(Boolean);
+const playerCount = s => `${(s.confirmed_count||0)+1}/${s.max_players}`;
+const isFull = s => (s.confirmed_count||0)+1 >= s.max_players;
+const truncate = (s,n) => s.length>n ? s.slice(0,n-1)+'…' : s;
+function formatDuration(min){ if(!min) return null; if(min>=360) return '6+ hours'; const h=min/60; return `~${h} hour${h>1?'s':''}`; }
+function avatar(u, size, fs, radius){ radius=radius||'50%'; return `<span style="width:${size}px;height:${size}px;border-radius:${radius};display:inline-flex;align-items:center;justify-content:center;font:700 ${fs}px 'Space Grotesk';color:#fff;background:${u.color};flex:none;">${u.nickname?u.nickname[0]:'?'}</span>`; }
+function badge(text, kind){
+  const m={ open:['var(--goodInk)','var(--goodSoft)'], approval:['var(--accentInk)','var(--accentSoft)'], done:['var(--muted)','var(--neutralSoft)'], pending:['var(--muted)','var(--neutralSoft)'], approved:['var(--goodInk)','var(--goodSoft)'], rejected:['var(--danger)','var(--dangerSoft)'], area:['var(--muted)','var(--neutralSoft)'], host:['var(--accentInk)','var(--accentSoft)'] };
+  const [c,b]=m[kind]||m.area;
+  return `<span style="font:600 10px/1 'Inter Tight';color:${c};background:${b};padding:5px 10px;border-radius:999px;white-space:nowrap;">${text}</span>`;
+}
+function sessionTypeBadge(s){ if(s.finished) return badge('Done','done'); return s.session_type==='open'?badge('● Open','open'):badge('Approval','approval'); }
+function gameChip(name){ const inCat=catGame(name); const exp=inCat&&inCat.category==='expansion'; return `<span onclick="app.go('game',{name:'${esc(name)}'})" style="font:600 12px/1 'Inter Tight';color:var(--accentInk);background:var(--accentSoft);padding:8px 12px;border-radius:999px;cursor:pointer;">🎲 ${esc(name)}${exp?` <span style="color:var(--muted);font-weight:400;">· Exp</span>`:''}</span>`; }
+function starRow(value, size, onClickPrefix){
+  let h=''; for(let i=1;i<=10;i++){ const on=i<=value; const click=onClickPrefix?` onclick="${onClickPrefix}(${i})" style="cursor:pointer;font-size:${size}px;color:${on?'var(--accent)':'var(--border)'};"`:` style="font-size:${size}px;color:${on?'var(--accent)':'var(--border)'};"`; h+=`<span${click}>★</span>`; }
+  return h;
+}
+
+//==================== NAV ====================
+function scrollTop(){ const el=document.getElementById('app-scroll'); if(el) el.scrollTop=0; }
+const app = {
+  reset(screen){ state.screen=screen; state.params={}; state.stack=[]; state.showNotif=false; state.focusId=null; render(); scrollTop(); },
+  go(screen, params){ state.stack.push({screen:state.screen, params:state.params}); state.screen=screen; state.params=params||{}; state.showNotif=false; state.focusId=null; render(); scrollTop(); },
+  back(){ const prev=state.stack.pop(); if(prev){ state.screen=prev.screen; state.params=prev.params; } state.showNotif=false; state.focusId=null; render(); scrollTop(); },
+  toggleTheme(){ state.theme = state.theme==='light' ? 'dark' : 'light'; render(); },
+  // browse filters
+  setRegion(v){ state.fRegion=v; state.fArea=''; state.fGame=''; render(); },
+  setArea(v){ state.fArea=v; state.fGame=''; render(); },
+  setGame(v){ state.fGame=v; render(); },
+  // notif
+  openNotif(){ state.showNotif=true; render(); },
+  closeNotif(){ state.showNotif=false; render(); },
+  markAllRead(){ state.notifs.forEach(n=>n.unread=false); render(); },
+  // silent setters (no re-render -> keep input focus/caret)
+  setField(k,v){ state[k]=v; },
+  setNS(k,v){ state.newSession[k]=v; },
+  setPF(k,v){ state.profileForm[k]=v; },
+  // join flow
+  join(id){ const s=getSession(id); const status=s.session_type==='open'?'approved':'pending'; if(s.session_type==='open') s.confirmed_count++; state.reqStatus[id]=status; state.joinMsg=''; render(); },
+  withdraw(id){ const was=state.reqStatus[id]; delete state.reqStatus[id]; const s=getSession(id); if(was==='approved') s.confirmed_count=Math.max(0,s.confirmed_count-1); render(); },
+  decide(sid,rid,status){ const r=(state.requests[sid]||[]).find(x=>x.id===rid); if(r) r.status=status; if(status==='approved'){ getSession(sid).confirmed_count++; } render(); },
+  cancelSession(){ alert('(Preview) This would delete the session and return you to My sessions.'); this.reset('mySessions'); },
+  // chat / dm
+  sendChat(sid){ const t=(state.chatDraft||'').trim(); if(!t) return; (state.chats[sid]=state.chats[sid]||[]).push({uid:'me',body:t,time:'now'}); state.chatDraft=''; render(); },
+  sendDM(uid){ const t=(state.dmDraft||'').trim(); if(!t) return; (state.dms[uid]=state.dms[uid]||[]).push({me:true,body:t,time:'now'}); state.dmDraft=''; render(); setTimeout(()=>{ const b=document.getElementById('app-scroll'); if(b) b.scrollTop=b.scrollHeight; },0); },
+  // ratings
+  setRating(n){ state.ratingDraft=n; render(); },
+  submitRating(sid){ if(state.ratingDraft<1) return; (state.ratings[sid]=state.ratings[sid]||[]).push({uid:'me',rating:state.ratingDraft,review:(state.reviewDraft||'').trim()}); state.ratingDraft=0; state.reviewDraft=''; render(); },
+  // create
+  goCreate(){ state.newSession={ title:'', startsAt:'', region:'', area:'', maxPlayers:'4', minPlayers:'2', durationMinutes:'180', fullAddress:'', mapsUrl:'', games:[], sessionType:'approval' }; state.ac.games={q:'',open:false}; this.go('create'); },
+  goEditSession(){ this.go('create'); }, // (preview) edit reuses the create form
+  nsRegion(v){ state.newSession.region=v; state.newSession.area=''; render(); },
+  nsType(v){ state.newSession.sessionType=v; render(); },
+  addSession(){ alert('(Preview) This would publish the session.'); this.reset('mySessions'); },
+  // profile form
+  goEditProfile(){ state.profileForm=JSON.parse(JSON.stringify(state.profile)); state.ac.dom={q:state.profile.domicile,open:false,committed:true}; state.ac.fav={q:'',open:false}; state.ac.owned={q:'',open:false}; this.go('editProfile'); },
+  goOnboarding(){ state.profileForm={ avatarColor:'#15B886', nickname:'', display_name:'', realName:'', gender:'', domicile:'', favorite_games:[], owned_games:[] }; state.ac.dom={q:'',open:false,committed:false}; state.ac.fav={q:'',open:false}; state.ac.owned={q:'',open:false}; this.go('onboarding'); },
+  saveProfile(){ state.profile=JSON.parse(JSON.stringify(state.profileForm)); USERS.me.favorite_games=state.profile.favorite_games; USERS.me.owned_games=state.profile.owned_games; USERS.me.nickname=state.profile.nickname||'Putri'; USERS.me.domicile=state.profile.domicile; this.back(); },
+  signOut(){ this.reset('login'); },
+  // ---- autocomplete (GameTagInput / DomicileInput) ----
+  acList(key){ return key==='games'?state.newSession.games : key==='fav'?state.profileForm.favorite_games : key==='owned'?state.profileForm.owned_games : null; },
+  acMax(key){ return key==='games'?20 : key==='fav'?10 : key==='owned'?30 : 0; },
+  acType(key,val){ const a=state.ac[key]; a.q=val; const t=val.trim().toLowerCase(); if(key==='dom'){ a.committed=false; state.profileForm.domicile=''; a.open=!!t; } else { a.open=!!t; } state.focusId='ac-'+key; render(); },
+  acSuggest(key){ const t=state.ac[key].q.trim().toLowerCase(); if(!t) return []; if(key==='dom') return DOMICILES.filter(d=>d.toLowerCase().includes(t)).slice(0,8); return GAME_CATALOG.filter(g=>g.name.toLowerCase().startsWith(t)).slice(0,8); },
+  acAdd(key,name){ const list=this.acList(key); const n=name.trim(); state.ac[key].q=''; state.ac[key].open=false; if(!n||list.length>=this.acMax(key)) { render(); return; } if(!list.some(g=>g.toLowerCase()===n.toLowerCase())) list.push(n); render(); },
+  acRemove(key,i){ this.acList(key).splice(i,1); render(); },
+  domPick(name){ state.profileForm.domicile=name; state.ac.dom={q:name,open:false,committed:true}; render(); },
+};
+window.app = app;
+
+//==================== SHARED BITS ====================
+function header(title, subtitle, opts){
+  opts=opts||{}; const right = opts.right!==undefined ? opts.right : `<button onclick="app.toggleTheme()" style="width:38px;height:38px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--ink);font-size:15px;cursor:pointer;">${state.theme==='light'?'☾':'☀'}</button>`;
+  return `<div style="position:sticky;top:0;z-index:5;background:var(--bg);padding:18px 20px 12px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+    <div><div style="font:700 24px/1 'Space Grotesk';letter-spacing:-0.03em;color:var(--ink);">${title}</div>${subtitle?`<div style="font:500 13px/1.3 'Inter Tight';color:var(--muted);margin-top:6px;">${subtitle}</div>`:''}</div>
+    <div style="display:flex;gap:9px;flex:none;">${right}</div></div>`;
+}
+const backBar = (label) => `<div style="position:sticky;top:0;z-index:5;background:var(--bg);padding:16px 20px 10px;display:flex;align-items:center;gap:12px;"><button onclick="app.back()" style="display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);color:var(--ink);font:600 13px/1 'Inter Tight';padding:8px 13px 8px 10px;border-radius:999px;cursor:pointer;flex:none;">‹ Back</button>${label?`<div style="font:700 18px/1 'Space Grotesk';color:var(--ink);">${label}</div>`:''}</div>`;
+const primaryBtn = (label,onclick) => `<button onclick="${onclick}" style="width:100%;border:none;background:var(--accent);color:#fff;font:700 15px/1 'Space Grotesk';padding:14px;border-radius:12px;cursor:pointer;box-shadow:0 8px 18px rgba(194,107,74,.32);">${label}</button>`;
+const card = (inner,extra) => `<div style="background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:0 6px 20px rgba(0,0,0,.05);${extra||''}">${inner}</div>`;
+const sectionTitle = (t) => `<div style="font:700 17px/1 'Space Grotesk';color:var(--ink);margin:24px 0 12px;">${t}</div>`;
+
+// generic tag-input (board games) renderer
+function tagInput(key, label, hint){
+  const list=app.acList(key)||[]; const a=state.ac[key]; const max=app.acMax(key); const atMax=list.length>=max;
+  const sugg=a.open?app.acSuggest(key):[];
+  const chips=list.map((g,i)=>`<span style="display:inline-flex;align-items:center;gap:6px;font:600 12px/1 'Inter Tight';color:var(--accentInk);background:var(--accentSoft);padding:8px 8px 8px 13px;border-radius:999px;">${esc(g)}<button onclick="app.acRemove('${key}',${i})" style="background:none;border:none;color:inherit;cursor:pointer;font-size:15px;line-height:1;opacity:.7;">×</button></span>`).join('');
+  const menu=sugg.length?`<div class="ac-menu">${sugg.map(s=>`<button class="ac-item" onmousedown="event.preventDefault();app.acAdd('${key}','${esc(s.name)}')">${esc(s.name)}${s.category==='expansion'?` <span style="color:var(--muted);font-size:12px;">· Expansion</span>`:''}</button>`).join('')}</div>`:'';
+  return `<div style="margin-bottom:16px;">
+    <label class="lbl">${label} ${hint?`<span class="hint">— ${hint}</span>`:''}</label>
+    ${list.length?`<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;">${chips}</div>`:''}
+    <div style="position:relative;display:flex;gap:8px;">
+      <input id="ac-${key}" class="fld" autocomplete="off" placeholder="${atMax?'Maximum reached':'Type a board game…'}" ${atMax?'disabled':''} value="${esc(a.q)}" oninput="app.acType('${key}',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();app.acAdd('${key}',this.value);}" />
+      <button onclick="app.acAdd('${key}',state.ac['${key}'].q)" ${atMax?'disabled':''} style="border:1px solid var(--border);background:var(--surface);color:var(--ink);font:600 13px 'Inter Tight';padding:0 16px;border-radius:11px;cursor:pointer;flex:none;">+ Add</button>
+      ${menu}
+    </div>
+  </div>`;
+}
+
+//==================== SCREENS ====================
+function screenLogin(){
+  return `<div style="min-height:100%;display:flex;flex-direction:column;padding:30px 24px 40px;animation:fadeIn .3s;">
+    <div style="display:flex;justify-content:flex-end;"><button onclick="app.toggleTheme()" style="display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);color:var(--ink);font:600 12px/1 'Inter Tight';padding:8px 12px;border-radius:999px;cursor:pointer;">${state.theme==='light'?'☾ Dark':'☀ Light'}</button></div>
+    <div style="margin:auto 0;">
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:28px;">
+        <span style="width:46px;height:46px;border-radius:14px;background:var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(194,107,74,.35);"><span style="position:relative;width:20px;height:20px;display:inline-block;"><span style="position:absolute;inset:0;border:2.5px solid #fff;border-radius:7px 7px 0 0;"></span></span></span>
+        <div><div style="font:700 22px/1 'Space Grotesk';letter-spacing:-0.03em;color:var(--ink);">BG Session</div><div style="font:500 13px/1.3 'Inter Tight';color:var(--muted);margin-top:5px;">Host &amp; join board game meetups around Jakarta.</div></div>
+      </div>
+      ${card(`
+        <div style="font:700 19px/1 'Space Grotesk';letter-spacing:-0.02em;color:var(--ink);margin-bottom:18px;">Welcome back</div>
+        <button onclick="app.reset('browse')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--field);border:1px solid var(--border);color:var(--ink);font:600 14px/1 'Inter Tight';padding:13px;border-radius:12px;cursor:pointer;margin-bottom:14px;"><span style="width:16px;height:16px;border-radius:50%;background:conic-gradient(#ea4335,#fbbc05,#34a853,#4285f4,#ea4335);display:inline-block;"></span>Continue with Google</button>
+        <div style="display:flex;align-items:center;gap:12px;color:var(--faint);font:500 12px/1 'Inter Tight';margin:14px 0;"><span style="flex:1;height:1px;background:var(--border);"></span>or<span style="flex:1;height:1px;background:var(--border);"></span></div>
+        <label class="lbl">Email</label><input class="fld" value="putri@email.com" style="margin-bottom:14px;" />
+        <label class="lbl">Password</label><input class="fld" type="password" value="password" style="margin-bottom:20px;" />
+        ${primaryBtn('Sign in',"app.reset('browse')")}
+      `,'border-radius:22px;')}
+      <div style="text-align:center;font:500 13px/1 'Inter Tight';color:var(--muted);margin-top:18px;">New here? <span onclick="app.go('signup')" style="color:var(--accentInk);font-weight:700;cursor:pointer;">Create an account</span></div>
+    </div>
+  </div>`;
+}
+
+function screenSignup(){
+  return `<div style="min-height:100%;display:flex;flex-direction:column;padding:30px 24px 40px;animation:fadeIn .3s;">
+    <div onclick="app.back()" style="font:500 13px/1 'Inter Tight';color:var(--muted);cursor:pointer;margin-bottom:8px;">← Sign in</div>
+    <div style="margin:auto 0;">
+      <div style="font:700 22px/1 'Space Grotesk';letter-spacing:-0.03em;color:var(--ink);">BG Session</div>
+      <div style="font:500 13px/1.3 'Inter Tight';color:var(--muted);margin:5px 0 22px;">Host &amp; join board game meetups around Jakarta.</div>
+      ${card(`
+        <div style="font:700 19px/1 'Space Grotesk';letter-spacing:-0.02em;color:var(--ink);margin-bottom:18px;">Create your account</div>
+        <button onclick="app.goOnboarding()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--field);border:1px solid var(--border);color:var(--ink);font:600 14px/1 'Inter Tight';padding:13px;border-radius:12px;cursor:pointer;margin-bottom:14px;"><span style="width:16px;height:16px;border-radius:50%;background:conic-gradient(#ea4335,#fbbc05,#34a853,#4285f4,#ea4335);display:inline-block;"></span>Continue with Google</button>
+        <div style="display:flex;align-items:center;gap:12px;color:var(--faint);font:500 12px/1 'Inter Tight';margin:14px 0;"><span style="flex:1;height:1px;background:var(--border);"></span>or<span style="flex:1;height:1px;background:var(--border);"></span></div>
+        <label class="lbl">Display name</label><input class="fld" placeholder="e.g. Andi" style="margin-bottom:14px;" />
+        <label class="lbl">Email</label><input class="fld" type="email" style="margin-bottom:14px;" />
+        <label class="lbl">Password <span class="hint">(min 6 characters)</span></label><input class="fld" type="password" style="margin-bottom:20px;" />
+        ${primaryBtn('Sign up',"app.goOnboarding()")}
+      `,'border-radius:22px;')}
+      <div style="text-align:center;font:500 13px/1 'Inter Tight';color:var(--muted);margin-top:18px;">Already have an account? <span onclick="app.back()" style="color:var(--accentInk);font-weight:700;cursor:pointer;">Sign in</span></div>
+    </div>
+  </div>`;
+}
+
+function profileFormBody(submitLabel, submitAction){
+  const p=state.profileForm; const dom=state.ac.dom; const domSugg=dom.open?app.acSuggest('dom'):[];
+  const genders=['Male','Female','Other','Prefer not to say'];
+  const domMenu=domSugg.length?`<div class="ac-menu">${domSugg.map(d=>`<button class="ac-item" onmousedown="event.preventDefault();app.domPick('${esc(d)}')">${esc(d)}</button>`).join('')}</div>`:'';
+  return `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:18px;">
+      <span style="width:84px;height:84px;border-radius:26px;background:${p.avatarColor};display:flex;align-items:center;justify-content:center;font:700 30px 'Space Grotesk';color:#fff;">${(p.nickname||'?')[0]}</span>
+      <div style="display:flex;gap:8px;"><button style="background:var(--surface);border:1px solid var(--border);color:var(--ink);font:600 12px 'Inter Tight';padding:8px 13px;border-radius:10px;cursor:pointer;">Upload avatar</button><button style="background:var(--surface);border:1px solid var(--border);color:var(--ink);font:600 12px 'Inter Tight';padding:8px 13px;border-radius:10px;cursor:pointer;">In-person photo</button></div>
+      <div style="font:500 11px/1.3 'Inter Tight';color:var(--faint);text-align:center;">Avatar is public · in-person photo only shown to confirmed participants</div>
+    </div>
+    <label class="lbl">Real name</label><input class="fld" value="${esc(p.realName)}" oninput="app.setPF('realName',this.value)" placeholder="e.g. Andi Wijaya" style="margin-bottom:16px;" />
+    <label class="lbl">Nickname <span class="hint">— shown to other players</span></label><input class="fld" value="${esc(p.nickname)}" oninput="app.setPF('nickname',this.value)" placeholder="e.g. Andi" style="margin-bottom:16px;" />
+    <label class="lbl">Gender</label>
+    <select class="fld" onchange="app.setPF('gender',this.value)" style="margin-bottom:16px;">${['',...genders.filter(g=>g!=='Prefer not to say')].map(g=>`<option value="${g}" ${p.gender===g?'selected':''}>${g||'Prefer not to say'}</option>`).join('')}</select>
+    <label class="lbl">Domicile <span class="hint">— pick your city/area from the list</span></label>
+    <div style="position:relative;margin-bottom:${dom.q&&!dom.committed?'6px':'16px'};"><input id="ac-dom" class="fld" autocomplete="off" placeholder="Type to search…" value="${esc(dom.q)}" oninput="app.acType('dom',this.value)" />${domMenu}</div>
+    ${dom.q&&!dom.committed?`<div style="font:500 12px 'Inter Tight';color:var(--accent);margin-bottom:16px;">Pick an option from the list to set your domicile.</div>`:''}
+    ${tagInput('fav','Favorite board games','at least 1, up to 10 — type to search the catalog')}
+    ${tagInput('owned','Board games you own','optional — it’s fine to own none')}
+    ${primaryBtn(submitLabel, submitAction)}`;
+}
+
+function screenOnboarding(){
+  return `<div style="padding:0 0 32px;animation:fadeIn .25s;">
+    <div style="padding:26px 20px 0;text-align:center;"><div style="font:700 23px/1.1 'Space Grotesk';letter-spacing:-0.03em;color:var(--goodInk);">Welcome to BG Session 🎲</div><div style="font:500 14px/1.4 'Inter Tight';color:var(--muted);margin-top:8px;">Tell us a bit about yourself to finish setting up your account.</div></div>
+    <div style="padding:18px 20px 0;">${card(profileFormBody('Get started','app.saveProfile()'),'border-radius:20px;')}</div>
+    <div style="text-align:center;font:500 13px 'Inter Tight';color:var(--muted);margin-top:16px;">Not you? <span onclick="app.reset('login')" style="color:var(--accentInk);font-weight:700;cursor:pointer;">Sign out</span></div>
+  </div>`;
+}
+
+function rateReminder(){
+  const toRate=state.sessions.filter(s=>s.finished && (s.host_id==='me'||state.reqStatus[s.id]==='approved') && !(state.ratings[s.id]||[]).some(r=>r.uid==='me'));
+  if(!toRate.length) return '';
+  const items=toRate.slice(0,3).map(s=>`<div onclick="app.go('session',{id:'${s.id}'})" style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--field);border:1px solid var(--border);border-radius:12px;padding:10px 12px;cursor:pointer;"><span style="font:600 13px 'Inter Tight';color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(s.title)}</span><span style="background:var(--accent);color:#fff;font:700 11px 'Space Grotesk';padding:6px 12px;border-radius:8px;">Rate</span></div>`).join('');
+  return `<div style="margin:0 20px 4px;">${card(`<div style="display:flex;align-items:flex-start;gap:10px;"><span style="font-size:22px;line-height:1;">⭐</span><div><div style="font:700 15px 'Space Grotesk';color:var(--ink);">Rate your finished ${toRate.length===1?'session':'sessions'}</div><div style="font:500 12px 'Inter Tight';color:var(--muted);margin-top:2px;">Leave a rating and review to help the group.</div></div></div><div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">${items}</div>`,'border-radius:18px;')}</div>`;
+}
+
+function sessionCard(s){
+  const h=user(s.host_id); const full=isFull(s);
+  return `<div onclick="app.go('session',{id:'${s.id}'})" style="background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:15px;box-shadow:0 6px 20px rgba(0,0,0,.05);cursor:pointer;animation:popIn .3s;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><span style="font:700 17px/1.2 'Space Grotesk';letter-spacing:-0.02em;color:var(--ink);">${esc(s.title)}</span>${sessionTypeBadge(s)}</div>
+    <div style="font:500 12px/1 'Space Grotesk';color:var(--muted);margin-top:10px;">📅 ${s.dateLabel}</div>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;">${badge(`${s.region} · ${s.area}`,'area')}<span style="font:500 12px 'Inter Tight';color:var(--muted);">👥 ${playerCount(s)}${full?' · full':''}</span><span style="font:500 12px 'Inter Tight';color:var(--muted);">🎲 ${esc(s.board_games?truncate(s.board_games,28):'TBD')}</span></div>
+    <div style="display:flex;align-items:center;gap:7px;margin-top:11px;color:var(--muted);font:500 13px 'Inter Tight';">${avatar(h,22,10)}Hosted by ${h.nickname}</div>
+  </div>`;
+}
+
+function screenBrowse(){
+  const regionOpts=['',...REGIONS];
+  const areaOpts=state.fRegion?(AREAS[state.fRegion]||[]):[];
+  // game options derived from visible sessions (region/area filtered)
+  const gset=new Map();
+  for(const s of state.sessions){ if(s.finished) continue; if(state.fRegion&&s.region!==state.fRegion) continue; if(state.fArea&&s.area!==state.fArea) continue; for(const g of parseGames(s.board_games)){ const k=g.toLowerCase(); if(!gset.has(k)) gset.set(k,g); } }
+  const gameOpts=[...gset.values()].sort((a,b)=>a.localeCompare(b));
+  const visible=state.sessions.filter(s=>!s.finished)
+    .filter(s=>!state.fRegion||s.region===state.fRegion)
+    .filter(s=>!state.fArea||s.area===state.fArea)
+    .filter(s=>!state.fGame||parseGames(s.board_games).some(g=>g.toLowerCase()===state.fGame.toLowerCase()));
+  const dot=state.notifs.some(n=>n.unread)?`<span style="position:absolute;top:7px;right:8px;width:8px;height:8px;background:var(--accent);border-radius:50%;border:1.5px solid var(--surface);"></span>`:'';
+  const right=`<button onclick="app.toggleTheme()" style="width:38px;height:38px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--ink);font-size:15px;cursor:pointer;">${state.theme==='light'?'☾':'☀'}</button><button onclick="app.openNotif()" style="position:relative;width:38px;height:38px;border-radius:12px;background:var(--surface);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;"><span style="position:relative;width:17px;height:17px;display:inline-block;"><span style="position:absolute;inset:0;border:2px solid var(--ink);border-radius:6px 6px 0 0;"></span></span>${dot}</button>`;
+  const sel=(label,val,opts,onchange,disabled)=>`<select class="fld" aria-label="${label}" onchange="${onchange}(this.value)" ${disabled?'disabled':''} style="flex:1;min-width:0;font-size:13px;padding:10px 30px 10px 12px;">${opts}</select>`;
+  const regionSelect=sel('Filter by region',state.fRegion,`<option value="">All regions</option>`+REGIONS.map(r=>`<option value="${r}" ${state.fRegion===r?'selected':''}>${r}</option>`).join(''),'app.setRegion',false);
+  const areaSelect=sel('Filter by area',state.fArea,`<option value="">All areas</option>`+areaOpts.map(a=>`<option value="${a}" ${state.fArea===a?'selected':''}>${a}</option>`).join(''),'app.setArea',!state.fRegion);
+  const gameSelect=sel('Filter by game',state.fGame,`<option value="">All games</option>`+gameOpts.map(g=>`<option value="${g}" ${state.fGame===g?'selected':''}>${g}</option>`).join(''),'app.setGame',gameOpts.length===0);
+  const list=visible.length?visible.map(sessionCard).join(''):`<div style="text-align:center;color:var(--muted);padding:42px 16px;"><div style="font:600 15px 'Space Grotesk';color:var(--ink);">No upcoming sessions${state.fRegion?` in ${state.fArea||state.fRegion}`:''}${state.fGame?` with ${state.fGame}`:''} yet.</div><div style="margin-top:12px;"><span onclick="app.goCreate()" style="display:inline-block;background:var(--accent);color:#fff;font:700 13px 'Space Grotesk';padding:11px 18px;border-radius:11px;cursor:pointer;">Be the first to host</span></div></div>`;
+  return `<div style="padding:0 0 18px;animation:fadeIn .25s;">
+    ${header('Upcoming sessions','Find a board game meetup near you.',{right})}
+    ${rateReminder()}
+    <div style="padding:6px 20px 0;display:flex;gap:8px;">${regionSelect}${areaSelect}${gameSelect}</div>
+    <div style="padding:14px 20px 0;display:flex;flex-direction:column;gap:11px;">${list}</div>
+  </div>`;
+}
+
+function screenSession(){
+  const s=getSession(state.params.id); if(!s) return '';
+  const host=user(s.host_id); const isHost=s.host_id==='me';
+  const myStatus=state.reqStatus[s.id]||null; const full=isFull(s); const finished=s.finished; const started=s.started;
+  const isParticipant=isHost||myStatus==='approved';
+  const games=parseGames(s.board_games);
+  // info card rows
+  let rows=`<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font:500 13px 'Inter Tight';color:var(--muted);">When</span><strong style="font:700 14px 'Space Grotesk';color:var(--ink);text-align:right;">${s.dateLabel}</strong></div>`;
+  if(formatDuration(s.duration_minutes)) rows+=`<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font:500 13px 'Inter Tight';color:var(--muted);">Duration</span><strong style="font:700 14px 'Space Grotesk';color:var(--ink);">${formatDuration(s.duration_minutes)}</strong></div>`;
+  rows+=`<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font:500 13px 'Inter Tight';color:var(--muted);">Region</span>${badge(s.region,'area')}</div>`;
+  rows+=`<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font:500 13px 'Inter Tight';color:var(--muted);">Area</span>${badge(s.area,'area')}</div>`;
+  rows+=`<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font:500 13px 'Inter Tight';color:var(--muted);">Players</span><strong style="font:700 14px 'Space Grotesk';color:var(--accentInk);">${playerCount(s)}${full?' · full':''}${s.min_players>1?` · min ${s.min_players}`:''}</strong></div>`;
+  rows+=`<div><div style="font:500 13px 'Inter Tight';color:var(--muted);margin-bottom:7px;">Board games</div>${games.length?`<div style="display:flex;flex-wrap:wrap;gap:7px;">${games.map(gameChip).join('')}</div>`:'<div style="font-size:13px;color:var(--ink);">To be decided</div>'}</div>`;
+  if(!finished){
+    let addr;
+    if(isParticipant) addr=`<div style="background:var(--accentSoft);border:1px solid var(--accent);border-radius:12px;padding:12px;"><div style="font:500 14px/1.4 'Inter Tight';color:var(--ink);">📍 ${esc(s.full_address)}</div><button style="margin-top:10px;background:var(--surface);border:1px solid var(--border);color:var(--ink);font:600 12px 'Inter Tight';padding:9px 12px;border-radius:10px;cursor:pointer;">🗺️ Open in Google Maps</button></div>`;
+    else addr=`<div style="background:var(--neutralSoft);border:1px dashed var(--border);border-radius:12px;padding:12px;display:flex;align-items:center;gap:9px;"><span>🔒</span><span style="font:500 13px/1.3 'Inter Tight';color:var(--muted);">The full address is revealed once the host confirms your spot.</span></div>`;
+    rows+=`<div><div style="font:500 13px 'Inter Tight';color:var(--muted);margin-bottom:7px;">Address</div>${addr}</div>`;
+  }
+  let html=`${backBar('')}
+    <div style="padding:4px 20px 0;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;"><h1 style="font:700 25px/1.12 'Space Grotesk';letter-spacing:-0.03em;color:var(--ink);margin:0;">${esc(s.title)}</h1>${sessionTypeBadge(s)}</div>
+      <div onclick="app.go('user',{id:'${host.id}'})" style="display:flex;align-items:center;gap:9px;margin-top:13px;cursor:pointer;">${avatar(host,26,12)}<span style="font:500 13px 'Inter Tight';color:var(--muted);">Hosted by <span style="color:var(--ink);font-weight:700;">${host.nickname}</span></span></div>
+    </div>
+    <div style="padding:16px 20px 0;">${card(`<div style="display:flex;flex-direction:column;gap:13px;">${rows}</div>`)}</div>`;
+
+  // ratings (finished + participant)
+  if(finished && isParticipant){
+    const rlist=state.ratings[s.id]||[]; const others=rlist.filter(r=>r.uid!=='me'&&r.review); const myRating=rlist.find(r=>r.uid==='me');
+    const avg=rlist.length?(rlist.reduce((a,r)=>a+r.rating,0)/rlist.length):0;
+    let inner='';
+    if(rlist.length>=2) inner+=`<div style="display:flex;align-items:center;gap:10px;"><div>${starRow(Math.round(avg),15)}</div><strong style="font:700 15px 'Space Grotesk';color:var(--ink);">${avg.toFixed(1)}/10</strong><span style="font:500 12px 'Inter Tight';color:var(--muted);">· ${rlist.length} ratings</span></div>`;
+    else if(rlist.length===1) inner+=`<div style="font:500 13px 'Inter Tight';color:var(--muted);">1 rating so far — the average appears once 2 or more people have rated.</div>`;
+    else inner+=`<div style="font:500 13px 'Inter Tight';color:var(--muted);">No ratings yet — be the first.</div>`;
+    inner+=`<div style="border-top:1px solid var(--border);margin-top:14px;padding-top:14px;">`;
+    if(myRating){ inner+=`<div style="font:600 12px 'Inter Tight';color:var(--ink);margin-bottom:8px;">Your rating</div><div>${starRow(myRating.rating,18)}</div>${myRating.review?`<div style="font:500 13px/1.4 'Inter Tight';color:var(--muted);margin-top:8px;">“${esc(myRating.review)}”</div>`:''}`; }
+    else { inner+=`<div style="font:600 12px 'Inter Tight';color:var(--ink);margin-bottom:9px;">Rate this session <span class="hint">— required for participants, and can’t be changed once sent</span></div><div style="margin-bottom:11px;">${starRow(state.ratingDraft,22,'app.setRating')}</div><textarea class="fld" placeholder="Add a review now (optional)…" oninput="app.setField('reviewDraft',this.value)" style="resize:none;min-height:54px;">${esc(state.reviewDraft)}</textarea><button onclick="app.submitRating('${s.id}')" style="width:100%;border:none;background:var(--accent);color:#fff;font:700 14px 'Space Grotesk';padding:12px;border-radius:11px;cursor:pointer;margin-top:10px;">Send</button>`; }
+    inner+=`</div>`;
+    if(others.length){ inner+=`<div style="border-top:1px solid var(--border);margin-top:14px;padding-top:6px;">`+others.map(r=>{ const u=user(r.uid); return `<div style="padding:12px 0;border-bottom:1px solid var(--border);"><div onclick="app.go('user',{id:'${u.id}'})" style="display:flex;align-items:center;gap:8px;cursor:pointer;">${avatar(u,24,11)}<span style="font:700 13px 'Inter Tight';color:var(--ink);">${u.nickname}</span></div><div style="font:500 13px/1.4 'Inter Tight';color:var(--muted);margin-top:6px;">${esc(r.review)}</div></div>`; }).join('')+`</div>`; }
+    html+=`<div style="padding:0 20px;">${sectionTitle('Ratings &amp; reviews')}${card(inner)}</div>`;
+  }
+
+  // guest actions (before start)
+  if(!isHost && !started){
+    let inner='';
+    if(!myStatus){ inner=`<div style="font:700 16px 'Space Grotesk';color:var(--ink);margin-bottom:12px;">Want to join?</div>`+(full?`<div style="background:var(--neutralSoft);border-radius:12px;padding:13px;font:600 13px 'Inter Tight';color:var(--muted);text-align:center;">This session is full.</div>`:`<label class="lbl">Message to host <span class="hint">(optional)</span></label><textarea class="fld" placeholder="Say hi, mention your experience level…" oninput="app.setField('joinMsg',this.value)" style="resize:none;min-height:60px;margin-bottom:12px;">${esc(state.joinMsg)}</textarea>${primaryBtn(s.session_type==='open'?'Join session':'Request to join',`app.join('${s.id}')`)}`); }
+    else if(myStatus==='pending'){ inner=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;"><span style="font:600 14px 'Inter Tight';color:var(--ink);">Your request is ${badge('Pending','pending')}</span><button onclick="app.withdraw('${s.id}')" style="background:var(--surface);border:1px solid var(--border);color:var(--danger);font:600 12px 'Inter Tight';padding:9px 13px;border-radius:10px;cursor:pointer;">Withdraw</button></div><div style="font:500 12px 'Inter Tight';color:var(--muted);margin-top:8px;">You'll be notified when the host responds.</div>`; }
+    else if(myStatus==='approved'){ inner=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;"><span style="font:700 14px 'Space Grotesk';color:var(--goodInk);">You're confirmed ${badge('Approved','approved')}</span><button onclick="app.withdraw('${s.id}')" style="background:transparent;border:1px solid var(--border);color:var(--muted);font:600 12px 'Inter Tight';padding:9px 13px;border-radius:10px;cursor:pointer;">Cancel my spot</button></div>`; }
+    html+=`<div style="padding:18px 20px 0;">${card(inner)}</div>`;
+  }
+
+  // host management (before start)
+  if(isHost && !started){
+    const pending=(state.requests[s.id]||[]).filter(r=>r.status==='pending');
+    let reqs=pending.length?pending.map(r=>{ const g=user(r.guestId); return card(`<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;"><div onclick="app.go('user',{id:'${g.id}'})" style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">${avatar(g,34,13)}<div><div style="font:700 14px 'Inter Tight';color:var(--ink);">${g.nickname}</div>${r.message?`<div style="font:500 13px/1.4 'Inter Tight';color:var(--muted);margin-top:3px;">“${esc(r.message)}”</div>`:''}</div></div>${badge('Pending','pending')}</div><div style="display:flex;gap:9px;margin-top:13px;"><button onclick="app.decide('${s.id}','${r.id}','approved')" ${full?'disabled':''} style="flex:1;border:none;background:var(--accent);color:#fff;font:700 13px 'Space Grotesk';padding:11px;border-radius:11px;cursor:${full?'not-allowed':'pointer'};opacity:${full?'.5':'1'};">Approve</button><button onclick="app.decide('${s.id}','${r.id}','rejected')" style="flex:1;border:1px solid var(--border);background:var(--surface);color:var(--danger);font:600 13px 'Inter Tight';padding:11px;border-radius:11px;cursor:pointer;">Decline</button></div>${full?`<div style="font:500 12px 'Inter Tight';color:var(--muted);margin-top:8px;">Session is full — increase max players to approve more.</div>`:''}`,'border-radius:15px;'); }).join('') : `<div style="font:500 13px 'Inter Tight';color:var(--muted);">No pending requests right now.</div>`;
+    html+=`<div style="padding:0 20px;">${sectionTitle('Requests to join')}<div style="display:flex;flex-direction:column;gap:10px;">${reqs}</div>${sectionTitle('Manage session')}<div style="display:flex;gap:10px;"><button onclick="app.goEditSession()" style="flex:1;background:var(--surface);border:1px solid var(--border);color:var(--ink);font:600 13px 'Inter Tight';padding:12px;border-radius:11px;cursor:pointer;">Edit details</button><button onclick="app.cancelSession()" style="flex:1;background:var(--dangerSoft);border:1px solid var(--danger);color:var(--danger);font:600 13px 'Inter Tight';padding:12px;border-radius:11px;cursor:pointer;">Cancel session</button></div></div>`;
+  }
+
+  // participants (Who's coming) — confirmed only
+  if(isParticipant){
+    let people=[{...host, isHost:true}];
+    (state.requests[s.id]||[]).filter(r=>r.status==='approved').forEach(r=>people.push({...user(r.guestId),isHost:false}));
+    if(s.id==='s6') people.push({...user('bima'),isHost:false}); // finished session had Bima
+    if(!isHost && myStatus==='approved') people.push({...USERS.me,isHost:false});
+    const seen={}; people=people.filter(p=>seen[p.id]?false:(seen[p.id]=true));
+    const rows2=people.map(p=>{ const extras=[p.realName,p.gender].filter(Boolean).join(' · '); return `<div style="display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;">${avatar(p,48,18,'16px')}<div style="min-width:0;"><div onclick="app.go('${p.id==='me'?'profile':'user'}',{id:'${p.id}'})" style="display:flex;align-items:center;gap:7px;cursor:pointer;"><span style="font:700 14px 'Inter Tight';color:var(--ink);">${p.nickname}</span>${p.isHost?badge('Host','host'):''}${p.id==='me'?`<span style="font:400 12px 'Inter Tight';color:var(--muted);">· you</span>`:''}</div>${extras?`<div style="font:500 13px 'Inter Tight';color:var(--muted);margin-top:2px;">${esc(extras)}</div>`:''}</div></div>`; }).join('');
+    html+=`<div style="padding:0 20px;">${sectionTitle(`Who's coming (${people.length})`)}<div style="font:500 12px 'Inter Tight';color:var(--muted);margin:-6px 0 12px;">Extra details are shared only between confirmed participants so you can recognize each other.</div><div style="display:flex;flex-direction:column;gap:9px;">${rows2}</div></div>`;
+  }
+
+  // session chat
+  if(isParticipant){
+    const msgs=(state.chats[s.id]||[]).map(m=>{ const mine=m.uid==='me'; const u=mine?USERS.me:user(m.uid); return `<div style="display:flex;gap:8px;align-items:flex-end;${mine?'flex-direction:row-reverse;':''}">${mine?'':avatar(u,28,12)}<div style="max-width:74%;"><div style="${mine?'text-align:right;':''}font:500 11px 'Inter Tight';color:var(--faint);margin-bottom:3px;">${mine?'':u.nickname+' · '}${m.time}</div><div style="padding:9px 13px;border-radius:15px;font:500 13px/1.4 'Inter Tight';word-break:break-word;${mine?'background:var(--accent);color:#fff;border-bottom-right-radius:5px;':'background:var(--neutralSoft);color:var(--ink);border-bottom-left-radius:5px;'}">${esc(m.body)}</div></div></div>`; }).join('') || `<div style="font:500 13px 'Inter Tight';color:var(--muted);text-align:center;padding:8px 0;">No messages yet — start the conversation.</div>`;
+    const composer=finished?`<div style="font:500 12px 'Inter Tight';color:var(--faint);text-align:center;margin-top:12px;">This session has ended — chat is now read-only.</div>`:`<div style="display:flex;gap:8px;margin-top:12px;"><input class="fld" placeholder="Message participants…" value="${esc(state.chatDraft)}" oninput="app.setField('chatDraft',this.value)" /><button onclick="app.sendChat('${s.id}')" style="border:none;background:var(--accent);color:#fff;font:700 13px 'Space Grotesk';padding:0 16px;border-radius:11px;cursor:pointer;">Send</button></div>`;
+    html+=`<div style="padding:0 20px 8px;">${sectionTitle('Session chat')}${card(`<div style="display:flex;flex-direction:column;gap:11px;min-height:50px;">${msgs}</div>${composer}`)}</div>`;
+  }
+  return `<div style="padding:0 0 28px;animation:fadeIn .25s;">${html}</div>`;
+}
+
+function myCard(s, statusBadge){
+  return `<div onclick="app.go('session',{id:'${s.id}'})" style="background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:15px;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.05);">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><span style="font:700 17px/1.2 'Space Grotesk';letter-spacing:-0.02em;color:var(--ink);">${esc(s.title)}</span>${statusBadge}</div>
+    <div style="font:500 12px 'Space Grotesk';color:var(--muted);margin-top:10px;">📅 ${s.dateLabel}</div>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;">${badge(s.area,'area')}<span style="font:500 12px 'Inter Tight';color:var(--muted);">👥 ${playerCount(s)}</span></div>
+  </div>`;
+}
+function screenMy(){
+  const hosting=state.sessions.filter(s=>s.host_id==='me'&&!s.finished);
+  const joined=state.sessions.filter(s=>s.host_id!=='me'&&state.reqStatus[s.id]);
+  const hostList=hosting.length?hosting.map(s=>myCard(s,sessionTypeBadge(s))).join(''):`<div style="text-align:center;padding:22px;background:var(--surface);border:1px solid var(--border);border-radius:16px;"><div style="font:500 13px 'Inter Tight';color:var(--muted);margin-bottom:12px;">You're not hosting anything yet.</div><span onclick="app.goCreate()" style="display:inline-block;background:var(--accent);color:#fff;font:700 13px 'Space Grotesk';padding:11px 18px;border-radius:11px;cursor:pointer;">Host a session</span></div>`;
+  const joinList=joined.length?joined.map(s=>{ const st=state.reqStatus[s.id]; const b=st==='approved'?badge('Approved','approved'):st==='rejected'?badge('Declined','rejected'):badge('Pending','pending'); return myCard(s,b); }).join(''):`<div style="text-align:center;padding:22px;background:var(--surface);border:1px solid var(--border);border-radius:16px;"><div style="font:500 13px 'Inter Tight';color:var(--muted);margin-bottom:12px;">You haven't requested to join any sessions yet.</div><span onclick="app.reset('browse')" style="display:inline-block;background:var(--surface);border:1px solid var(--border);color:var(--ink);font:700 13px 'Space Grotesk';padding:11px 18px;border-radius:11px;cursor:pointer;">Browse sessions</span></div>`;
+  return `<div style="padding:0 0 18px;animation:fadeIn .25s;">
+    ${header('My sessions','Sessions you host and sessions you’ve joined.')}
+    <div style="padding:2px 20px 0;">
+      <div style="font:600 11px/1 'Inter Tight';letter-spacing:0.04em;color:var(--muted);margin:8px 0 11px;text-transform:uppercase;">Hosting (${hosting.length})</div>
+      <div style="display:flex;flex-direction:column;gap:11px;">${hostList}</div>
+      <div style="font:600 11px/1 'Inter Tight';letter-spacing:0.04em;color:var(--muted);margin:22px 0 11px;text-transform:uppercase;">Joined / requested (${joined.length})</div>
+      <div style="display:flex;flex-direction:column;gap:11px;">${joinList}</div>
+    </div>
+  </div>`;
+}
+
+function profileViewBody(p, opts){
+  opts=opts||{};
+  const fav=p.favorite_games||[]; const owned=p.owned_games||[];
+  const favH=fav.length?`<div style="display:flex;flex-wrap:wrap;gap:7px;">${fav.map(gameChip).join('')}</div>`:`<span style="font:500 13px 'Inter Tight';color:var(--muted);">—</span>`;
+  const ownH=owned.length?`<div style="display:flex;flex-wrap:wrap;gap:7px;">${owned.map(g=>`<span onclick="app.go('game',{name:'${esc(g)}'})" style="font:600 12px/1 'Inter Tight';color:var(--muted);background:var(--neutralSoft);padding:8px 12px;border-radius:999px;cursor:pointer;">🎲 ${esc(g)}</span>`).join('')}</div>`:`<span style="font:500 13px 'Inter Tight';color:var(--muted);">None</span>`;
+  // history
+  const hist=state.sessions.filter(s=>s.finished && (s.host_id===p.id || (p.id==='me'&&state.reqStatus[s.id]==='approved')));
+  let histH;
+  if(!hist.length) histH=`<div style="font:500 13px 'Inter Tight';color:var(--muted);">No past sessions yet.</div>`;
+  else histH=`<div style="display:flex;flex-direction:column;gap:9px;">`+hist.map(s=>{ const r=state.ratings[s.id]||[]; const avg=r.length?(r.reduce((a,b)=>a+b.rating,0)/r.length).toFixed(1):null; const role=s.host_id===p.id?'Host':'Participant'; return `<div onclick="app.go('session',{id:'${s.id}'})" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px;cursor:pointer;opacity:.92;"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font:700 15px 'Space Grotesk';color:var(--ink);">${esc(s.title)}</span>${badge(role,role==='Host'?'approval':'approved')}</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px;align-items:center;"><span style="font:500 12px 'Inter Tight';color:var(--muted);">📅 ${s.dateLabel}</span>${badge(s.area,'area')}<span style="font:500 12px 'Inter Tight';color:var(--muted);">👥 ${playerCount(s)}</span>${avg?`<span style="font:600 12px 'Space Grotesk';color:var(--accentInk);">★ ${avg}/10</span>`:''}</div></div>`; }).join('')+`</div>`;
+  return `<div style="padding:6px 20px 0;display:flex;flex-direction:column;align-items:center;text-align:center;">
+      <span style="width:88px;height:88px;border-radius:28px;background:${p.color||p.avatarColor||'#15B886'};display:flex;align-items:center;justify-content:center;font:700 33px 'Space Grotesk';color:#fff;box-shadow:0 10px 24px rgba(21,184,134,.25);">${(p.nickname||'?')[0]}</span>
+      <div style="font:700 21px/1 'Space Grotesk';letter-spacing:-0.02em;color:var(--ink);margin-top:13px;">${p.nickname}</div>
+      <div style="display:flex;align-items:center;gap:5px;margin-top:8px;"><span style="width:6px;height:6px;border-radius:50%;background:${p.online?'var(--good)':'var(--faint)'};"></span><span style="font:600 12px/1 'Inter Tight';color:${p.online?'var(--goodInk)':'var(--muted)'};">${p.seen||'Offline'}</span></div>
+      ${p.domicile?`<div style="font:500 13px/1 'Inter Tight';color:var(--muted);margin-top:8px;">📍 ${esc(p.domicile)}</div>`:''}
+      ${opts.email?`<div style="font:500 13px/1 'Inter Tight';color:var(--muted);margin-top:4px;">${esc(opts.email)}</div>`:''}
+      ${opts.headerAction||''}
+    </div>
+    <div style="padding:20px 20px 0;">${card(`<div style="margin-bottom:14px;"><div style="font:500 12px 'Inter Tight';color:var(--muted);margin-bottom:8px;">Favorite board games</div>${favH}</div><div><div style="font:500 12px 'Inter Tight';color:var(--muted);margin-bottom:8px;">Board games owned</div>${ownH}</div>`)}</div>
+    <div style="padding:0 20px;">${sectionTitle('Session history')}${histH}</div>`;
+}
+
+function screenProfile(){
+  const p={...state.profile, color:state.profile.avatarColor, online:true, seen:'Online now'};
+  return `<div style="padding:0 0 24px;animation:fadeIn .25s;">
+    <div style="display:flex;justify-content:flex-end;padding:16px 20px 0;"><button onclick="app.toggleTheme()" style="width:38px;height:38px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--ink);font-size:15px;cursor:pointer;">${state.theme==='light'?'☾':'☀'}</button></div>
+    ${profileViewBody(p,{email:USERS.me.email})}
+    <div style="padding:22px 20px 0;display:flex;flex-direction:column;gap:10px;">${primaryBtn('Edit profile','app.goEditProfile()')}<button onclick="app.signOut()" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--muted);font:600 14px 'Inter Tight';padding:12px;border-radius:12px;cursor:pointer;">Sign out</button></div>
+  </div>`;
+}
+
+function screenUser(){
+  const p=user(state.params.id);
+  const action=`<div style="margin-top:14px;"><button onclick="app.go('conversation',{id:'${p.id}'})" style="border:none;background:var(--accent);color:#fff;font:700 13px 'Space Grotesk';padding:11px 20px;border-radius:11px;cursor:pointer;">💬 Message ${p.nickname}</button></div>`;
+  return `<div style="padding:0 0 28px;animation:fadeIn .25s;">${backBar('')}${profileViewBody(p,{headerAction:action})}</div>`;
+}
+
+function screenEditProfile(){
+  return `<div style="padding:0 0 32px;animation:fadeIn .25s;">${backBar('Edit profile')}<div style="padding:6px 20px 0;">${card(profileFormBody('Save','app.saveProfile()'),'border-radius:20px;')}</div></div>`;
+}
+
+function screenGame(){
+  const name=state.params.name; const g=catGame(name);
+  const all=Object.values(USERS);
+  const fav=all.filter(u=>u.favorite_games.some(x=>x.toLowerCase()===name.toLowerCase()));
+  const own=all.filter(u=>u.owned_games.some(x=>x.toLowerCase()===name.toLowerCase()));
+  const grid=(members,empty)=>members.length?`<div style="display:flex;flex-wrap:wrap;gap:9px;">${members.map(u=>`<div onclick="app.go('${u.id==='me'?'profile':'user'}',{id:'${u.id}'})" style="display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:5px 14px 5px 5px;cursor:pointer;">${avatar(u,30,12)}<span style="font:600 13px 'Inter Tight';color:var(--ink);">${u.id==='me'?'You':u.nickname}</span></div>`).join('')}</div>`:`<div style="font:500 13px 'Inter Tight';color:var(--muted);">${empty}</div>`;
+  const subtitle=g?(g.category==='expansion'?'Expansion':'Base game'):'Not in the catalog yet';
+  return `<div style="padding:0 0 28px;animation:fadeIn .25s;">${backBar('')}
+    <div style="padding:4px 20px 0;">
+      <div style="height:120px;border-radius:18px;background:repeating-linear-gradient(135deg,var(--accent),var(--accent) 10px,var(--accentSoft) 10px,var(--accentSoft) 20px);position:relative;display:flex;align-items:flex-end;padding:14px;"><span style="font:600 8px 'IBM Plex Mono';color:rgba(255,255,255,.75);position:absolute;top:14px;left:14px;">[ box art ]</span><h1 style="font:700 24px/1.05 'Space Grotesk';color:#fff;margin:0;letter-spacing:-0.02em;text-shadow:0 2px 8px rgba(0,0,0,.3);">🎲 ${esc(name)}</h1></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;"><span style="font:600 13px 'Inter Tight';color:var(--muted);">${subtitle}</span><button style="background:var(--surface);border:1px solid var(--border);color:var(--ink);font:600 12px 'Inter Tight';padding:10px 13px;border-radius:11px;cursor:pointer;">🔗 View on BGG ↗</button></div>
+    </div>
+    <div style="padding:8px 20px 0;">${sectionTitle(`Favorited by (${fav.length})`)}${grid(fav,'No one has favorited this yet.')}${sectionTitle(`Owned by (${own.length})`)}${grid(own,'No one has registered owning this yet.')}</div>
+  </div>`;
+}
+
+function screenMessages(){
+  const list=Object.keys(state.dms).map(uid=>{ const u=user(uid); const msgs=state.dms[uid]; const last=msgs[msgs.length-1]; return `<div onclick="app.go('conversation',{id:'${uid}'})" style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid var(--border);cursor:pointer;">${avatar(u,44,16)}<div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font:700 14px 'Inter Tight';color:var(--ink);">${u.nickname}</span><span style="font:500 11px 'IBM Plex Mono';color:var(--faint);">${last.time}</span></div><div style="font:500 13px 'Inter Tight';color:var(--muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(last.me?'You: ':'')+esc(last.body)}</div></div></div>`; }).join('');
+  const body=list?`<div style="background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;">${list}</div>`:`<div style="text-align:center;padding:48px 16px;"><div style="font:600 15px 'Space Grotesk';color:var(--ink);">No conversations yet.</div><div style="font:500 13px 'Inter Tight';color:var(--muted);margin-top:6px;">Open someone's profile and tap “Message” to start chatting.</div></div>`;
+  return `<div style="padding:0 0 18px;animation:fadeIn .25s;">${header('Messages','Your private chats with other players.')}<div style="padding:4px 20px 0;">${body}</div></div>`;
+}
+
+function screenConversation(){
+  const u=user(state.params.id);
+  const msgs=(state.dms[state.params.id]||[]).map(m=>`<div style="display:flex;flex-direction:column;${m.me?'align-items:flex-end;':'align-items:flex-start;'}"><div style="max-width:78%;padding:10px 14px;border-radius:16px;font:500 14px/1.4 'Inter Tight';word-break:break-word;${m.me?'background:var(--accent);color:#fff;border-bottom-right-radius:5px;':'background:var(--surface);border:1px solid var(--border);color:var(--ink);border-bottom-left-radius:5px;'}">${esc(m.body)}</div><div style="font:500 10px 'IBM Plex Mono';color:var(--faint);margin-top:3px;">${m.time}</div></div>`).join('') || `<div style="margin:auto;font:500 14px 'Inter Tight';color:var(--muted);">Say hello 👋</div>`;
+  return `<div style="display:flex;flex-direction:column;height:100%;animation:fadeIn .25s;">
+    <div style="position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px;padding:14px 16px;"><button onclick="app.back()" style="background:none;border:none;color:var(--ink);font-size:22px;cursor:pointer;line-height:1;padding:0 4px;">‹</button><div onclick="app.go('user',{id:'${u.id}'})" style="display:flex;align-items:center;gap:10px;cursor:pointer;">${avatar(u,38,15)}<div><div style="font:700 15px/1 'Space Grotesk';color:var(--ink);">${u.nickname}</div><div style="font:500 11px/1 'Inter Tight';color:${u.online?'var(--good)':'var(--muted)'};margin-top:4px;">${u.seen}</div></div></div></div>
+    <div style="flex:1;overflow-y:auto;padding:18px 16px;display:flex;flex-direction:column;gap:12px;">${msgs}</div>
+    <div style="display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);background:var(--surface);"><input class="fld" style="border-radius:14px;" placeholder="Type a message…" value="${esc(state.dmDraft)}" oninput="app.setField('dmDraft',this.value)" /><button onclick="app.sendDM('${u.id}')" style="border:none;background:var(--accent);color:#fff;font:700 14px 'Space Grotesk';padding:0 18px;border-radius:14px;cursor:pointer;">Send</button></div>
+  </div>`;
+}
+
+function screenCreate(){
+  const n=state.newSession;
+  const regionOpts=`<option value="" disabled ${!n.region?'selected':''}>Choose region…</option>`+REGIONS.map(r=>`<option value="${r}" ${n.region===r?'selected':''}>${r}</option>`).join('');
+  const areaList=n.region?(AREAS[n.region]||[]):[];
+  const areaOpts=`<option value="" disabled ${!n.area?'selected':''}>${n.region?'Choose area…':'Pick a region first'}</option>`+areaList.map(a=>`<option value="${a}" ${n.area===a?'selected':''}>${a}</option>`).join('');
+  const durOpts=[['','Not sure'],['60','~1 hour'],['120','~2 hours'],['180','~3 hours'],['240','~4 hours'],['300','~5 hours'],['360','6+ hours']].map(([v,l])=>`<option value="${v}" ${n.durationMinutes===v?'selected':''}>${l}</option>`).join('');
+  const typeBtn=(t,title,sub)=>`<button onclick="app.nsType('${t}')" style="flex:1;border:1px solid ${n.sessionType===t?'var(--accent)':'var(--border)'};background:${n.sessionType===t?'var(--accentSoft)':'var(--surface)'};color:${n.sessionType===t?'var(--accentInk)':'var(--muted)'};padding:13px;border-radius:12px;cursor:pointer;text-align:left;"><div style="font:700 13px 'Space Grotesk';">${title}</div><div style="font:500 11px 'Inter Tight';opacity:.85;margin-top:3px;">${sub}</div></button>`;
+  return `<div style="padding:0 0 32px;animation:fadeIn .25s;">${backBar('Host a session')}
+    <div style="padding:6px 20px 0;">${card(`
+      <label class="lbl">Session title</label><input class="fld" maxlength="140" placeholder="e.g. Sunday Heavy Euro Night" value="${esc(n.title)}" oninput="app.setNS('title',this.value)" style="margin-bottom:16px;" />
+      <label class="lbl">Date &amp; time</label><input class="fld" type="datetime-local" value="${esc(n.startsAt)}" oninput="app.setNS('startsAt',this.value)" style="margin-bottom:16px;" />
+      <div style="display:flex;gap:12px;margin-bottom:16px;">
+        <div style="flex:1;"><label class="lbl">Region</label><select class="fld" onchange="app.nsRegion(this.value)">${regionOpts}</select></div>
+        <div style="flex:1;"><label class="lbl">Area</label><select class="fld" onchange="app.setNS('area',this.value)" ${!n.region?'disabled':''} key="${n.region}">${areaOpts}</select></div>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:16px;">
+        <div style="flex:1;"><label class="lbl">Max players <span class="hint">(incl. host)</span></label><input class="fld" type="number" min="1" max="50" value="${esc(n.maxPlayers)}" oninput="app.setNS('maxPlayers',this.value)" /></div>
+        <div style="flex:1;"><label class="lbl">Min players <span class="hint">— or it's canceled</span></label><input class="fld" type="number" min="1" max="50" value="${esc(n.minPlayers)}" oninput="app.setNS('minPlayers',this.value)" /></div>
+      </div>
+      <div style="font:500 11px/1.4 'Inter Tight';color:var(--faint);margin:-8px 0 16px;">If fewer than the minimum confirm by the start time, the session is automatically canceled and removed.</div>
+      <label class="lbl">Estimated duration</label><select class="fld" onchange="app.setNS('durationMinutes',this.value)" style="margin-bottom:16px;">${durOpts}</select>
+      <label class="lbl">Full address <span class="hint">— private, shown only to confirmed guests</span></label><textarea class="fld" placeholder="Street, building, unit number, landmarks…" oninput="app.setNS('fullAddress',this.value)" style="resize:none;min-height:56px;margin-bottom:16px;">${esc(n.fullAddress)}</textarea>
+      <label class="lbl">Google Maps link <span class="hint">— optional, pin the exact spot</span></label><input class="fld" type="url" placeholder="https://maps.app.goo.gl/…" value="${esc(n.mapsUrl)}" oninput="app.setNS('mapsUrl',this.value)" style="margin-bottom:16px;" />
+      ${tagInput('games','Board games','what you plan to bring/play — type to search the catalog')}
+      <label class="lbl">Joining</label><select class="fld" onchange="app.setNS('sessionType',this.value)" style="margin-bottom:8px;"><option value="approval" ${n.sessionType==='approval'?'selected':''}>Approval required — you review each request</option><option value="open" ${n.sessionType==='open'?'selected':''}>Open — guests are confirmed instantly</option></select>
+      <div style="display:flex;gap:10px;margin:8px 0 18px;">${typeBtn('approval','Approval','You review each request')}${typeBtn('open','Open','Confirmed instantly')}</div>
+      ${primaryBtn('Publish session','app.addSession()')}
+    `,'border-radius:20px;')}</div>
+  </div>`;
+}
+
+//==================== CHROME (bottom nav + FAB) ====================
+function renderChrome(){
+  const screen=state.screen; const isAuth=screen==='login'||screen==='signup'||screen==='onboarding';
+  const el=document.getElementById('chrome');
+  if(isAuth||screen==='conversation'){ el.innerHTML=''; el.style.display='none'; return; }
+  el.style.display='block';
+  const c=k=> (screen===k||(k==='browse'&&['session','game'].includes(screen))) ?'var(--accent)':'var(--faint)';
+  el.innerHTML=`<div style="position:relative;height:76px;background:var(--navbg);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 26px;flex:none;box-shadow:0 -4px 22px rgba(0,0,0,.06);">
+    <button onclick="app.reset('browse')" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;"><span style="width:16px;height:16px;border-radius:5px;background:${c('browse')};"></span><span style="font:600 9px/1 'Inter Tight';color:${c('browse')};">Browse</span></button>
+    <button onclick="app.reset('mySessions')" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;"><span style="width:15px;height:14px;border:2px solid ${c('mySessions')};border-radius:4px;"></span><span style="font:600 9px/1 'Inter Tight';color:${c('mySessions')};">Sessions</span></button>
+    <div style="width:54px;"></div>
+    <button onclick="app.reset('messages')" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;"><span style="width:15px;height:13px;border:2px solid ${c('messages')};border-radius:5px;"></span><span style="font:600 9px/1 'Inter Tight';color:${c('messages')};">Messages</span></button>
+    <button onclick="app.reset('profile')" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;"><span style="width:14px;height:14px;border:2px solid ${c('profile')};border-radius:50%;"></span><span style="font:600 9px/1 'Inter Tight';color:${c('profile')};">Profile</span></button>
+    <button onclick="app.goCreate()" style="position:absolute;left:50%;top:-20px;transform:translateX(-50%);width:56px;height:56px;border-radius:18px;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 22px rgba(194,107,74,.5);"><span style="width:21px;height:2.6px;background:#fff;position:absolute;border-radius:2px;"></span><span style="width:2.6px;height:21px;background:#fff;position:absolute;border-radius:2px;"></span></button>
+  </div>`;
+}
+
+//==================== NOTIF OVERLAY ====================
+function renderOverlay(){
+  const el=document.getElementById('overlay');
+  if(!state.showNotif){ el.innerHTML=''; el.style.display='none'; return; }
+  el.style.display='block';
+  const items=state.notifs.map(n=>`<div style="padding:13px 16px;border-bottom:1px solid var(--border);${n.unread?'background:var(--accentSoft);':''}"><div style="font:600 14px/1.2 'Inter Tight';color:var(--ink);">${n.title}</div><div style="font:500 13px/1.3 'Inter Tight';color:var(--muted);margin-top:3px;">${n.body}</div><div style="font:500 11px/1 'IBM Plex Mono';color:var(--faint);margin-top:5px;">${n.time}</div></div>`).join('');
+  el.innerHTML=`<div onclick="app.closeNotif()" style="position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:40;animation:fadeIn .2s;"><div onclick="event.stopPropagation()" style="position:absolute;top:64px;right:16px;left:16px;background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.3);animation:popIn .25s;"><div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);"><span style="font:700 15px 'Space Grotesk';color:var(--ink);">Notifications</span><span onclick="app.markAllRead()" style="font:600 12px 'Inter Tight';color:var(--accentInk);cursor:pointer;">Mark all read</span></div><div style="max-height:60vh;overflow-y:auto;">${items}</div></div></div>`;
+}
+
+//==================== RENDER ====================
+const SCREENS={ login:screenLogin, signup:screenSignup, onboarding:screenOnboarding, browse:screenBrowse, session:screenSession, mySessions:screenMy, profile:screenProfile, editProfile:screenEditProfile, user:screenUser, game:screenGame, messages:screenMessages, conversation:screenConversation, create:screenCreate };
+function renderScreen(){ const fn=SCREENS[state.screen]||screenLogin; document.getElementById('app-scroll').innerHTML=fn(); }
+function render(){
+  const T=THEMES[state.theme];
+  Object.entries(T).forEach(([k,v])=>document.body.style.setProperty('--'+k, v));
+  renderScreen(); renderChrome(); renderOverlay();
+  // restore focus to an autocomplete input after re-render (keeps typing fluid)
+  if(state.focusId){ const el=document.getElementById(state.focusId); if(el){ el.focus(); const v=el.value; try{ el.setSelectionRange(v.length,v.length); }catch(e){} } state.focusId=null; }
+}
+render();
+</script>
+</body>
+</html>

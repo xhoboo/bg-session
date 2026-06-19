@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { isSessionFinished } from '../lib/format'
 import ProfileView from '../components/ProfileView'
 
 export default function Profile() {
-  const { user, profile } = useAuth()
+  const { user, profile, signOut } = useAuth()
+  const navigate = useNavigate()
+
+  const handleSignOut = async () => {
+    await signOut()
+    navigate('/login', { replace: true })
+  }
   const [history, setHistory] = useState([])
 
   // Finished sessions (hosted + joined) for this user's history, with avg
@@ -58,6 +64,8 @@ export default function Profile() {
       <ProfileView profile={profile} email={user.email} history={history} />
       <div className="spacer" />
       <Link to="/profile/edit" className="btn btn-primary btn-block">Edit profile</Link>
+      <div className="spacer" />
+      <button className="btn btn-secondary btn-block" onClick={handleSignOut}>Sign out</button>
     </div>
   )
 }
