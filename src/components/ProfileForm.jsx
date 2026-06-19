@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import GameTagInput from './GameTagInput'
-import DomicileInput from './DomicileInput'
 import AvatarUpload from './AvatarUpload'
 
 const GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say']
@@ -48,20 +47,22 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
       <div className="card">
         <AvatarUpload
           label="Avatar"
-          hint="shown on your profile and sessions"
           value={form.avatarUrl}
           name={form.nickname}
           onChange={setField('avatarUrl')}
         />
 
         <div className="form-group">
-          <label className="field-label" htmlFor="nickname">
-            Nickname <span className="field-hint">— shown to other players</span>
-          </label>
+          <label className="field-label" htmlFor="nickname">Nickname</label>
           <input id="nickname" type="text" value={form.nickname} onChange={set('nickname')} placeholder="e.g. Andi" required />
         </div>
 
-        <DomicileInput value={form.domicile} onChange={setField('domicile')} />
+        <div className="form-group">
+          <label className="field-label" htmlFor="domicile">
+            Domicile <span className="field-hint">— optional</span>
+          </label>
+          <input id="domicile" type="text" value={form.domicile} onChange={set('domicile')} placeholder="e.g. Jakarta Pusat" />
+        </div>
 
         <GameTagInput
           label="Favorite board games"
@@ -81,7 +82,9 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
       </div>
 
       {/* Confirmed participants only — shared once a session is confirmed */}
-      <h2 className="section-title" style={{ marginBottom: 4 }}>Confirmed participants only</h2>
+      <h2 className="section-title" style={{ marginBottom: 4 }}>
+        Confirmed participants only <span className="field-hint">— optional</span>
+      </h2>
       <p className="subtitle" style={{ marginBottom: 12 }}>Only shared with players once a session is confirmed, so they can recognize you.</p>
       <div className="card">
         <AvatarUpload

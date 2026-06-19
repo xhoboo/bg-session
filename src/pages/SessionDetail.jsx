@@ -131,22 +131,24 @@ export default function SessionDetail() {
     navigate('/my-sessions', { replace: true })
   }
 
+  // Submit the star rating on its own. Rating is required and permanent; once
+  // sent it can't be changed. A review can be added separately afterwards.
   const submitRating = async () => {
     setError('')
-    // First submission: insert the rating (review optional). Rating is required
-    // and permanent. A guest can rate now and add a review later.
-    if (!ratings.find((r) => r.user_id === user.id)) {
-      if (ratingValue < 1) return setError('Please pick a star rating from 1 to 10.')
-      setBusy(true)
-      const { error } = await supabase
-        .from('session_ratings')
-        .insert({ session_id: id, user_id: user.id, rating: ratingValue, review: reviewText.trim() })
-      setBusy(false)
-      if (error) return setError(error.message)
-      setReviewText('')
-      return loadAll()
-    }
-    // Already rated: add the review to the existing row (rating stays as-is).
+    if (ratings.find((r) => r.user_id === user.id)) return // already rated
+    if (ratingValue < 1) return setError('Please pick a star rating from 1 to 10.')
+    setBusy(true)
+    const { error } = await supabase
+      .from('session_ratings')
+      .insert({ session_id: id, user_id: user.id, rating: ratingValue })
+    setBusy(false)
+    if (error) return setError(error.message)
+    await loadAll()
+  }
+
+  // Send the written review on its own — attached to the existing rating row.
+  const submitReview = async () => {
+    setError('')
     const body = reviewText.trim()
     if (!body) return
     setBusy(true)
@@ -281,31 +283,45 @@ export default function SessionDetail() {
                 {!myRating && <span className="field-hint"> — required for participants, and can’t be changed once sent</span>}
               </div>
               <div className="rating-row" style={{ marginBottom: 12 }}>
-                {myRating
-                  ? <StarRating value={myRating.rating} size={18} />
-                  : <StarRating value={ratingValue} onChange={setRatingValue} />}
+                {myRating ? (
+                  <StarRating value={myRating.rating} size={18} />
+                ) : (
+                  <>
+                    <StarRating value={ratingValue} onChange={setRatingValue} />
+                    {/* Submit button sits right beside the stars it sends. */}
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={submitRating}
+                      disabled={busy || ratingValue < 1}
+                      title={ratingValue < 1 ? 'Pick a star rating first' : 'Submit rating'}
+                    >
+                      Submit rating
+                    </button>
+                  </>
+                )}
               </div>
 
-              {/* Review: separate from the rating. The box stays until you send a
-                  review (you can rate now and review later); then it's read-only. */}
+              {/* Review: a separate, optional step that's only available once
+                  you've rated. Stays editable until sent, then read-only. */}
               {myRating?.review ? (
                 <div className="muted" style={{ fontSize: 14 }}>“{myRating.review}”</div>
-              ) : (
+              ) : myRating ? (
                 <div className="review-input-wrap">
                   <textarea
-                    placeholder={myRating ? 'Add a review (optional)…' : 'Add a review now (optional)…'}
+                    placeholder="Add a review (optional)…"
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
                   />
                   <button
                     className="btn btn-primary btn-sm review-send-btn"
-                    onClick={submitRating}
-                    disabled={busy || (myRating ? !reviewText.trim() : ratingValue < 1)}
-                    title={!myRating && ratingValue < 1 ? 'Pick a star rating first' : 'Send'}
+                    onClick={submitReview}
+                    disabled={busy || !reviewText.trim()}
                   >
-                    Send
+                    Send review
                   </button>
                 </div>
+              ) : (
+                <p className="muted" style={{ margin: 0, fontSize: 14 }}>You can add a written review after you submit your rating.</p>
               )}
             </div>
 
