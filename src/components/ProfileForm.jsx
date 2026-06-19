@@ -41,64 +41,74 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
   }
 
   return (
-    <form className="card" onSubmit={handleSubmit}>
-      <AvatarUpload
-        label="Avatar"
-        hint="public — shown on your profile and sessions"
-        value={form.avatarUrl}
-        name={form.nickname}
-        onChange={setField('avatarUrl')}
-      />
+    <form onSubmit={handleSubmit}>
+      {/* Public profile — visible to everyone */}
+      <h2 className="section-title" style={{ marginTop: 0, marginBottom: 4 }}>Public profile</h2>
+      <p className="subtitle" style={{ marginBottom: 12 }}>Shown to everyone — on your profile and in sessions.</p>
+      <div className="card">
+        <AvatarUpload
+          label="Avatar"
+          hint="shown on your profile and sessions"
+          value={form.avatarUrl}
+          name={form.nickname}
+          onChange={setField('avatarUrl')}
+        />
 
-      <AvatarUpload
-        label="In-person photo"
-        hint="recommended — only shown to confirmed participants so they recognize you"
-        value={form.photoUrl}
-        name={form.nickname}
-        onChange={setField('photoUrl')}
-      />
+        <div className="form-group">
+          <label className="field-label" htmlFor="nickname">
+            Nickname <span className="field-hint">— shown to other players</span>
+          </label>
+          <input id="nickname" type="text" value={form.nickname} onChange={set('nickname')} placeholder="e.g. Andi" required />
+        </div>
 
-      <div className="form-group">
-        <label className="field-label" htmlFor="realName">Real name</label>
-        <input id="realName" type="text" value={form.realName} onChange={set('realName')} placeholder="e.g. Andi Wijaya" />
+        <DomicileInput value={form.domicile} onChange={setField('domicile')} />
+
+        <GameTagInput
+          label="Favorite board games"
+          hint="at least 1, up to 10 — type to search the catalog"
+          items={form.favoriteGames}
+          onChange={setField('favoriteGames')}
+          max={10}
+        />
+
+        <GameTagInput
+          label="Board games you own"
+          hint="optional — it's fine to own none"
+          items={form.ownedGames}
+          onChange={setField('ownedGames')}
+          max={30}
+        />
       </div>
 
-      <div className="form-group">
-        <label className="field-label" htmlFor="nickname">
-          Nickname <span className="field-hint">— shown to other players</span>
-        </label>
-        <input id="nickname" type="text" value={form.nickname} onChange={set('nickname')} placeholder="e.g. Andi" required />
+      {/* Confirmed participants only — shared once a session is confirmed */}
+      <h2 className="section-title" style={{ marginBottom: 4 }}>Confirmed participants only</h2>
+      <p className="subtitle" style={{ marginBottom: 12 }}>Only shared with players once a session is confirmed, so they can recognize you.</p>
+      <div className="card">
+        <AvatarUpload
+          label="In-person photo"
+          hint="recommended — so participants recognize you"
+          value={form.photoUrl}
+          name={form.nickname}
+          onChange={setField('photoUrl')}
+        />
+
+        <div className="form-group">
+          <label className="field-label" htmlFor="realName">Real name</label>
+          <input id="realName" type="text" value={form.realName} onChange={set('realName')} placeholder="e.g. Andi Wijaya" />
+        </div>
+
+        <div className="form-group">
+          <label className="field-label" htmlFor="gender">Gender</label>
+          <select id="gender" value={form.gender} onChange={set('gender')}>
+            <option value="">Prefer not to say</option>
+            {GENDERS.filter((g) => g !== 'Prefer not to say').map((g) => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      <div className="form-group">
-        <label className="field-label" htmlFor="gender">Gender</label>
-        <select id="gender" value={form.gender} onChange={set('gender')}>
-          <option value="">Prefer not to say</option>
-          {GENDERS.filter((g) => g !== 'Prefer not to say').map((g) => (
-            <option key={g} value={g}>{g}</option>
-          ))}
-        </select>
-      </div>
-
-      <DomicileInput value={form.domicile} onChange={setField('domicile')} />
-
-      <GameTagInput
-        label="Favorite board games"
-        hint="at least 1, up to 10 — type to search the catalog"
-        items={form.favoriteGames}
-        onChange={setField('favoriteGames')}
-        max={10}
-      />
-
-      <GameTagInput
-        label="Board games you own"
-        hint="optional — it's fine to own none"
-        items={form.ownedGames}
-        onChange={setField('ownedGames')}
-        max={30}
-      />
-
-      <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
+      <button className="btn btn-primary btn-block" type="submit" disabled={busy} style={{ marginTop: 20 }}>
         {busy ? 'Saving…' : submitLabel}
       </button>
     </form>
