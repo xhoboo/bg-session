@@ -51,6 +51,7 @@ export default function EditSession() {
       setInitial({
         title: s.title,
         startsAt: toDatetimeLocalValue(s.starts_at),
+        region: s.region ?? '',
         area: s.area,
         fullAddress: addr?.full_address ?? '',
         mapsUrl: addr?.maps_url ?? '',
@@ -69,7 +70,8 @@ export default function EditSession() {
 
   const handleSubmit = async (form) => {
     setError('')
-    if (!form.area) return setError('Please choose a neighborhood area.')
+    if (!form.region) return setError('Please choose a region.')
+    if (!form.area) return setError('Please choose an area.')
     if (!form.fullAddress.trim()) return setError('Please enter the full address.')
     if (Number(form.minPlayers) > Number(form.maxPlayers)) return setError('Min players cannot be greater than max players.')
 
@@ -83,6 +85,7 @@ export default function EditSession() {
       .update({
         title: form.title.trim(),
         starts_at: startsAtIso,
+        region: form.region,
         area: form.area,
         min_players: Number(form.minPlayers),
         max_players: Number(form.maxPlayers),

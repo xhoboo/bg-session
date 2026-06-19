@@ -4,14 +4,17 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration, hasSessionStarted, isSessionFinished } from '../lib/format'
 import Avatar from '../components/Avatar'
+import GameChip from '../components/GameChip'
 import StarRating from '../components/StarRating'
 import SessionChat from '../components/SessionChat'
 import SessionParticipants from '../components/SessionParticipants'
+import { useGameCatalog } from '../lib/useGameCatalog'
 
 export default function SessionDetail() {
   const { id } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { catalog, loading: catalogLoading } = useGameCatalog()
 
   const [session, setSession] = useState(null)
   const [address, setAddress] = useState(null)
@@ -209,6 +212,9 @@ export default function SessionDetail() {
           {formatDuration(session.duration_minutes) && (
             <div className="row-between"><span className="muted">Duration</span><strong>{formatDuration(session.duration_minutes)}</strong></div>
           )}
+          {session.region && (
+            <div className="row-between"><span className="muted">Region</span><span className="badge badge-area">{session.region}</span></div>
+          )}
           <div className="row-between"><span className="muted">Area</span><span className="badge badge-area">{session.area}</span></div>
           <div className="row-between"><span className="muted">Players</span><strong>{playerCount(session)}{isFull ? ' · full' : ''}{session.min_players > 1 ? ` · min ${session.min_players}` : ''}</strong></div>
           <div>
@@ -216,7 +222,7 @@ export default function SessionDetail() {
             {session.board_games ? (
               <div className="chips">
                 {session.board_games.split(',').map((g) => g.trim()).filter(Boolean).map((g) => (
-                  <Link key={g} to={`/games/${encodeURIComponent(g)}`} className="chip chip-link">{g}</Link>
+                  <GameChip key={g} name={g} catalog={catalog} loading={catalogLoading} />
                 ))}
               </div>
             ) : (

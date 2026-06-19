@@ -5,6 +5,9 @@ dist-ssr
 .env
 .env.*.local
 
+# Local-only admin tool — never commit or deploy (holds the service_role key)
+/admin/
+
 # Editor / OS
 .vscode/*
 !.vscode/extensions.json

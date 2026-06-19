@@ -7,6 +7,7 @@ import SessionForm from '../components/SessionForm'
 const initialForm = {
   title: '',
   startsAt: '',
+  region: '',
   area: '',
   fullAddress: '',
   mapsUrl: '',
@@ -26,7 +27,8 @@ export default function CreateSession() {
   const handleSubmit = async (form) => {
     setError('')
 
-    if (!form.area) return setError('Please choose a neighborhood area.')
+    if (!form.region) return setError('Please choose a region.')
+    if (!form.area) return setError('Please choose an area.')
     if (!form.fullAddress.trim()) return setError('Please enter the full address (kept private until you confirm a guest).')
     if (Number(form.minPlayers) > Number(form.maxPlayers)) return setError('Min players cannot be greater than max players.')
 
@@ -42,6 +44,7 @@ export default function CreateSession() {
         host_id: user.id,
         title: form.title.trim(),
         starts_at: startsAtIso,
+        region: form.region,
         area: form.area,
         min_players: Number(form.minPlayers),
         max_players: Number(form.maxPlayers),

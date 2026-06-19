@@ -26,7 +26,7 @@ export default function SessionCard({ session }) {
         <span>📅 {formatDateTime(session.starts_at)}</span>
       </div>
       <div className="session-meta">
-        <span><span className="badge badge-area">{session.area}</span></span>
+        <span><span className="badge badge-area">{session.region ? `${session.region} · ${session.area}` : session.area}</span></span>
         <span>👥 {spots} players{isFull ? ' · full' : ''}</span>
         <span>🎲 {session.board_games ? truncate(session.board_games, 40) : 'TBD'}</span>
       </div>

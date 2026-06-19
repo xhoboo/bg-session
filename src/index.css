@@ -196,8 +196,10 @@ textarea { resize: vertical; min-height: 80px; }
 .stack { display: flex; flex-direction: column; gap: 12px; }
 .empty-state { text-align: center; color: var(--slate-600); padding: 48px 16px; }
 
-.toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+.toolbar { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; }
 .toolbar select { width: auto; min-width: 180px; }
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-group .field-label { margin: 0; }
 
 .address-box { background: var(--teal-50); border: 1px solid #99f6e4; border-radius: 10px; padding: 14px; }
 .address-locked { background: var(--slate-100); border: 1px dashed var(--slate-200); border-radius: 10px; padding: 14px; color: var(--slate-600); }
@@ -260,6 +262,7 @@ textarea { resize: vertical; min-height: 80px; }
 .chip-muted { background: var(--slate-100); color: var(--slate-600); }
 .chip-link { text-decoration: none; cursor: pointer; }
 .chip-link:hover { background: #ccfbf1; }
+.chip-disabled { background: var(--slate-100); color: var(--slate-400); cursor: default; border: 1px dashed var(--slate-200); }
 .chip-removable { padding-right: 6px; }
 .chip-x { background: none; border: none; cursor: pointer; font-size: 16px; line-height: 1; color: inherit; opacity: 0.6; padding: 0 2px; }
 .chip-x:hover { opacity: 1; }

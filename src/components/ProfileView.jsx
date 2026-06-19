@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Avatar from './Avatar'
+import GameChip from './GameChip'
+import { useGameCatalog } from '../lib/useGameCatalog'
 import { formatDateTime, playerCount, lastSeen } from '../lib/format'
 
 const PAGE_SIZE = 10
@@ -13,6 +15,7 @@ const PAGE_SIZE = 10
 // "Message" button on someone else's profile).
 export default function ProfileView({ profile, email, history = [], headerAction }) {
   const [page, setPage] = useState(0)
+  const { catalog, loading: catalogLoading } = useGameCatalog()
   if (!profile) return null
 
   const name = profile.nickname || profile.display_name || 'Player'
@@ -46,7 +49,7 @@ export default function ProfileView({ profile, email, history = [], headerAction
           <div className="muted" style={{ marginBottom: 6 }}>Favorite board games</div>
           {fav.length ? (
             <div className="chips">{fav.map((g) => (
-              <Link to={`/games/${encodeURIComponent(g)}`} className="chip chip-link" key={g}>{g}</Link>
+              <GameChip key={g} name={g} catalog={catalog} loading={catalogLoading} />
             ))}</div>
           ) : (
             <span className="muted">—</span>
@@ -56,7 +59,7 @@ export default function ProfileView({ profile, email, history = [], headerAction
           <div className="muted" style={{ marginBottom: 6 }}>Board games owned</div>
           {owned.length ? (
             <div className="chips">{owned.map((g) => (
-              <Link to={`/games/${encodeURIComponent(g)}`} className="chip chip-link chip-muted" key={g}>{g}</Link>
+              <GameChip key={g} name={g} catalog={catalog} loading={catalogLoading} muted />
             ))}</div>
           ) : (
             <span className="muted">None</span>

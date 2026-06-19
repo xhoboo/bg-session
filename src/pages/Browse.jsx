@@ -1,15 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { isSessionFinished } from '../lib/format'
-import { JAKARTA_AREAS } from '../data/areas'
+import { useRegions } from '../lib/useRegions'
 import SessionCard from '../components/SessionCard'
+
+// Parse a session's comma-separated board_games text into a clean list.
+const parseGames = (text) => (text || '').split(',').map((g) => g.trim()).filter(Boolean)
 
 export default function Browse() {
   const { user } = useAuth()
+  const { regions, areasByRegion } = useRegions()
   const [sessions, setSessions] = useState([])
+  const [region, setRegion] = useState('')
   const [area, setArea] = useState('')
+  const [game, setGame] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [toRate, setToRate] = useState([])
@@ -54,29 +60,56 @@ export default function Browse() {
     }
   }, [user.id])
 
+  // Fetch all upcoming sessions once; the three filters below are applied
+  // client-side so we can also derive the board-game options from what's
+  // actually on offer.
   useEffect(() => {
     let active = true
     setLoading(true)
 
-    let query = supabase
+    supabase
       .from('sessions')
-      .select('id, title, starts_at, area, max_players, board_games, session_type, confirmed_count, host:profiles(display_name, avatar_url)')
+      .select('id, title, starts_at, region, area, max_players, board_games, session_type, confirmed_count, host:profiles(display_name, avatar_url)')
       .gte('starts_at', new Date().toISOString())
       .order('starts_at', { ascending: true })
-
-    if (area) query = query.eq('area', area)
-
-    query.then(({ data, error }) => {
-      if (!active) return
-      if (error) setError(error.message)
-      else setSessions(data ?? [])
-      setLoading(false)
-    })
+      .then(({ data, error }) => {
+        if (!active) return
+        if (error) setError(error.message)
+        else setSessions(data ?? [])
+        setLoading(false)
+      })
 
     return () => {
       active = false
     }
-  }, [area])
+  }, [])
+
+  // Area options follow the chosen region; board-game options are the distinct
+  // games in upcoming sessions that match the current region + area filter.
+  const areaOptions = region ? areasByRegion[region] || [] : []
+  const gameOptions = useMemo(() => {
+    const byKey = new Map() // lowercased name -> first-seen display name
+    for (const s of sessions) {
+      if (region && s.region !== region) continue
+      if (area && s.area !== area) continue
+      for (const g of parseGames(s.board_games)) {
+        const key = g.toLowerCase()
+        if (!byKey.has(key)) byKey.set(key, g)
+      }
+    }
+    return [...byKey.values()].sort((a, b) => a.localeCompare(b))
+  }, [sessions, region, area])
+
+  const visible = sessions.filter((s) => {
+    if (region && s.region !== region) return false
+    if (area && s.area !== area) return false
+    if (game && !parseGames(s.board_games).some((g) => g.toLowerCase() === game.toLowerCase())) return false
+    return true
+  })
+
+  // Changing a parent filter invalidates its narrower children.
+  const onRegionChange = (e) => { setRegion(e.target.value); setArea(''); setGame('') }
+  const onAreaChange = (e) => { setArea(e.target.value); setGame('') }
 
   return (
     <div className="container">
@@ -112,27 +145,49 @@ export default function Browse() {
       )}
 
       <div className="toolbar">
-        <label className="field-label" htmlFor="filter" style={{ margin: 0 }}>Area</label>
-        <select id="filter" value={area} onChange={(e) => setArea(e.target.value)}>
-          <option value="">All areas</option>
-          {JAKARTA_AREAS.map((a) => (
-            <option key={a} value={a}>{a}</option>
-          ))}
-        </select>
+        <div className="filter-group">
+          <label className="field-label" htmlFor="f-region">Region</label>
+          <select id="f-region" value={region} onChange={onRegionChange}>
+            <option value="">All regions</option>
+            {regions.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label className="field-label" htmlFor="f-area">Area</label>
+          <select id="f-area" value={area} onChange={onAreaChange} disabled={!region}>
+            <option value="">All areas</option>
+            {areaOptions.map((a) => (
+              <option key={a} value={a}>{a}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label className="field-label" htmlFor="f-game">Board game</label>
+          <select id="f-game" value={game} onChange={(e) => setGame(e.target.value)} disabled={gameOptions.length === 0}>
+            <option value="">All games</option>
+            {gameOptions.map((g) => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
 
       {loading ? (
         <div className="spinner" aria-label="Loading sessions" />
-      ) : sessions.length === 0 ? (
+      ) : visible.length === 0 ? (
         <div className="empty-state">
-          <p>No upcoming sessions{area ? ` in ${area}` : ''} yet.</p>
+          <p>No upcoming sessions{region ? ` in ${area || region}` : ''}{game ? ` with ${game}` : ''} yet.</p>
           <Link to="/create" className="btn btn-primary">Be the first to host</Link>
         </div>
       ) : (
         <div className="stack">
-          {sessions.map((s) => (
+          {visible.map((s) => (
             <SessionCard key={s.id} session={s} />
           ))}
         </div>
