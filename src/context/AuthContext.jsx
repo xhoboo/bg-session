@@ -49,7 +49,9 @@ export function AuthProvider({ children }) {
         .eq('id', uid)
         .maybeSingle(),
     ])
-    setProfile(pub ? { ...pub, ...(priv ?? {}) } : null)
+    // We touch last_seen on load, so for your own profile you're online "now" —
+    // stamp it locally too, sidestepping a read/write race on first load.
+    setProfile(pub ? { ...pub, ...(priv ?? {}), last_seen_at: new Date().toISOString() } : null)
     setProfileLoaded(true)
   }, [])
 

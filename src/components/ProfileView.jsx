@@ -30,14 +30,14 @@ export default function ProfileView({ profile, email, history = [], headerAction
     <>
       <div className="profile-view-head">
         <Avatar name={name} src={profile.avatar_url} size={88} />
-        <h1 style={{ marginBottom: 2 }}>{name}</h1>
+        <div className="name-row">
+          <h1 style={{ margin: 0 }}>{name}</h1>
+          <span className={'last-seen' + (seen.online ? ' is-online' : '')} title={seen.label}>
+            <span className="last-seen-dot" />{seen.label}
+          </span>
+        </div>
         {profile.domicile && <p className="muted" style={{ margin: '2px 0 0' }}>📍 {profile.domicile}</p>}
         {email && <p className="muted" style={{ margin: '2px 0 0', fontSize: 14 }}>{email}</p>}
-        {seen && (
-          <p className={'last-seen' + (seen.online ? ' is-online' : '')}>
-            <span className="last-seen-dot" />{seen.label}
-          </p>
-        )}
         {headerAction && <div style={{ marginTop: 10 }}>{headerAction}</div>}
       </div>
 

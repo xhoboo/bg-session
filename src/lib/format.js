@@ -40,10 +40,11 @@ export function timeAgo(iso) {
   return formatDateShort(iso)
 }
 
-// Coarse "last online" status for a profile. Returns null when unknown (the
-// user has never been stamped). Within 5 minutes counts as currently online.
+// Coarse "last online" status for a profile. Within 5 minutes counts as
+// currently online; no timestamp yet (user hasn't opened the app since this
+// shipped) shows as "Offline" and self-corrects once they load it.
 export function lastSeen(iso) {
-  if (!iso) return null
+  if (!iso) return { online: false, label: 'Offline' }
   const diffMin = (Date.now() - new Date(iso).getTime()) / 60_000
   if (diffMin < 5) return { online: true, label: 'Online now' }
   return { online: false, label: `Last seen ${timeAgo(iso)}` }
