@@ -68,9 +68,36 @@ export function AuthProvider({ children }) {
       return
     }
     loadProfile(session.user.id)
-    // Stamp "last online" (fire-and-forget; server sets the clock).
-    supabase.rpc('touch_last_seen')
   }, [session?.user?.id, loadProfile])
+
+  // Keep last_seen_at tied to real activity, so members show an accurate
+  // "Online now" / "Last seen Xm ago". A single stamp on load goes stale while
+  // the app stays open — making an active user look offline to everyone else,
+  // and freezing your own profile at the load time. So we re-stamp on any user
+  // interaction (click / keypress / scroll / navigation) and when the tab
+  // regains focus, throttled to at most once a minute and only while the tab is
+  // visible. We update the local profile too, so your own profile reads
+  // "Online now" instead of a frozen load-time value.
+  useEffect(() => {
+    if (!isSupabaseConfigured || !session?.user) return
+    let lastPing = 0
+    const ping = () => {
+      if (document.visibilityState !== 'visible') return
+      const now = Date.now()
+      if (now - lastPing < 60_000) return
+      lastPing = now
+      supabase.rpc('touch_last_seen') // server sets the clock; fire-and-forget
+      setProfile((p) => (p ? { ...p, last_seen_at: new Date().toISOString() } : p))
+    }
+    ping() // stamp immediately on login / session restore
+    const activity = ['click', 'keydown', 'pointerdown', 'scroll', 'focus']
+    activity.forEach((e) => window.addEventListener(e, ping, { passive: true }))
+    document.addEventListener('visibilitychange', ping)
+    return () => {
+      activity.forEach((e) => window.removeEventListener(e, ping))
+      document.removeEventListener('visibilitychange', ping)
+    }
+  }, [session?.user?.id])
 
   const refreshProfile = useCallback(() => {
     if (session?.user) return loadProfile(session.user.id)
