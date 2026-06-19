@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 // 1–10 star rating. Interactive when onChange is provided; read-only otherwise.
-export default function StarRating({ value = 0, onChange, size = 24, showvalue = true }) {
+export default function StarRating({ value = 0, onChange, size = 24, showValue = true }) {
   const [hover, setHover] = useState(0)
   const readOnly = !onChange
   const active = hover || value
@@ -22,7 +22,7 @@ export default function StarRating({ value = 0, onChange, size = 24, showvalue =
           <span className={active >= n ? 'star on' : 'star'}>★</span>
         </button>
       ))}
-      {showvalue && value > 0 && <span className="muted" style={{ fontSize: 13, marginLeft: 6 }}>{value}/10</span>}
+      {showValue && value > 0 && <span className="muted" style={{ fontSize: 13, marginLeft: 6 }}>{value}/10</span>}
     </span>
   )
 }

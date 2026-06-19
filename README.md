@@ -30,9 +30,10 @@ notice instead of crashing.
 
 In the Supabase dashboard open **SQL Editor → New query** and run each file in
 [`supabase/migrations/`](supabase/migrations/) **in order**, from
-`0001_init.sql` through the latest (`0011_…`). They're incremental and safe to
-re-run. Later migrations add richer profiles, private profile fields, avatar
-storage, ratings, the board-game/domicile catalogs, chat, and rating reminders.
+`0001_init.sql` through the latest (`0023_…`). They're incremental. Later
+migrations add richer profiles, private profile fields, avatar storage, ratings
+& reviews, the board-game catalog, the regions/areas location model, session
+chat, reminders, and online-presence (last-seen) tracking.
 
 The base migration creates:
 
@@ -91,17 +92,23 @@ still work.
 
 ```
 src/
-  lib/            supabaseClient.js, format.js
+  lib/            supabaseClient.js, format.js, useRegions.js,
+                  useGameCatalog.js, useDebouncedCallback.js
   context/        AuthContext.jsx        (session + profile)
-  components/     Layout, Navbar, NotificationBell, ProtectedRoute,
-                  SessionCard, GoogleButton, SetupNotice
-  pages/          Login, Signup, AuthCallback,
-                  Browse, CreateSession, SessionDetail, MySessions
-  data/areas.js   Jakarta neighborhood list
+  components/     Layout, Navbar, BottomNav, NotificationBell, ThemeToggle,
+                  ProfileForm/ProfileView, SessionForm/SessionCard,
+                  SessionChat, StarRating, Avatar, …
+  pages/          Login, Signup, AuthCallback, Onboarding, Browse,
+                  Create/EditSession, SessionDetail, MySessions, Profile,
+                  EditProfile, UserProfile, GameDetail, Messages, Conversation
 supabase/
-  migrations/0001_init.sql
-  functions/send-notification-email/
+  migrations/     0001_init.sql … 0023_drop_domiciles.sql
+  functions/      send-notification-email/
 ```
+
+> Regions & areas (the Host form's location pickers and Browse filters) and the
+> board-game catalog are data-driven from Supabase, managed out-of-band by a
+> local-only admin tool — there's no hardcoded list in the source.
 
 ## 7. How the flows work
 

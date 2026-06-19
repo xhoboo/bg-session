@@ -264,7 +264,7 @@ export default function SessionDetail() {
           <div className="card stack">
             {ratings.length >= 1 ? (
               <div className="rating-row">
-                <StarRating value={Math.round(avgRating)} showvalue={false} />
+                <StarRating value={Math.round(avgRating)} showValue={false} />
                 <strong>{avgRating}/10</strong>
                 {/* Hide the count below 3 ratings: with only the average shown and
                     no count, a lone rating can't be singled out. */}

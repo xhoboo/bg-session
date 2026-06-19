@@ -1,16 +1,23 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 
-// Loads the region/area catalog from Supabase once. Returns the ordered list of
+// Loads the region/area catalog from Supabase. Returns the ordered list of
 // region names and a lookup of area names keyed by region name. Regions/areas
-// added later via the local admin tool show up here without a code change, so
-// the Host-a-Session form and the Browse filters always read the live catalog.
+// added later via the local admin tool show up after a page reload, so the
+// Host-a-Session form and the Browse filters stay in sync with the catalog.
+//
+// Like the board-game catalog this is small, read-only reference data, so the
+// first successful load is cached at module scope and shared across every
+// component that mounts this hook (no refetch when navigating between Browse and
+// the Host form). A full reload picks up any newly added regions/areas.
+let cache = null // { regions: string[], areasByRegion: Record<string, string[]> }
+
 export function useRegions() {
-  const [regions, setRegions] = useState([])
-  const [areasByRegion, setAreasByRegion] = useState({})
-  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState(() => cache ?? { regions: [], areasByRegion: {} })
+  const [loading, setLoading] = useState(cache === null)
 
   useEffect(() => {
+    if (cache) return // already loaded — serve from cache
     let active = true
     ;(async () => {
       const [regRes, areaRes] = await Promise.all([
@@ -28,8 +35,9 @@ export function useRegions() {
         ;(byRegion[rname] ||= []).push(a.name)
       }
 
-      setRegions(regs.map((r) => r.name))
-      setAreasByRegion(byRegion)
+      const next = { regions: regs.map((r) => r.name), areasByRegion: byRegion }
+      if (!regRes.error && !areaRes.error) cache = next // cache only successful loads
+      setData(next)
       setLoading(false)
     })()
     return () => {
@@ -37,5 +45,5 @@ export function useRegions() {
     }
   }, [])
 
-  return { regions, areasByRegion, loading }
+  return { regions: data.regions, areasByRegion: data.areasByRegion, loading }
 }

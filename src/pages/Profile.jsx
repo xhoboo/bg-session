@@ -8,12 +8,12 @@ import ProfileView from '../components/ProfileView'
 export default function Profile() {
   const { user, profile, signOut } = useAuth()
   const navigate = useNavigate()
+  const [history, setHistory] = useState([])
 
   const handleSignOut = async () => {
     await signOut()
     navigate('/login', { replace: true })
   }
-  const [history, setHistory] = useState([])
 
   // Finished sessions (hosted + joined) for this user's history, with avg
   // ratings. "Finished" is start + duration, so in-progress sessions don't show.

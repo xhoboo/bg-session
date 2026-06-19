@@ -2,7 +2,8 @@ import { useState } from 'react'
 import GameTagInput from './GameTagInput'
 import AvatarUpload from './AvatarUpload'
 
-const GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say']
+// Explicit choices; an empty selection means "Prefer not to say".
+const GENDERS = ['Male', 'Female', 'Other']
 
 // Build the form state shape from a profile row (or empty for a new user).
 export function profileToForm(p) {
@@ -104,7 +105,7 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
           <label className="field-label" htmlFor="gender">Gender</label>
           <select id="gender" value={form.gender} onChange={set('gender')}>
             <option value="">Prefer not to say</option>
-            {GENDERS.filter((g) => g !== 'Prefer not to say').map((g) => (
+            {GENDERS.map((g) => (
               <option key={g} value={g}>{g}</option>
             ))}
           </select>
