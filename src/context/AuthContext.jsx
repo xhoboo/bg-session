@@ -20,6 +20,11 @@ export function AuthProvider({ children }) {
 
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return
+      // On refresh a session is restored here. Mark the profile as not-yet-
+      // loaded so route gates wait for it, instead of briefly seeing a stale
+      // "loaded" flag with a null profile and bouncing the user to onboarding
+      // (and from there to the homepage).
+      if (data.session?.user) setProfileLoaded(false)
       setSession(data.session ?? null)
       setLoading(false)
     })

@@ -74,7 +74,7 @@ export default function SessionDetail() {
     // Ratings — RLS returns rows only to participants of this session.
     const { data: rts } = await supabase
       .from('session_ratings')
-      .select('id, user_id, rating, review, created_at, rater:profiles(display_name, avatar_url)')
+      .select('id, user_id, rating, review, created_at, rater:profiles(nickname, display_name, avatar_url)')
       .eq('session_id', id)
       .order('created_at', { ascending: false })
     setRatings(rts ?? [])
@@ -132,12 +132,10 @@ export default function SessionDetail() {
     if (ratingValue < 1) return setError('Please pick a star rating from 1 to 10.')
     setBusy(true)
     setError('')
+    // Ratings are permanent — insert once, never update.
     const { error } = await supabase
       .from('session_ratings')
-      .upsert(
-        { session_id: id, user_id: user.id, rating: ratingValue, review: reviewText.trim() },
-        { onConflict: 'session_id,user_id' },
-      )
+      .insert({ session_id: id, user_id: user.id, rating: ratingValue, review: reviewText.trim() })
     setBusy(false)
     if (error) return setError(error.message)
     await loadAll()
@@ -170,9 +168,13 @@ export default function SessionDetail() {
 
       <div className="row-between" style={{ marginTop: 12 }}>
         <h1 style={{ marginBottom: 0 }}>{session.title}</h1>
-        <span className={'badge ' + (session.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
-          {session.session_type === 'open' ? 'Open' : 'Approval'}
-        </span>
+        {finished ? (
+          <span className="badge badge-done">Done</span>
+        ) : (
+          <span className={'badge ' + (session.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
+            {session.session_type === 'open' ? 'Open' : 'Approval'}
+          </span>
+        )}
       </div>
       <p className="subtitle" style={{ marginTop: 8 }}>
         Hosted by{' '}
@@ -197,25 +199,28 @@ export default function SessionDetail() {
             <div>{session.board_games || 'To be decided'}</div>
           </div>
 
-          <div>
-            <div className="muted" style={{ marginBottom: 4 }}>Address</div>
-            {address ? (
-              <div className="address-box">
-                <div>📍 {address.full_address}</div>
-                <a
-                  className="btn btn-secondary btn-sm"
-                  style={{ marginTop: 10 }}
-                  href={mapsLink(address.full_address, address.maps_url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  🗺️ Open in Google Maps
-                </a>
-              </div>
-            ) : (
-              <div className="address-locked">🔒 The full address is revealed once the host confirms your spot.</div>
-            )}
-          </div>
+          {/* Address is hidden once the session has finished — it's no longer useful. */}
+          {!finished && (
+            <div>
+              <div className="muted" style={{ marginBottom: 4 }}>Address</div>
+              {address ? (
+                <div className="address-box">
+                  <div>📍 {address.full_address}</div>
+                  <a
+                    className="btn btn-secondary btn-sm"
+                    style={{ marginTop: 10 }}
+                    href={mapsLink(address.full_address, address.maps_url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    🗺️ Open in Google Maps
+                  </a>
+                </div>
+              ) : (
+                <div className="address-locked">🔒 The full address is revealed once the host confirms your spot.</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -224,47 +229,69 @@ export default function SessionDetail() {
         <>
           <h2 className="section-title">Ratings & reviews</h2>
           <div className="card stack">
-            {avgRating ? (
+            {ratings.length >= 2 ? (
               <div className="rating-row">
                 <StarRating value={Math.round(avgRating)} showvalue={false} />
                 <strong>{avgRating}/10</strong>
-                <span className="muted">· {ratings.length} {ratings.length === 1 ? 'rating' : 'ratings'}</span>
+                <span className="muted">· {ratings.length} ratings</span>
               </div>
+            ) : ratings.length === 1 ? (
+              // Keep a lone rating anonymous — the average would equal it.
+              <p className="muted" style={{ margin: 0 }}>1 rating so far — the average appears once 2 or more people have rated.</p>
             ) : (
               <p className="muted" style={{ margin: 0 }}>No ratings yet — be the first.</p>
             )}
 
             <div style={{ borderTop: '1px solid var(--slate-100)', paddingTop: 14 }}>
-              <div className="field-label" style={{ marginBottom: 8 }}>
-                {myRating ? 'Your rating' : 'Rate this session'}
-                {!myRating && <span className="field-hint"> — required for participants</span>}
-              </div>
-              <div className="rating-row" style={{ marginBottom: 10 }}>
-                <StarRating value={ratingValue} onChange={setRatingValue} />
-              </div>
-              <textarea
-                placeholder="Add a review (optional)…"
-                value={reviewText}
-                onChange={(e) => setReviewText(e.target.value)}
-              />
-              <div className="spacer" />
-              <button className="btn btn-primary" onClick={submitRating} disabled={busy}>
-                {myRating ? 'Update my rating' : 'Submit rating'}
-              </button>
+              {myRating ? (
+                // Already rated — permanent and read-only. Your score is shown
+                // only to you; to everyone else your rating is anonymous.
+                <>
+                  <div className="field-label" style={{ marginBottom: 8 }}>Your rating</div>
+                  <div className="rating-row" style={{ marginBottom: myRating.review ? 8 : 0 }}>
+                    <StarRating value={myRating.rating} size={18} />
+                  </div>
+                  {myRating.review && <div className="muted" style={{ fontSize: 14 }}>“{myRating.review}”</div>}
+                </>
+              ) : (
+                // Not rated yet — pick a score + optional review, send once.
+                <>
+                  <div className="field-label" style={{ marginBottom: 8 }}>
+                    Rate this session
+                    <span className="field-hint"> — required for participants, and can’t be changed once sent</span>
+                  </div>
+                  <div className="rating-row" style={{ marginBottom: 10 }}>
+                    <StarRating value={ratingValue} onChange={setRatingValue} />
+                  </div>
+                  <div className="review-input-wrap">
+                    <textarea
+                      placeholder="Add a review (optional)…"
+                      value={reviewText}
+                      onChange={(e) => setReviewText(e.target.value)}
+                    />
+                    <button
+                      className="btn btn-primary btn-sm review-send-btn"
+                      onClick={submitRating}
+                      disabled={busy || ratingValue < 1}
+                      title={ratingValue < 1 ? 'Pick a star rating first' : 'Send rating & review'}
+                    >
+                      Send
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
-            {ratings.filter((r) => r.user_id !== user.id).length > 0 && (
+            {/* Reviews are attributed to the writer; the numeric ratings stay anonymous. */}
+            {ratings.filter((r) => r.user_id !== user.id && r.review).length > 0 && (
               <div>
-                {ratings.filter((r) => r.user_id !== user.id).map((r) => (
+                {ratings.filter((r) => r.user_id !== user.id && r.review).map((r) => (
                   <div className="review-item" key={r.id}>
-                    <div className="rating-row">
-                      <Link to={`/users/${r.user_id}`} className="user-link">
-                        <Avatar name={r.rater?.display_name || 'Player'} src={r.rater?.avatar_url} size={24} />
-                        {r.rater?.display_name || 'Player'}
-                      </Link>
-                      <StarRating value={r.rating} size={15} />
-                    </div>
-                    {r.review && <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>{r.review}</div>}
+                    <Link to={`/users/${r.user_id}`} className="user-link">
+                      <Avatar name={r.rater?.nickname || r.rater?.display_name || 'Player'} src={r.rater?.avatar_url} size={24} />
+                      {r.rater?.nickname || r.rater?.display_name || 'Player'}
+                    </Link>
+                    <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>{r.review}</div>
                   </div>
                 ))}
               </div>
@@ -273,8 +300,8 @@ export default function SessionDetail() {
         </>
       )}
 
-      {/* ---------------- Guest actions ---------------- */}
-      {!isHost && (myRequest || !started) && (
+      {/* ---------------- Guest actions (only before the session starts) ---------------- */}
+      {!isHost && !started && (
         <div className="card">
           {!myRequest && !started && (
             <>

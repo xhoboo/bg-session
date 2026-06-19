@@ -38,19 +38,20 @@ export default function GameDetail() {
   return (
     <div className="container container-narrow">
       <Link to="/" className="muted" style={{ fontSize: 14 }}>← Back to browse</Link>
-      <h1 style={{ marginTop: 12, marginBottom: 4 }}>🎲 {gameName}</h1>
+      <div style={{ marginTop: 12, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <h1 style={{ margin: 0 }}>🎲 {gameName}</h1>
+        <a
+          className="btn btn-secondary btn-sm"
+          href={bggLink(gameName, game?.bgg_url)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          🔗 View on BoardGameGeek ↗
+        </a>
+      </div>
       <p className="subtitle">
         {game ? (game.category === 'expansion' ? 'Expansion' : 'Base game') : 'Not in the catalog yet'}
       </p>
-
-      <a
-        className="btn btn-secondary btn-sm"
-        href={bggLink(gameName, game?.bgg_url)}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        🔗 View on BoardGameGeek ↗
-      </a>
 
       <h2 className="section-title">Favorited by ({favoritedBy.length})</h2>
       <MemberGrid members={favoritedBy} emptyText="No one has favorited this yet." />

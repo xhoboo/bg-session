@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { formatDateTime, playerCount, isSessionFull } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFull, isSessionFinished } from '../lib/format'
 import Avatar from './Avatar'
 
 export default function SessionCard({ session }) {
@@ -7,14 +7,19 @@ export default function SessionCard({ session }) {
   const hostName = session.host?.display_name || 'Host'
   const spots = playerCount(session)
   const isFull = isSessionFull(session)
+  const finished = isSessionFinished(session)
 
   return (
     <div className="card session-card" onClick={() => navigate(`/sessions/${session.id}`)}>
       <div className="row-between">
         <span className="session-card-title">{session.title}</span>
-        <span className={'badge ' + (session.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
-          {session.session_type === 'open' ? 'Open' : 'Approval'}
-        </span>
+        {finished ? (
+          <span className="badge badge-done">Done</span>
+        ) : (
+          <span className={'badge ' + (session.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
+            {session.session_type === 'open' ? 'Open' : 'Approval'}
+          </span>
+        )}
       </div>
 
       <div className="session-meta">

@@ -19,6 +19,7 @@ export default function Browse() {
   useEffect(() => {
     let active = true
     supabase.rpc('enqueue_rating_reminders')
+    supabase.rpc('enqueue_session_reminders') // day-before reminder + attendance follow-up
     ;(async () => {
       const now = new Date().toISOString()
       const [hostRes, joinRes] = await Promise.all([
