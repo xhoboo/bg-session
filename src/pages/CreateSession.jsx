@@ -11,7 +11,7 @@ const initialForm = {
   area: '',
   fullAddress: '',
   mapsUrl: '',
-  minPlayers: 2,
+  minPlayers: 3,
   maxPlayers: 4,
   durationMinutes: '',
   boardGames: '',
@@ -30,6 +30,7 @@ export default function CreateSession() {
     if (!form.region) return setError('Please choose a region.')
     if (!form.area) return setError('Please choose an area.')
     if (!form.fullAddress.trim()) return setError('Please enter the full address (kept private until you confirm a guest).')
+    if (Number(form.minPlayers) < 3) return setError('Min players must be at least 3.')
     if (Number(form.minPlayers) > Number(form.maxPlayers)) return setError('Min players cannot be greater than max players.')
 
     const startsAtIso = new Date(form.startsAt).toISOString()

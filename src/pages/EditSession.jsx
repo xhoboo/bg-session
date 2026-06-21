@@ -73,6 +73,7 @@ export default function EditSession() {
     if (!form.region) return setError('Please choose a region.')
     if (!form.area) return setError('Please choose an area.')
     if (!form.fullAddress.trim()) return setError('Please enter the full address.')
+    if (Number(form.minPlayers) < 3) return setError('Min players must be at least 3.')
     if (Number(form.minPlayers) > Number(form.maxPlayers)) return setError('Min players cannot be greater than max players.')
 
     const startsAtIso = new Date(form.startsAt).toISOString()

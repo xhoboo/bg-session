@@ -93,14 +93,14 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
           <input
             id="minPlayers"
             type="number"
-            min={1}
+            min={3}
             max={50}
             value={form.minPlayers}
             onChange={update('minPlayers')}
             required
           />
           <div className="field-hint" style={{ marginTop: 6 }}>
-            If fewer than this confirm by the start time, the session is automatically canceled and removed.
+            At least 3. If fewer than this confirm by the start time, the session is automatically canceled and removed.
           </div>
         </div>
       </div>

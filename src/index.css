@@ -536,12 +536,13 @@ textarea { resize: vertical; min-height: 80px; }
 .pager { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 16px; }
 
 /* ---------- Rating reminder (homepage) ---------- */
-.rate-reminder { background: var(--accent-soft); border-color: var(--accent); margin-bottom: 18px; }
-.rate-reminder-head { display: flex; align-items: flex-start; gap: 12px; }
+.rate-reminder { background: var(--accent-soft); border-color: var(--accent); margin-bottom: 16px; padding: 12px; }
+.rate-reminder-head { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.rate-reminder-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rate-reminder-item {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   background: var(--field); border: 1px solid var(--slate-200); border-radius: var(--radius-sm);
-  padding: 10px 12px; text-decoration: none; color: inherit;
+  padding: 7px 10px; text-decoration: none; color: inherit;
 }
 .rate-reminder-item:hover { filter: brightness(0.98); }
 

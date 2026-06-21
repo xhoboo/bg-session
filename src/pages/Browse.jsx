@@ -113,36 +113,31 @@ export default function Browse() {
 
   return (
     <div className="container">
-      <div className="row-between" style={{ marginBottom: 4 }}>
-        <h1>Upcoming sessions</h1>
-        <Link to="/create" className="btn btn-primary btn-sm">+ Host a session</Link>
-      </div>
-      <p className="subtitle">Find a board game meetup near you.</p>
-
       {toRate.length > 0 && (
         <div className="card rate-reminder">
           <div className="rate-reminder-head">
-            <span style={{ fontSize: 22, lineHeight: 1 }}>⭐</span>
-            <div>
-              <strong>Rate your finished {toRate.length === 1 ? 'session' : 'sessions'}</strong>
-              <p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>
-                Leave a rating and review to help the group.
-              </p>
-            </div>
+            <span aria-hidden="true">⭐</span>
+            <strong>Rate your finished {toRate.length === 1 ? 'session' : 'sessions'}</strong>
           </div>
-          <div className="stack" style={{ marginTop: 12 }}>
+          <div className="stack" style={{ marginTop: 8 }}>
             {toRate.slice(0, 3).map((s) => (
               <Link key={s.id} to={`/sessions/${s.id}`} className="rate-reminder-item">
-                <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title}</span>
+                <span className="rate-reminder-title">{s.title}</span>
                 <span className="btn btn-primary btn-sm">Rate</span>
               </Link>
             ))}
           </div>
           {toRate.length > 3 && (
-            <p className="muted" style={{ margin: '10px 0 0', fontSize: 12 }}>+{toRate.length - 3} more awaiting your rating</p>
+            <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>+{toRate.length - 3} more awaiting your rating</p>
           )}
         </div>
       )}
+
+      <div className="row-between" style={{ marginBottom: 4 }}>
+        <h1>Upcoming sessions</h1>
+        <Link to="/create" className="btn btn-primary btn-sm">+ Host a session</Link>
+      </div>
+      <p className="subtitle">Find a board game meetup near you.</p>
 
       <div className="toolbar">
         <select aria-label="Filter by region" value={region} onChange={onRegionChange}>
