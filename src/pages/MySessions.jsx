@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { useLang } from '../lib/i18n'
 import { formatDateTime, playerCount, isSessionFinished } from '../lib/format'
+import { SessionListSkeleton } from '../components/Skeleton'
 
 export default function MySessions() {
   const { user } = useAuth()
+  const { t } = useLang()
   const [hosting, setHosting] = useState([])
   const [joined, setJoined] = useState([])
   const [loading, setLoading] = useState(true)
@@ -39,18 +42,26 @@ export default function MySessions() {
     }
   }, [user.id])
 
-  if (loading) return <div className="spinner" aria-label="Loading" />
+  if (loading) {
+    return (
+      <div className="container">
+        <h1>{t('My sessions')}</h1>
+        <p className="subtitle">{t("Sessions you host and sessions you've joined.")}</p>
+        <SessionListSkeleton count={3} />
+      </div>
+    )
+  }
 
   return (
     <div className="container">
-      <h1>My sessions</h1>
-      <p className="subtitle">Sessions you host and sessions you've joined.</p>
+      <h1>{t('My sessions')}</h1>
+      <p className="subtitle">{t("Sessions you host and sessions you've joined.")}</p>
 
-      <h2 className="section-title">Hosting ({hosting.length})</h2>
+      <h2 className="section-title">{t('Hosting ({n})', { n: hosting.length })}</h2>
       {hosting.length === 0 ? (
         <div className="empty-state" style={{ padding: 24 }}>
-          <p>You're not hosting anything yet.</p>
-          <Link to="/create" className="btn btn-primary">Host a session</Link>
+          <p>{t("You're not hosting anything yet.")}</p>
+          <Link to="/create" className="btn btn-primary">{t('Host a session')}</Link>
         </div>
       ) : (
         <div className="stack">
@@ -60,10 +71,10 @@ export default function MySessions() {
                 <span className="session-card-title">{s.title}</span>
                 <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
                   <span className={'badge ' + (s.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
-                    {s.recurrence === 'weekly' ? 'Weekly' : 'One-time'}
+                    {s.recurrence === 'weekly' ? t('Weekly') : t('One-time')}
                   </span>
                   <span className={'badge ' + (s.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
-                    {s.session_type === 'open' ? 'Open' : 'Approval'}
+                    {s.session_type === 'open' ? t('Open') : t('Approval')}
                   </span>
                 </span>
               </div>
@@ -77,11 +88,11 @@ export default function MySessions() {
         </div>
       )}
 
-      <h2 className="section-title">Joined / requested ({joined.length})</h2>
+      <h2 className="section-title">{t('Joined / requested ({n})', { n: joined.length })}</h2>
       {joined.length === 0 ? (
         <div className="empty-state" style={{ padding: 24 }}>
-          <p>You haven't requested to join any sessions yet.</p>
-          <Link to="/" className="btn btn-secondary">Browse sessions</Link>
+          <p>{t("You haven't requested to join any sessions yet.")}</p>
+          <Link to="/" className="btn btn-secondary">{t('Browse sessions')}</Link>
         </div>
       ) : (
         <div className="stack">
@@ -91,10 +102,10 @@ export default function MySessions() {
                 <span className="session-card-title">{r.session.title}</span>
                 <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
                   <span className={'badge ' + (r.session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
-                    {r.session.recurrence === 'weekly' ? 'Weekly' : 'One-time'}
+                    {r.session.recurrence === 'weekly' ? t('Weekly') : t('One-time')}
                   </span>
                   <span className={'badge badge-' + r.status}>
-                    {r.status === 'approved' ? 'Approved' : r.status === 'rejected' ? 'Declined' : 'Pending'}
+                    {r.status === 'approved' ? t('Approved') : r.status === 'rejected' ? t('Declined') : r.status === 'waitlisted' ? t('Waitlist') : t('Pending')}
                   </span>
                 </span>
               </div>

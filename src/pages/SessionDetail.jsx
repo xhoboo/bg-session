@@ -2,17 +2,22 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { useLang } from '../lib/i18n'
 import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration, hasSessionStarted, isSessionFinished } from '../lib/format'
 import Avatar from '../components/Avatar'
 import GameChip from '../components/GameChip'
 import StarRating from '../components/StarRating'
 import SessionChat from '../components/SessionChat'
 import SessionParticipants from '../components/SessionParticipants'
+import SessionBringList from '../components/SessionBringList'
 import { useGameCatalog } from '../lib/useGameCatalog'
+import { SessionDetailSkeleton } from '../components/Skeleton'
+import ShareSessionButton from '../components/ShareSessionButton'
 
 export default function SessionDetail() {
   const { id } = useParams()
   const { user } = useAuth()
+  const { t } = useLang()
   const navigate = useNavigate()
   const { catalog, loading: catalogLoading } = useGameCatalog()
 
@@ -26,6 +31,7 @@ export default function SessionDetail() {
   const [reviewText, setReviewText] = useState('')
   const [cohostIds, setCohostIds] = useState(() => new Set())
   const [seriesEditable, setSeriesEditable] = useState([])
+  const [transferTo, setTransferTo] = useState('') // chosen new host (weekly transfer)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -142,8 +148,8 @@ export default function SessionDetail() {
   const cancelSession = async () => {
     const weekly = !!session.series_id
     const msg = weekly
-      ? "End this weekly session? This removes the upcoming session, stops it repeating, and notifies the confirmed guests. Past weeks stay in everyone's history."
-      : 'Cancel this session? This removes it for everyone and notifies the confirmed guests. This cannot be undone.'
+      ? t("End this weekly session? This removes the upcoming session, stops it repeating, and notifies the confirmed guests. Past weeks stay in everyone's history.")
+      : t('Cancel this session? This removes it for everyone and notifies the confirmed guests. This cannot be undone.')
     if (!window.confirm(msg)) return
     setBusy(true)
     setError('')
@@ -154,10 +160,29 @@ export default function SessionDetail() {
     navigate('/my-sessions', { replace: true })
   }
 
+  // Hand the weekly session to a confirmed participant. The RPC moves the series
+  // + upcoming occurrence to them, drops their join_request, and re-adds the old
+  // host (this user) as an approved participant — so we just leave to My sessions.
+  const transferHost = async () => {
+    if (!transferTo) return
+    const target = requests.find((r) => r.guest_id === transferTo)
+    const name = target?.guest?.display_name || t('this participant')
+    if (!window.confirm(t('Transfer hosting to {name}? They become the host of this weekly session and you stay on as a regular participant.', { name }))) return
+    setBusy(true)
+    setError('')
+    const { error } = await supabase.rpc('transfer_weekly_host', {
+      p_series_id: session.series_id,
+      p_new_host_id: transferTo,
+    })
+    setBusy(false)
+    if (error) return setError(error.message)
+    navigate('/my-sessions', { replace: true })
+  }
+
   // A co-host resigns: they're removed from the series and from this and any
   // upcoming occurrence (their past weeks stay in their history).
   const stepDown = async () => {
-    if (!window.confirm('Step down as co-host? You will be removed from this and every upcoming week.')) return
+    if (!window.confirm(t('Step down as co-host? You will be removed from this and every upcoming week.'))) return
     setBusy(true)
     setError('')
     const { error } = await supabase.rpc('step_down_cohost', { p_series_id: session.series_id })
@@ -171,7 +196,7 @@ export default function SessionDetail() {
   const submitRating = async () => {
     setError('')
     if (ratings.find((r) => r.user_id === user.id)) return // already rated
-    if (ratingValue < 1) return setError('Please pick a star rating from 1 to 10.')
+    if (ratingValue < 1) return setError(t('Please pick a star rating from 1 to 10.'))
     setBusy(true)
     const { error } = await supabase
       .from('session_ratings')
@@ -198,18 +223,26 @@ export default function SessionDetail() {
     await loadAll()
   }
 
-  if (loading) return <div className="spinner" aria-label="Loading session" />
+  if (loading) return <SessionDetailSkeleton />
   if (error && !session) {
     return (
       <div className="container container-narrow">
         <div className="alert alert-error">{error}</div>
-        <Link to="/" className="btn btn-secondary">← Back to browse</Link>
+        <Link to="/" className="btn btn-secondary">{t('← Back to browse')}</Link>
       </div>
     )
   }
 
   const isFull = isSessionFull(session)
   const pending = requests.filter((r) => r.status === 'pending')
+  const waitlisted = requests.filter((r) => r.status === 'waitlisted')
+  // Both are awaiting the host: pending (a spot is free) and waitlisted (full —
+  // approvable once a spot opens). Open sessions auto-promote, so their waitlist
+  // is usually empty by the time the host looks.
+  const actionable = [...pending, ...waitlisted]
+  // Confirmed participants the host could hand the weekly session to (co-hosts
+  // are auto-approved, so they're eligible too).
+  const approvedGuests = requests.filter((r) => r.status === 'approved')
 
   const started = hasSessionStarted(session)
   const finished = isSessionFinished(session)
@@ -228,42 +261,46 @@ export default function SessionDetail() {
         <h1 style={{ marginBottom: 0 }}>{session.title}</h1>
         <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
           <span className={'badge ' + (session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
-            {session.recurrence === 'weekly' ? 'Weekly' : 'One-time'}
+            {session.recurrence === 'weekly' ? t('Weekly') : t('One-time')}
           </span>
           {finished ? (
-            <span className="badge badge-done">Done</span>
+            <span className="badge badge-done">{t('Done')}</span>
           ) : (
             <span className={'badge ' + (session.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
-              {session.session_type === 'open' ? 'Open' : 'Approval'}
+              {session.session_type === 'open' ? t('Open') : t('Approval')}
             </span>
           )}
         </span>
       </div>
       <p className="subtitle" style={{ marginTop: 8 }}>
-        Hosted by{' '}
+        {t('Hosted by')}{' '}
         <Link to={`/users/${session.host_id}`} className="user-link">
-          <Avatar name={session.host?.display_name || 'Host'} src={session.host?.avatar_url} size={24} />
-          {session.host?.display_name || 'Host'}
+          <Avatar name={session.host?.display_name || t('Host')} src={session.host?.avatar_url} size={24} />
+          {session.host?.display_name || t('Host')}
         </Link>
       </p>
+
+      <div style={{ marginBottom: 16 }}>
+        <ShareSessionButton session={session} address={address} hostName={session.host?.display_name} />
+      </div>
 
       {error && <div className="alert alert-error">{error}</div>}
 
       <div className="card">
         <div className="stack">
-          <div className="row-between"><span className="muted">When</span><strong>{formatDateTime(session.starts_at)}</strong></div>
+          <div className="row-between"><span className="muted">{t('When')}</span><strong>{formatDateTime(session.starts_at)}</strong></div>
           {formatDuration(session.duration_minutes) && (
-            <div className="row-between"><span className="muted">Duration</span><strong>{formatDuration(session.duration_minutes)}</strong></div>
+            <div className="row-between"><span className="muted">{t('Duration')}</span><strong>{formatDuration(session.duration_minutes)}</strong></div>
           )}
           {session.region && (
-            <div className="row-between"><span className="muted">Region</span><span className="badge badge-area">{session.region}</span></div>
+            <div className="row-between"><span className="muted">{t('Region')}</span><span className="badge badge-area">{session.region}</span></div>
           )}
           {session.area && (
-            <div className="row-between"><span className="muted">Area</span><span className="badge badge-area">{session.area}</span></div>
+            <div className="row-between"><span className="muted">{t('Area')}</span><span className="badge badge-area">{session.area}</span></div>
           )}
-          <div className="row-between"><span className="muted">Players</span><strong>{playerCount(session)}{isFull ? ' · full' : ''}{session.min_players > 1 ? ` · min ${session.min_players}` : ''}</strong></div>
+          <div className="row-between"><span className="muted">{t('Players')}</span><strong>{playerCount(session)}{isFull ? ` ${t('· full')}` : ''}{session.min_players > 1 ? ` ${t('· min {n}', { n: session.min_players })}` : ''}</strong></div>
           <div>
-            <div className="muted" style={{ marginBottom: 4 }}>Board games</div>
+            <div className="muted" style={{ marginBottom: 4 }}>{t('Board games')}</div>
             {session.board_games ? (
               <div className="chips">
                 {session.board_games.split(',').map((g) => g.trim()).filter(Boolean).map((g) => (
@@ -271,29 +308,37 @@ export default function SessionDetail() {
                 ))}
               </div>
             ) : (
-              <div>To be decided</div>
+              <div>{t('To be decided')}</div>
             )}
           </div>
 
           {/* Address is hidden once the session has finished — it's no longer useful. */}
           {!finished && (
             <div>
-              <div className="muted" style={{ marginBottom: 4 }}>Address</div>
+              <div className="muted" style={{ marginBottom: 4 }}>{t('Address')}</div>
               {address ? (
                 <div className="address-box">
                   <div>📍 {address.full_address}</div>
-                  <a
-                    className="btn btn-secondary btn-sm"
-                    style={{ marginTop: 10 }}
-                    href={mapsLink(address.full_address, address.maps_url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    🗺️ Open in Google Maps
-                  </a>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+                    <a
+                      className="btn btn-secondary btn-sm"
+                      href={mapsLink(address.full_address, address.maps_url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {t('🗺️ Open in Google Maps')}
+                    </a>
+                    {/* Safety: let the guest send where they'll be to a friend. */}
+                    <ShareSessionButton
+                      session={session}
+                      address={address}
+                      hostName={session.host?.display_name}
+                      label="📤 Share with a friend"
+                    />
+                  </div>
                 </div>
               ) : (
-                <div className="address-locked">🔒 The full address is revealed once the host confirms your spot.</div>
+                <div className="address-locked">{t('🔒 The full address is revealed once the host confirms your spot.')}</div>
               )}
             </div>
           )}
@@ -303,7 +348,7 @@ export default function SessionDetail() {
       {/* ---------------- Ratings & reviews (finished sessions) ---------------- */}
       {finished && isParticipant && (
         <>
-          <h2 className="section-title">Ratings & reviews</h2>
+          <h2 className="section-title">{t('Ratings & reviews')}</h2>
           <div className="card stack">
             {ratings.length >= 1 ? (
               <div className="rating-row">
@@ -311,18 +356,18 @@ export default function SessionDetail() {
                 <strong>{avgRating}/10</strong>
                 {/* Hide the count below 3 ratings: with only the average shown and
                     no count, a lone rating can't be singled out. */}
-                {ratings.length >= 3 && <span className="muted">· {ratings.length} ratings</span>}
+                {ratings.length >= 3 && <span className="muted">{t('· {n} ratings', { n: ratings.length })}</span>}
               </div>
             ) : (
-              <p className="muted" style={{ margin: 0 }}>No ratings yet — be the first.</p>
+              <p className="muted" style={{ margin: 0 }}>{t('No ratings yet — be the first.')}</p>
             )}
 
             <div style={{ borderTop: '1px solid var(--slate-100)', paddingTop: 14 }}>
               {/* Rating: editable until submitted, then permanent. Your score is
                   shown only to you; to everyone else your rating is anonymous. */}
               <div className="field-label" style={{ marginBottom: 8 }}>
-                {myRating ? 'Your rating' : 'Rate this session'}
-                {!myRating && <span className="field-hint"> — required for participants, and can’t be changed once sent</span>}
+                {myRating ? t('Your rating') : t('Rate this session')}
+                {!myRating && <span className="field-hint"> {t('— required for participants, and can’t be changed once sent')}</span>}
               </div>
               <div className="rating-row" style={{ marginBottom: 12 }}>
                 {myRating ? (
@@ -335,9 +380,9 @@ export default function SessionDetail() {
                       className="btn btn-primary btn-sm"
                       onClick={submitRating}
                       disabled={busy || ratingValue < 1}
-                      title={ratingValue < 1 ? 'Pick a star rating first' : 'Submit rating'}
+                      title={ratingValue < 1 ? t('Pick a star rating first') : t('Submit rating')}
                     >
-                      Submit rating
+                      {t('Submit rating')}
                     </button>
                   </>
                 )}
@@ -350,7 +395,7 @@ export default function SessionDetail() {
               ) : myRating ? (
                 <div className="review-input-wrap">
                   <textarea
-                    placeholder="Add a review (optional)…"
+                    placeholder={t('Add a review (optional)…')}
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
                   />
@@ -359,11 +404,11 @@ export default function SessionDetail() {
                     onClick={submitReview}
                     disabled={busy || !reviewText.trim()}
                   >
-                    Send review
+                    {t('Send review')}
                   </button>
                 </div>
               ) : (
-                <p className="muted" style={{ margin: 0, fontSize: 14 }}>You can add a written review after you submit your rating.</p>
+                <p className="muted" style={{ margin: 0, fontSize: 14 }}>{t('You can add a written review after you submit your rating.')}</p>
               )}
             </div>
 
@@ -373,8 +418,8 @@ export default function SessionDetail() {
                 {ratings.filter((r) => r.user_id !== user.id && r.review).map((r) => (
                   <div className="review-item" key={r.id}>
                     <Link to={`/users/${r.user_id}`} className="user-link">
-                      <Avatar name={r.rater?.nickname || r.rater?.display_name || 'Player'} src={r.rater?.avatar_url} size={24} />
-                      {r.rater?.nickname || r.rater?.display_name || 'Player'}
+                      <Avatar name={r.rater?.nickname || r.rater?.display_name || t('Player')} src={r.rater?.avatar_url} size={24} />
+                      {r.rater?.nickname || r.rater?.display_name || t('Player')}
                     </Link>
                     <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>{r.review}</div>
                   </div>
@@ -390,49 +435,66 @@ export default function SessionDetail() {
         <div className="card">
           {!myRequest && !started && (
             <>
-              <h2 style={{ marginTop: 0, fontSize: 18 }}>Want to join?</h2>
-              {isFull ? (
-                <div className="alert alert-info">This session is full.</div>
-              ) : (
-                <>
-                  <div className="form-group">
-                    <label className="field-label" htmlFor="msg">
-                      Message to host <span className="field-hint">(optional)</span>
-                    </label>
-                    <textarea
-                      id="msg"
-                      placeholder="Say hi, mention your experience level…"
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                    />
-                  </div>
-                  <button className="btn btn-primary btn-block" onClick={requestToJoin} disabled={busy}>
-                    {session.session_type === 'open' ? 'Join session' : 'Request to join'}
-                  </button>
-                </>
+              <h2 style={{ marginTop: 0, fontSize: 18 }}>
+                {isFull ? t('Session full — join the waitlist?') : t('Want to join?')}
+              </h2>
+              {isFull && (
+                <p className="muted" style={{ marginTop: 0 }}>
+                  {session.session_type === 'open'
+                    ? t("We'll confirm you automatically the moment a spot opens.")
+                    : t('The host can approve you from the waitlist when a spot opens.')}
+                </p>
               )}
+              <div className="form-group">
+                <label className="field-label" htmlFor="msg">
+                  {t('Message to host')} <span className="field-hint">{t('(optional)')}</span>
+                </label>
+                <textarea
+                  id="msg"
+                  placeholder={t('Say hi, mention your experience level…')}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                />
+              </div>
+              <button className="btn btn-primary btn-block" onClick={requestToJoin} disabled={busy}>
+                {isFull ? t('Join waitlist') : session.session_type === 'open' ? t('Join session') : t('Request to join')}
+              </button>
             </>
           )}
 
           {myRequest && myRequest.status === 'pending' && (
             <>
               <div className="row-between">
-                <span>Your request is <span className="badge badge-pending">Pending</span></span>
-                <button className="btn btn-danger btn-sm" onClick={withdraw} disabled={busy}>Withdraw</button>
+                <span>{t('Your request is')} <span className="badge badge-pending">{t('Pending')}</span></span>
+                <button className="btn btn-danger btn-sm" onClick={withdraw} disabled={busy}>{t('Withdraw')}</button>
               </div>
-              <p className="muted" style={{ marginBottom: 0 }}>You'll be notified when the host responds.</p>
+              <p className="muted" style={{ marginBottom: 0 }}>{t("You'll be notified when the host responds.")}</p>
             </>
           )}
 
           {myRequest && myRequest.status === 'approved' && (
             <div className="row-between">
-              <span>You're confirmed <span className="badge badge-approved">Approved</span></span>
-              <button className="btn btn-danger btn-sm" onClick={withdraw} disabled={busy}>Cancel my spot</button>
+              <span>{t("You're confirmed")} <span className="badge badge-approved">{t('Approved')}</span></span>
+              <button className="btn btn-danger btn-sm" onClick={withdraw} disabled={busy}>{t('Cancel my spot')}</button>
             </div>
           )}
 
           {myRequest && myRequest.status === 'rejected' && (
-            <span>Your request was <span className="badge badge-rejected">Declined</span></span>
+            <span>{t('Your request was')} <span className="badge badge-rejected">{t('Declined')}</span></span>
+          )}
+
+          {myRequest && myRequest.status === 'waitlisted' && (
+            <>
+              <div className="row-between">
+                <span>{t("You're on the")} <span className="badge badge-pending">{t('Waitlist')}</span></span>
+                <button className="btn btn-danger btn-sm" onClick={withdraw} disabled={busy}>{t('Leave waitlist')}</button>
+              </div>
+              <p className="muted" style={{ marginBottom: 0 }}>
+                {session.session_type === 'open'
+                  ? t("We'll confirm you automatically the moment a spot opens — you'll get a notification.")
+                  : t('The host can approve you from the waitlist once a spot opens.')}
+              </p>
+            </>
           )}
         </div>
       )}
@@ -440,10 +502,14 @@ export default function SessionDetail() {
       {/* ---------------- Host management (only before the session starts) ---------------- */}
       {isHost && !started && (
         <>
-          <h2 className="section-title">Requests to join</h2>
+          <h2 className="section-title">
+            {waitlisted.length > 0
+              ? t('Requests to join · {n} on waitlist', { n: waitlisted.length })
+              : t('Requests to join')}
+          </h2>
 
-          {pending.length === 0 && <p className="muted">No pending requests right now.</p>}
-          {pending.map((r) => (
+          {actionable.length === 0 && <p className="muted">{t('No pending requests right now.')}</p>}
+          {actionable.map((r) => (
             <div className="card" key={r.id}>
               <div className="row-between">
                 <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -455,7 +521,9 @@ export default function SessionDetail() {
                     {r.message && <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>“{r.message}”</div>}
                   </div>
                 </div>
-                <span className="badge badge-pending">Pending</span>
+                <span className={'badge ' + (r.status === 'waitlisted' ? 'badge-onetime' : 'badge-pending')}>
+                  {r.status === 'waitlisted' ? t('Waitlist') : t('Pending')}
+                </span>
               </div>
               <div className="spacer" />
               <div className="form-row">
@@ -463,47 +531,68 @@ export default function SessionDetail() {
                   className="btn btn-primary"
                   onClick={() => decide(r.id, 'approved')}
                   disabled={busy || isFull}
-                  title={isFull ? 'Session is full' : ''}
+                  title={isFull ? t('Session is full') : ''}
                 >
-                  Approve
+                  {t('Approve')}
                 </button>
                 <button className="btn btn-danger" onClick={() => decide(r.id, 'rejected')} disabled={busy}>
-                  Decline
+                  {t('Decline')}
                 </button>
               </div>
-              {isFull && <p className="muted" style={{ marginBottom: 0, marginTop: 8 }}>Session is full — increase max players to approve more.</p>}
+              {isFull && <p className="muted" style={{ marginBottom: 0, marginTop: 8 }}>{t('Session is full — increase max players to approve more.')}</p>}
             </div>
           ))}
 
-          <h2 className="section-title">Manage session</h2>
+          <h2 className="section-title">{t('Manage session')}</h2>
           <div className="form-row">
             <button className="btn btn-secondary" onClick={() => navigate(`/sessions/${id}/edit`)} disabled={busy}>
-              Edit details
+              {t('Edit details')}
             </button>
             <button className="btn btn-danger" onClick={cancelSession} disabled={busy}>
-              {session.series_id ? 'End weekly session' : 'Cancel session'}
+              {session.series_id ? t('End weekly session') : t('Cancel session')}
             </button>
           </div>
+
+          {/* Transfer host — weekly only, to a confirmed participant. */}
+          {session.series_id && approvedGuests.length > 0 && (
+            <div className="card" style={{ marginTop: 12 }}>
+              <div className="field-label">{t('Transfer host')}</div>
+              <p className="muted" style={{ marginTop: 0, fontSize: 14 }}>
+                {t('Hand this weekly session over to a confirmed participant. They become the host; you stay on as a regular participant.')}
+              </p>
+              <div className="form-row">
+                <select value={transferTo} onChange={(e) => setTransferTo(e.target.value)}>
+                  <option value="">{t('Choose a participant…')}</option>
+                  {approvedGuests.map((r) => (
+                    <option key={r.guest_id} value={r.guest_id}>{r.guest?.display_name || t('Player')}</option>
+                  ))}
+                </select>
+                <button className="btn btn-secondary" onClick={transferHost} disabled={busy || !transferTo}>
+                  {t('Transfer')}
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
 
       {/* ---------------- Co-host controls (weekly sessions) ---------------- */}
       {isCohost && !started && (
         <>
-          <h2 className="section-title">Co-host</h2>
+          <h2 className="section-title">{t('Co-host')}</h2>
           <div className="card">
             <p className="muted" style={{ marginTop: 0 }}>
-              You're a co-host of this weekly session.
-              {seriesEditable.length === 0 && ' The host hasn’t given you edit permissions.'}
+              {t("You're a co-host of this weekly session.")}
+              {seriesEditable.length === 0 && t(' The host hasn’t given you edit permissions.')}
             </p>
             <div className="form-row">
               {seriesEditable.length > 0 && (
                 <button className="btn btn-secondary" onClick={() => navigate(`/sessions/${id}/edit`)} disabled={busy}>
-                  Edit details
+                  {t('Edit details')}
                 </button>
               )}
               <button className="btn btn-danger" onClick={stepDown} disabled={busy}>
-                Step down
+                {t('Step down')}
               </button>
             </div>
           </div>
@@ -511,6 +600,8 @@ export default function SessionDetail() {
       )}
 
       {isParticipant && <SessionParticipants sessionId={id} hostId={session.host_id} seriesId={session.series_id} />}
+
+      {isParticipant && <SessionBringList sessionId={id} readOnly={finished} />}
 
       {isParticipant && <SessionChat sessionId={id} readOnly={finished} />}
     </div>

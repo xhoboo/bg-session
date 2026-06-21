@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useLang } from '../lib/i18n'
 import GoogleButton from '../components/GoogleButton'
 import ThemeToggle from '../components/ThemeToggle'
 
 export default function Login() {
   const { signInWithEmail } = useAuth()
+  const { t } = useLang()
   const navigate = useNavigate()
   const location = useLocation()
   const from = location.state?.from?.pathname || '/'
@@ -35,21 +37,21 @@ export default function Login() {
       <div className="center" style={{ marginBottom: 24 }}>
         <h1 style={{ color: 'var(--teal-700)' }}>BG Session</h1>
         <p className="subtitle" style={{ margin: 0 }}>
-          Host & join board game meetups around Jakarta.
+          {t('Host & join board game meetups in your area.')}
         </p>
       </div>
 
       <div className="card">
-        <h2 style={{ marginTop: 0, fontSize: 18 }}>Welcome back</h2>
+        <h2 style={{ marginTop: 0, fontSize: 18 }}>{t('Welcome back')}</h2>
 
         {error && <div className="alert alert-error">{error}</div>}
 
         <GoogleButton onError={setError} />
-        <div className="divider">or</div>
+        <div className="divider">{t('or')}</div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="field-label" htmlFor="email">Email</label>
+            <label className="field-label" htmlFor="email">{t('Email')}</label>
             <input
               id="email"
               type="email"
@@ -60,7 +62,7 @@ export default function Login() {
             />
           </div>
           <div className="form-group">
-            <label className="field-label" htmlFor="password">Password</label>
+            <label className="field-label" htmlFor="password">{t('Password')}</label>
             <input
               id="password"
               type="password"
@@ -71,13 +73,13 @@ export default function Login() {
             />
           </div>
           <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
-            {busy ? 'Signing in…' : 'Sign in'}
+            {busy ? t('Signing in…') : t('Sign in')}
           </button>
         </form>
       </div>
 
       <p className="center muted" style={{ marginTop: 16 }}>
-        New here? <Link to="/signup">Create an account</Link>
+        {t('New here?')} <Link to="/signup">{t('Create an account')}</Link>
       </p>
     </div>
   )

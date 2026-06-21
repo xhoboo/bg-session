@@ -3,6 +3,8 @@ import { useParams, Link, Navigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import ProfileView from '../components/ProfileView'
+import { ProfileSkeleton } from '../components/Skeleton'
+import UserSafetyActions from '../components/UserSafetyActions'
 
 // Public, read-only view of another player's profile (linked from sessions).
 // Only public fields are shown — real name / in-person photo are
@@ -67,7 +69,15 @@ export default function UserProfile() {
   // Viewing your own id: send to the editable own-profile page.
   if (user && id === user.id) return <Navigate to="/profile" replace />
 
-  if (loading) return <div className="spinner" aria-label="Loading" />
+  if (loading) {
+    return (
+      <div className="container container-narrow">
+        <Link to="/" className="muted" style={{ fontSize: 14 }}>← Back to browse</Link>
+        <div className="spacer" />
+        <ProfileSkeleton />
+      </div>
+    )
+  }
 
   const name = profile?.nickname || profile?.display_name || 'player'
 
@@ -76,13 +86,16 @@ export default function UserProfile() {
       <Link to="/" className="muted" style={{ fontSize: 14 }}>← Back to browse</Link>
       <div className="spacer" />
       {profile ? (
-        <ProfileView
-          profile={profile}
-          history={history}
-          headerAction={
-            <Link to={`/messages/${id}`} className="btn btn-secondary btn-sm">💬 Message {name}</Link>
-          }
-        />
+        <>
+          <ProfileView
+            profile={profile}
+            history={history}
+            headerAction={
+              <Link to={`/messages/${id}`} className="btn btn-secondary btn-sm">💬 Message {name}</Link>
+            }
+          />
+          <UserSafetyActions targetId={id} targetName={name} />
+        </>
       ) : (
         <div className="alert alert-error">Player not found.</div>
       )}

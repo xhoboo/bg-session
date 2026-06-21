@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { useLang } from '../lib/i18n'
 import Avatar from '../components/Avatar'
 import { timeAgo } from '../lib/format'
+import { ConversationListSkeleton } from '../components/Skeleton'
 
 export default function Messages() {
   const { user } = useAuth()
+  const { t } = useLang()
   const [convos, setConvos] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -28,7 +31,10 @@ export default function Messages() {
         if (m.recipient_id === user.id && !m.read) byOther.get(otherId).unread += 1
       }
 
-      const list = [...byOther.values()]
+      // Hide conversations with people I've blocked.
+      const { data: blocks } = await supabase.from('user_blocks').select('blocked_id').eq('blocker_id', user.id)
+      const blockedSet = new Set((blocks ?? []).map((b) => b.blocked_id))
+      const list = [...byOther.values()].filter((c) => !blockedSet.has(c.otherId))
       if (list.length) {
         const { data: profs } = await supabase
           .from('profiles')
@@ -47,17 +53,25 @@ export default function Messages() {
     }
   }, [user.id])
 
-  if (loading) return <div className="spinner" aria-label="Loading" />
+  if (loading) {
+    return (
+      <div className="container container-narrow">
+        <h1>{t('Messages')}</h1>
+        <p className="subtitle">{t('Your private chats with other players.')}</p>
+        <ConversationListSkeleton />
+      </div>
+    )
+  }
 
   return (
     <div className="container container-narrow">
-      <h1>Messages</h1>
-      <p className="subtitle">Your private chats with other players.</p>
+      <h1>{t('Messages')}</h1>
+      <p className="subtitle">{t('Your private chats with other players.')}</p>
 
       {convos.length === 0 ? (
         <div className="empty-state">
-          <p>No conversations yet.</p>
-          <p className="muted">Open someone's profile and tap “Message” to start chatting.</p>
+          <p>{t('No conversations yet.')}</p>
+          <p className="muted">{t('Open someone’s profile and tap “Message” to start chatting.')}</p>
         </div>
       ) : (
         <div className="card" style={{ padding: 0 }}>
@@ -72,7 +86,7 @@ export default function Messages() {
                     <strong>{name}</strong>
                     <span className="muted" style={{ fontSize: 12 }}>{timeAgo(c.last.created_at)}</span>
                   </div>
-                  <div className="conv-preview">{mine ? 'You: ' : ''}{c.last.body}</div>
+                  <div className="conv-preview">{mine ? t('You: ') : ''}{c.last.body}</div>
                 </div>
                 {c.unread > 0 && <span className="bell-badge" style={{ position: 'static' }}>{c.unread > 9 ? '9+' : c.unread}</span>}
               </Link>

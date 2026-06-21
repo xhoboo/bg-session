@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { useLang } from '../lib/i18n'
 
 // Primary mobile navigation: four tabs with a center "host a session" FAB.
 // The Messages tab carries a live unread direct-message badge.
@@ -15,6 +16,7 @@ function Icon({ name }) {
 
 export default function BottomNav() {
   const { user } = useAuth()
+  const { t } = useLang()
   const navigate = useNavigate()
   const [unread, setUnread] = useState(0)
 
@@ -44,16 +46,16 @@ export default function BottomNav() {
 
   return (
     <nav className="bottom-nav" aria-label="Primary">
-      <NavLink to="/" end className={cls}><Icon name="browse" /><span>Browse</span></NavLink>
-      <NavLink to="/my-sessions" className={cls}><Icon name="sessions" /><span>Sessions</span></NavLink>
+      <NavLink to="/" end className={cls}><Icon name="browse" /><span>{t('Browse')}</span></NavLink>
+      <NavLink to="/my-sessions" className={cls}><Icon name="sessions" /><span>{t('Sessions')}</span></NavLink>
       <div className="bottom-nav-spacer" aria-hidden="true" />
       <NavLink to="/messages" className={cls}>
-        <Icon name="messages" /><span>Messages</span>
+        <Icon name="messages" /><span>{t('Messages')}</span>
         {unread > 0 && <span className="bottom-nav-badge">{unread > 9 ? '9+' : unread}</span>}
       </NavLink>
-      <NavLink to="/profile" className={cls}><Icon name="profile" /><span>Profile</span></NavLink>
+      <NavLink to="/profile" className={cls}><Icon name="profile" /><span>{t('Profile')}</span></NavLink>
 
-      <button className="fab" onClick={() => navigate('/create')} aria-label="Host a session">
+      <button className="fab" onClick={() => navigate('/create')} aria-label={t('Host a session')}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
       </button>
     </nav>

@@ -20,6 +20,7 @@ export default function WeeklySessionForm({
   showCohostAdmin = true,
   editableKeys = null,
   selfId,
+  candidates = [],
 }) {
   const [form, setForm] = useState(initial)
   const { regions, areasByRegion, loading: locLoading } = useRegions()
@@ -71,6 +72,24 @@ export default function WeeklySessionForm({
 
         <div className="form-row">
           <div className="form-group">
+            <label className="field-label" htmlFor="maxPlayers">Max players <span className="field-hint">(incl. host)</span></label>
+            <input id="maxPlayers" type="number" min={1} max={50} value={form.maxPlayers} onChange={update('maxPlayers')} disabled={!can('players')} required />
+          </div>
+          <div className="form-group">
+            <label className="field-label" htmlFor="minPlayers">Min players <span className="field-hint">— or it's canceled</span></label>
+            <input id="minPlayers" type="number" min={3} max={50} value={form.minPlayers} onChange={update('minPlayers')} disabled={!can('players')} required />
+          </div>
+        </div>
+        <div className="field-hint">
+          At least 3. Any week that doesn't reach the minimum by its start time is canceled for that week and rolls on to the next.
+        </div>
+      </div>
+
+      <div className="form-section">
+        <div className="form-section-title">Schedule</div>
+
+        <div className="form-row">
+          <div className="form-group">
             <label className="field-label" htmlFor="weeklyDay">Every</label>
             <select id="weeklyDay" value={form.weeklyDay} onChange={update('weeklyDay')} disabled={!can('schedule')} required>
               <option value="" disabled>Choose day…</option>
@@ -90,6 +109,19 @@ export default function WeeklySessionForm({
             Next session: {formatDateTime(preview.toISOString())}
           </p>
         )}
+
+        <div className="form-group" style={{ marginTop: 16 }}>
+          <label className="field-label" htmlFor="duration">Estimated duration</label>
+          <select id="duration" value={form.durationMinutes} onChange={update('durationMinutes')} disabled={!can('duration')}>
+            <option value="">Not sure</option>
+            <option value="60">~1 hour</option>
+            <option value="120">~2 hours</option>
+            <option value="180">~3 hours</option>
+            <option value="240">~4 hours</option>
+            <option value="300">~5 hours</option>
+            <option value="360">6+ hours</option>
+          </select>
+        </div>
       </div>
 
       <div className="form-section">
@@ -148,35 +180,7 @@ export default function WeeklySessionForm({
       </div>
 
       <div className="form-section">
-        <div className="form-section-title">Players & duration</div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label className="field-label" htmlFor="maxPlayers">Max players <span className="field-hint">(incl. host)</span></label>
-            <input id="maxPlayers" type="number" min={1} max={50} value={form.maxPlayers} onChange={update('maxPlayers')} disabled={!can('players')} required />
-          </div>
-          <div className="form-group">
-            <label className="field-label" htmlFor="minPlayers">Min players <span className="field-hint">— or it's canceled</span></label>
-            <input id="minPlayers" type="number" min={3} max={50} value={form.minPlayers} onChange={update('minPlayers')} disabled={!can('players')} required />
-          </div>
-        </div>
-
-        <div className="form-group" style={{ marginTop: 16 }}>
-          <label className="field-label" htmlFor="duration">Estimated duration</label>
-          <select id="duration" value={form.durationMinutes} onChange={update('durationMinutes')} disabled={!can('duration')}>
-            <option value="">Not sure</option>
-            <option value="60">~1 hour</option>
-            <option value="120">~2 hours</option>
-            <option value="180">~3 hours</option>
-            <option value="240">~4 hours</option>
-            <option value="300">~5 hours</option>
-            <option value="360">6+ hours</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="form-section">
-        <div className="form-section-title">Games & joining</div>
+        <div className="form-section-title">Board games</div>
 
         {can('board_games') ? (
           <GameTagInput
@@ -196,9 +200,13 @@ export default function WeeklySessionForm({
             )}
           </div>
         )}
+      </div>
+
+      <div className="form-section">
+        <div className="form-section-title">Joining</div>
 
         <div className="form-group">
-          <label className="field-label" htmlFor="type">Joining</label>
+          <label className="field-label" htmlFor="type">Join type</label>
           <select id="type" value={form.sessionType} onChange={update('sessionType')} disabled={!can('session_type')}>
             <option value="approval">Approval required — you review each request</option>
             <option value="open">Open — guests are confirmed instantly</option>
@@ -217,6 +225,7 @@ export default function WeeklySessionForm({
             <CohostPicker
               value={form.cohosts || []}
               onChange={(c) => setForm((f) => ({ ...f, cohosts: c }))}
+              candidates={candidates}
               excludeId={selfId}
             />
           </div>

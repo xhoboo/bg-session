@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import { formatDateTime, playerCount, isSessionFull, isSessionFinished, locationLabel } from '../lib/format'
+import { useLang } from '../lib/i18n'
 import Avatar from './Avatar'
 
 export default function SessionCard({ session }) {
   const navigate = useNavigate()
+  const { t } = useLang()
   const hostName = session.host?.display_name || 'Host'
   const spots = playerCount(session)
   const isFull = isSessionFull(session)
@@ -15,13 +17,13 @@ export default function SessionCard({ session }) {
         <span className="session-card-title">{session.title}</span>
         <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
           <span className={'badge ' + (session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
-            {session.recurrence === 'weekly' ? 'Weekly' : 'One-time'}
+            {session.recurrence === 'weekly' ? t('Weekly') : t('One-time')}
           </span>
           {finished ? (
-            <span className="badge badge-done">Done</span>
+            <span className="badge badge-done">{t('Done')}</span>
           ) : (
             <span className={'badge ' + (session.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
-              {session.session_type === 'open' ? 'Open' : 'Approval'}
+              {session.session_type === 'open' ? t('Open') : t('Approval')}
             </span>
           )}
         </span>
@@ -32,13 +34,13 @@ export default function SessionCard({ session }) {
       </div>
       <div className="session-meta">
         <span><span className="badge badge-area">{locationLabel(session.region, session.area)}</span></span>
-        <span>👥 {spots} players{isFull ? ' · full' : ''}</span>
-        <span>🎲 {session.board_games ? truncate(session.board_games, 40) : 'TBD'}</span>
+        <span>👥 {t('{n} players', { n: spots })}{isFull ? ` · ${t('full')}` : ''}</span>
+        <span>🎲 {session.board_games ? truncate(session.board_games, 40) : t('TBD')}</span>
       </div>
 
       <div className="muted" style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 7 }}>
         <Avatar name={hostName} src={session.host?.avatar_url} size={22} />
-        Hosted by {hostName}
+        {t('Hosted by {name}', { name: hostName })}
       </div>
     </div>
   )

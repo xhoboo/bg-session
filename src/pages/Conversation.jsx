@@ -3,15 +3,22 @@ import { useParams, Link, Navigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import Avatar from '../components/Avatar'
+import ReportDialog from '../components/ReportDialog'
+import { useBlock } from '../lib/useBlock'
+import { useLang } from '../lib/i18n'
 import { timeAgo } from '../lib/format'
 
 export default function Conversation() {
   const { userId } = useParams()
   const { user } = useAuth()
+  const { t } = useLang()
   const [other, setOther] = useState(null)
   const [messages, setMessages] = useState([])
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(true)
+  const [sendError, setSendError] = useState('')
+  const [showReport, setShowReport] = useState(false)
+  const { blocked, busy: blockBusy, block, unblock } = useBlock(userId)
   const endRef = useRef(null)
 
   const markRead = useCallback(async () => {
@@ -65,23 +72,39 @@ export default function Conversation() {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  const name = other?.nickname || other?.display_name || 'Player'
+
   const send = async (e) => {
     e.preventDefault()
     const body = text.trim()
     if (!body) return
-    setText('')
-    const { data } = await supabase
+    setSendError('')
+    // Insert can be rejected by the block trigger (migration 0037) if either
+    // side has blocked the other — keep the text so it isn't lost, and surface
+    // a neutral message.
+    const { data, error } = await supabase
       .from('direct_messages')
       .insert({ sender_id: user.id, recipient_id: userId, body })
       .select('*')
       .single()
+    if (error) {
+      setSendError(t('You can no longer message this user.'))
+      return
+    }
+    setText('')
     if (data) setMessages((prev) => (prev.some((x) => x.id === data.id) ? prev : [...prev, data]))
+  }
+
+  const toggleBlock = async () => {
+    if (blocked) {
+      await unblock()
+      return
+    }
+    if (window.confirm(t('Block {name}? They won’t be able to message you.', { name }))) await block()
   }
 
   if (user && userId === user.id) return <Navigate to="/messages" replace />
   if (loading) return <div className="spinner" aria-label="Loading" />
-
-  const name = other?.nickname || other?.display_name || 'Player'
 
   return (
     <div className="container container-narrow">
@@ -91,12 +114,18 @@ export default function Conversation() {
           <Avatar name={name} src={other?.avatar_url} size={36} />
           {name}
         </Link>
+        <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
+          <button className="btn btn-secondary btn-sm" onClick={() => setShowReport(true)}>{t('🚩 Report')}</button>
+          <button className="btn btn-danger btn-sm" onClick={toggleBlock} disabled={blockBusy}>
+            {blocked ? t('Unblock') : t('Block')}
+          </button>
+        </span>
       </div>
 
       <div className="card">
         <div className="chat-thread">
           {messages.length === 0 ? (
-            <p className="muted center" style={{ margin: 'auto' }}>Say hello 👋</p>
+            <p className="muted center" style={{ margin: 'auto' }}>{t('Say hello 👋')}</p>
           ) : (
             messages.map((m) => (
               <div key={m.id} className={'bubble ' + (m.sender_id === user.id ? 'me' : 'them')}>
@@ -108,17 +137,33 @@ export default function Conversation() {
           <div ref={endRef} />
         </div>
 
-        <form className="chat-input-row" onSubmit={send}>
-          <input
-            type="text"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Type a message…"
-            maxLength={2000}
-          />
-          <button className="btn btn-primary" type="submit" disabled={!text.trim()}>Send</button>
-        </form>
+        {blocked ? (
+          <div className="address-locked center" style={{ marginTop: 12 }}>
+            {t('You blocked {name}.', { name })}{' '}
+            <button className="btn btn-secondary btn-sm" style={{ marginTop: 8 }} onClick={unblock} disabled={blockBusy}>
+              {t('Unblock to message')}
+            </button>
+          </div>
+        ) : (
+          <form className="chat-input-row" onSubmit={send}>
+            <input
+              type="text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={t('Type a message…')}
+              maxLength={2000}
+            />
+            <button className="btn btn-primary" type="submit" disabled={!text.trim()}>{t('Send')}</button>
+          </form>
+        )}
+        {sendError && (
+          <p className="center" style={{ color: 'var(--red-600)', fontSize: 13, marginTop: 8, marginBottom: 0 }}>{sendError}</p>
+        )}
       </div>
+
+      {showReport && (
+        <ReportDialog targetId={userId} targetName={name} onClose={() => setShowReport(false)} />
+      )}
     </div>
   )
 }

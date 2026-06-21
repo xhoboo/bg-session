@@ -19,6 +19,7 @@ export default function EditSession() {
   const [isHost, setIsHost] = useState(false)
   const [origCohostIds, setOrigCohostIds] = useState([])
   const [origSchedule, setOrigSchedule] = useState({ weeklyDay: '', startTime: '' })
+  const [candidates, setCandidates] = useState([]) // confirmed participants eligible to be co-hosts
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -92,6 +93,15 @@ export default function EditSession() {
         setLoading(false)
         return
       }
+      // Co-hosts can only be appointed from confirmed participants of this
+      // occurrence (co-hosts are themselves auto-approved, so they're included).
+      const { data: approved } = await supabase
+        .from('join_requests')
+        .select('guest:profiles(id, nickname, display_name, avatar_url)')
+        .eq('session_id', id)
+        .eq('status', 'approved')
+      setCandidates((approved ?? []).map((r) => r.guest).filter(Boolean))
+
       const startTime = (ws.start_time || '').slice(0, 5) // "HH:MM"
       setSeries(ws)
       setIsHost(host)
@@ -301,6 +311,7 @@ export default function EditSession() {
           showCohostAdmin={isHost}
           editableKeys={isHost ? null : series?.cohost_editable || []}
           selfId={user.id}
+          candidates={candidates}
         />
       ) : (
         <SessionForm initial={initial} submitLabel="Save changes" busy={busy} onSubmit={handleSubmitOneTime} />

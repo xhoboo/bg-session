@@ -2,20 +2,26 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { useLang } from '../lib/i18n'
 import { isSessionFinished } from '../lib/format'
 import { useRegions } from '../lib/useRegions'
 import SessionCard from '../components/SessionCard'
+import SessionsMap from '../components/SessionsMap'
+import { SessionListSkeleton } from '../components/Skeleton'
 
 // Parse a session's comma-separated board_games text into a clean list.
 const parseGames = (text) => (text || '').split(',').map((g) => g.trim()).filter(Boolean)
 
 export default function Browse() {
   const { user } = useAuth()
+  const { t } = useLang()
   const { regions, areasByRegion } = useRegions()
   const [sessions, setSessions] = useState([])
   const [region, setRegion] = useState('')
   const [area, setArea] = useState('')
   const [game, setGame] = useState('')
+  const [view, setView] = useState('list') // 'list' | 'map'
+  const [mapRegion, setMapRegion] = useState(null) // region tapped on the map
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [toRate, setToRate] = useState([])
@@ -113,8 +119,9 @@ export default function Browse() {
     return true
   })
 
-  // Changing a parent filter invalidates its narrower children.
-  const onRegionChange = (e) => { setRegion(e.target.value); setArea(''); setGame('') }
+  // Changing a parent filter invalidates its narrower children (and any map pin
+  // selection, which is region-scoped).
+  const onRegionChange = (e) => { setRegion(e.target.value); setArea(''); setGame(''); setMapRegion(null) }
   const onAreaChange = (e) => { setArea(e.target.value); setGame('') }
 
   return (
@@ -123,59 +130,81 @@ export default function Browse() {
         <div className="card rate-reminder">
           <div className="rate-reminder-head">
             <span aria-hidden="true">⭐</span>
-            <strong>Rate your finished {toRate.length === 1 ? 'session' : 'sessions'}</strong>
+            <strong>{t(toRate.length === 1 ? 'Rate your finished session' : 'Rate your finished sessions')}</strong>
           </div>
           <div className="stack" style={{ marginTop: 8 }}>
             {toRate.slice(0, 3).map((s) => (
               <Link key={s.id} to={`/sessions/${s.id}`} className="rate-reminder-item">
                 <span className="rate-reminder-title">{s.title}</span>
-                <span className="btn btn-primary btn-sm">Rate</span>
+                <span className="btn btn-primary btn-sm">{t('Rate')}</span>
               </Link>
             ))}
           </div>
           {toRate.length > 3 && (
-            <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>+{toRate.length - 3} more awaiting your rating</p>
+            <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>{t('+{n} more awaiting your rating', { n: toRate.length - 3 })}</p>
           )}
         </div>
       )}
 
       <div className="row-between" style={{ marginBottom: 4 }}>
-        <h1>Upcoming sessions</h1>
-        <Link to="/create" className="btn btn-primary btn-sm">+ Host a session</Link>
+        <h1>{t('Upcoming sessions')}</h1>
+        <Link to="/create" className="btn btn-primary btn-sm">{t('+ Host a session')}</Link>
       </div>
-      <p className="subtitle">Find a board game meetup near you.</p>
+      <p className="subtitle">{t('Find a board game meetup near you.')}</p>
 
       <div className="toolbar">
-        <select aria-label="Filter by region" value={region} onChange={onRegionChange}>
-          <option value="">All regions</option>
+        <select aria-label={t('Filter by region')} value={region} onChange={onRegionChange}>
+          <option value="">{t('All regions')}</option>
           {regions.map((r) => (
             <option key={r} value={r}>{r}</option>
           ))}
         </select>
 
-        <select aria-label="Filter by area" value={area} onChange={onAreaChange} disabled={!region}>
-          <option value="">All areas</option>
+        <select aria-label={t('Filter by area')} value={area} onChange={onAreaChange} disabled={!region}>
+          <option value="">{t('All areas')}</option>
           {areaOptions.map((a) => (
             <option key={a} value={a}>{a}</option>
           ))}
         </select>
 
-        <select aria-label="Filter by board game" value={game} onChange={(e) => setGame(e.target.value)} disabled={gameOptions.length === 0}>
-          <option value="">All games</option>
+        <select aria-label={t('Filter by board game')} value={game} onChange={(e) => setGame(e.target.value)} disabled={gameOptions.length === 0}>
+          <option value="">{t('All games')}</option>
           {gameOptions.map((g) => (
             <option key={g} value={g}>{g}</option>
           ))}
         </select>
       </div>
 
+      <div className="seg-toggle" role="tablist" aria-label="View mode">
+        <button role="tab" aria-selected={view === 'list'} className={view === 'list' ? 'is-on' : ''} onClick={() => setView('list')}>{t('List')}</button>
+        <button role="tab" aria-selected={view === 'map'} className={view === 'map' ? 'is-on' : ''} onClick={() => setView('map')}>{t('Map')}</button>
+      </div>
+
       {error && <div className="alert alert-error">{error}</div>}
 
       {loading ? (
-        <div className="spinner" aria-label="Loading sessions" />
+        <SessionListSkeleton />
+      ) : view === 'map' ? (
+        <>
+          <SessionsMap sessions={visible} selectedRegion={mapRegion} onSelectRegion={setMapRegion} />
+          {mapRegion ? (
+            <div className="row-between" style={{ margin: '14px 0 4px' }}>
+              <strong>{mapRegion}</strong>
+              <button className="btn btn-secondary btn-sm" onClick={() => setMapRegion(null)}>{t('Show all')}</button>
+            </div>
+          ) : (
+            <p className="muted" style={{ margin: '14px 0 4px', fontSize: 13 }}>{t('Tap a marker to see sessions in that area.')}</p>
+          )}
+          <div className="stack">
+            {(mapRegion ? visible.filter((s) => s.region === mapRegion) : visible).map((s) => (
+              <SessionCard key={s.id} session={s} />
+            ))}
+          </div>
+        </>
       ) : visible.length === 0 ? (
         <div className="empty-state">
-          <p>No upcoming sessions{region ? ` in ${area || region}` : ''}{game ? ` with ${game}` : ''} yet.</p>
-          <Link to="/create" className="btn btn-primary">Be the first to host</Link>
+          <p>{t('No upcoming sessions yet.')}</p>
+          <Link to="/create" className="btn btn-primary">{t('Be the first to host')}</Link>
         </div>
       ) : (
         <div className="stack">

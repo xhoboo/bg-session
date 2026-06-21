@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import Avatar from '../components/Avatar'
+import Skeleton from '../components/Skeleton'
 import { bggLink } from '../lib/format'
 
 // Detail page for a board game (by name): its category (if it's in the catalog)
@@ -33,7 +34,21 @@ export default function GameDetail() {
     }
   }, [gameName])
 
-  if (loading) return <div className="spinner" aria-label="Loading" />
+  if (loading) {
+    return (
+      <div className="container container-narrow" role="status" aria-label="Loading game">
+        <Link to="/" className="muted" style={{ fontSize: 14 }}>← Back to browse</Link>
+        <Skeleton width="60%" height={25} style={{ marginTop: 14 }} />
+        <Skeleton width={180} height={34} radius={10} style={{ marginTop: 14 }} />
+        <Skeleton width="45%" height={17} style={{ marginTop: 26 }} />
+        <div className="member-grid" style={{ marginTop: 12 }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} width={130} height={42} radius={999} />
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container container-narrow">
