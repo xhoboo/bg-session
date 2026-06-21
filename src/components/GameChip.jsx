@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom'
 // case-insensitively via `catalog`, a Map from useGameCatalog) it's a clickable
 // link showing the catalog's canonical spelling; otherwise it's a plain,
 // non-clickable chip showing the stored name. `muted` keeps the lighter look
-// used for "owned" games.
+// used for non-clickable "owned" games — clickable chips always use the accent
+// colour so favorites and owned games match when both link to the catalog.
 export default function GameChip({ name, catalog, loading, muted }) {
   const display = (name || '').trim()
   if (!display) return null
@@ -20,7 +21,7 @@ export default function GameChip({ name, catalog, loading, muted }) {
 
   if (canonical) {
     return (
-      <Link to={`/games/${encodeURIComponent(canonical)}`} className={'chip chip-link' + mutedCls}>
+      <Link to={`/games/${encodeURIComponent(canonical)}`} className="chip chip-link">
         {canonical}
       </Link>
     )
