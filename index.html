@@ -5,15 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#F4F1EA" />
     <title>BG Session — Board Game Meetups in Indonesia</title>
-    <script>
-      // Apply the saved theme before first paint to avoid a flash of the wrong theme.
-      (function () {
-        try {
-          var t = localStorage.getItem('bg-theme');
-          if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
-        } catch (e) { /* ignore */ }
-      })();
-    </script>
+    <!-- Loaded as an external file (not inline) so the CSP can keep a strict
+         script-src 'self'. Runs before first paint to avoid a theme flash. -->
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>
