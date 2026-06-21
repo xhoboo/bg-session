@@ -9,11 +9,12 @@ const PAGE_SIZE = 10
 
 // Read-only profile display, shared by the user's own Profile page and the
 // public /users/:id page. Only public fields are shown here — the private
-// "additional info" (real name, gender, in-person photo) is never rendered on
-// a profile; it surfaces only to confirmed co-participants inside a session.
+// "additional info" (real name, in-person photo) is never rendered on a
+// profile; it surfaces only to confirmed co-participants inside a session.
+// Email is never shown (not even on your own profile).
 // `headerAction` is an optional node rendered just under the nickname (e.g. a
 // "Message" button on someone else's profile).
-export default function ProfileView({ profile, email, history = [], headerAction }) {
+export default function ProfileView({ profile, history = [], headerAction }) {
   const [page, setPage] = useState(0)
   const { catalog, loading: catalogLoading } = useGameCatalog()
   if (!profile) return null
@@ -40,7 +41,6 @@ export default function ProfileView({ profile, email, history = [], headerAction
           </span>
         </div>
         {profile.domicile && <p className="muted" style={{ margin: '2px 0 0' }}>📍 {profile.domicile}</p>}
-        {email && <p className="muted" style={{ margin: '2px 0 0', fontSize: 14 }}>{email}</p>}
         {headerAction && <div style={{ marginTop: 10 }}>{headerAction}</div>}
       </div>
 

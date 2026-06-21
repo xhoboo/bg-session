@@ -49,7 +49,7 @@ export function AuthProvider({ children }) {
 
   const loadProfile = useCallback(async (uid) => {
     setProfileLoaded(false)
-    // Public profile + the user's own private fields (real name, gender, photo).
+    // Public profile + the user's own private fields (real name, photo).
     const [{ data: pub }, { data: priv }] = await Promise.all([
       supabase
         .from('profiles')
@@ -58,7 +58,7 @@ export function AuthProvider({ children }) {
         .maybeSingle(),
       supabase
         .from('profile_private')
-        .select('real_name, gender, photo_url')
+        .select('real_name, photo_url')
         .eq('id', uid)
         .maybeSingle(),
     ])

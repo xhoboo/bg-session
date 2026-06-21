@@ -61,7 +61,7 @@ export default function Profile() {
 
   return (
     <div className="container container-narrow">
-      <ProfileView profile={profile} email={user.email} history={history} />
+      <ProfileView profile={profile} history={history} />
       <div className="spacer" />
       <Link to="/profile/edit" className="btn btn-primary btn-block">Edit profile</Link>
       <div className="spacer" />

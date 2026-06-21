@@ -5,8 +5,8 @@ import { useAuth } from '../context/AuthContext'
 import Avatar from './Avatar'
 
 // Shown to confirmed participants (host + approved guests) of a session. Lists
-// everyone coming, together with the private "additional info" — real name,
-// gender and in-person photo — to help people recognize each other in person.
+// everyone coming, together with the private "additional info" — real name and
+// in-person photo — to help people recognize each other in person.
 // That private data is returned only for confirmed co-participants by
 // profile_private's RLS, so there's nothing to hide on the client here.
 export default function SessionParticipants({ sessionId, hostId }) {
@@ -33,7 +33,7 @@ export default function SessionParticipants({ sessionId, hostId }) {
       if (ids.length) {
         const { data: priv } = await supabase
           .from('profile_private')
-          .select('id, real_name, gender, photo_url')
+          .select('id, real_name, photo_url')
           .in('id', ids)
         const byId = new Map((priv ?? []).map((p) => [p.id, p]))
         list.forEach((p) => Object.assign(p, byId.get(p.id) ?? {}))
@@ -57,7 +57,7 @@ export default function SessionParticipants({ sessionId, hostId }) {
       <div className="participants-list">
         {people.map((p) => {
           const name = p.nickname || p.display_name || 'Player'
-          const extras = [p.real_name, p.gender].filter(Boolean)
+          const extras = [p.real_name].filter(Boolean)
           return (
             <div className="participant-card card" key={p.id}>
               <Avatar name={name} src={p.photo_url || p.avatar_url} size={52} />

@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import ProfileView from '../components/ProfileView'
 
 // Public, read-only view of another player's profile (linked from sessions).
-// Only public fields are shown — real name / gender / in-person photo are
+// Only public fields are shown — real name / in-person photo are
 // never displayed here; they appear only to confirmed co-participants inside a
 // session. Session history (finished sessions hosted AND joined) comes from the
 // user_session_history() function, which exposes only public session fields.

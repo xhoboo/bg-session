@@ -2,9 +2,6 @@ import { useState } from 'react'
 import GameTagInput from './GameTagInput'
 import AvatarUpload from './AvatarUpload'
 
-// Explicit choices; an empty selection means "Prefer not to say".
-const GENDERS = ['Male', 'Female', 'Other']
-
 // Build the form state shape from a profile row (or empty for a new user).
 export function profileToForm(p) {
   return {
@@ -12,7 +9,6 @@ export function profileToForm(p) {
     photoUrl: p?.photo_url || '',
     realName: p?.real_name || '',
     nickname: p?.nickname || p?.display_name || '',
-    gender: p?.gender || '',
     domicile: p?.domicile || '',
     favoriteGames: p?.favorite_games || [],
     ownedGames: p?.owned_games || [],
@@ -33,7 +29,6 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
       photoUrl: form.photoUrl,
       realName: form.realName.trim(),
       nickname: form.nickname.trim(),
-      gender: form.gender,
       domicile: form.domicile,
       favoriteGames: form.favoriteGames.map((s) => s.trim()).filter(Boolean),
       ownedGames: form.ownedGames.map((s) => s.trim()).filter(Boolean),
@@ -112,16 +107,6 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
         <div className="form-group">
           <label className="field-label" htmlFor="realName">Real name</label>
           <input id="realName" type="text" value={form.realName} onChange={set('realName')} placeholder="e.g. Andi Wijaya" />
-        </div>
-
-        <div className="form-group">
-          <label className="field-label" htmlFor="gender">Gender</label>
-          <select id="gender" value={form.gender} onChange={set('gender')}>
-            <option value="">Prefer not to say</option>
-            {GENDERS.map((g) => (
-              <option key={g} value={g}>{g}</option>
-            ))}
-          </select>
         </div>
       </div>
 

@@ -45,7 +45,6 @@ export default function EditProfile() {
       .upsert({
         id: user.id,
         real_name: vals.realName || null,
-        gender: vals.gender || null,
         photo_url: vals.photoUrl || null,
       })
     setBusy(false)

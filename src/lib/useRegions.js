@@ -21,8 +21,8 @@ export function useRegions() {
     let active = true
     ;(async () => {
       const [regRes, areaRes] = await Promise.all([
-        supabase.from('regions').select('id, name').order('sort_order').order('name'),
-        supabase.from('areas').select('name, region_id, sort_order').order('sort_order').order('name'),
+        supabase.from('regions').select('id, name').order('name'),
+        supabase.from('areas').select('name, region_id').order('name'),
       ])
       if (!active) return
 
@@ -35,9 +35,8 @@ export function useRegions() {
         ;(byRegion[rname] ||= []).push(a.name)
       }
 
-      // Present regions and areas alphabetically in the dropdowns — the DB
-      // sort_order is a curated/geographic order, but a picker is easier to scan
-      // by name. (Sorted client-side so it's independent of the query order.)
+      // Present regions and areas alphabetically in the dropdowns. (Sorted
+      // client-side too so it's independent of the query order / collation.)
       const byName = (a, b) => a.localeCompare(b)
       for (const k of Object.keys(byRegion)) byRegion[k].sort(byName)
       const next = { regions: regs.map((r) => r.name).sort(byName), areasByRegion: byRegion }
