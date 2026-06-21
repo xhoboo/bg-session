@@ -21,6 +21,16 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
   // Some regions have no sub-areas yet — then the area field is optional.
   const hasAreas = areaOptions.length > 0
 
+  // The form keeps `startsAt` as one datetime-local string (YYYY-MM-DDTHH:mm)
+  // so the parents don't change, but the UI splits it into a date and a time
+  // field. Each setter rewrites only its half of the combined value.
+  const startsDate = (form.startsAt || '').split('T')[0] || ''
+  const startsTime = (form.startsAt || '').split('T')[1] || ''
+  const setStartsDate = (e) =>
+    setForm((f) => ({ ...f, startsAt: `${e.target.value}T${(f.startsAt || '').split('T')[1] || ''}` }))
+  const setStartsTime = (e) =>
+    setForm((f) => ({ ...f, startsAt: `${(f.startsAt || '').split('T')[0] || ''}T${e.target.value}` }))
+
   const handleSubmit = (e) => {
     e.preventDefault()
     onSubmit(form)
@@ -46,19 +56,6 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
 
         <div className="form-row">
           <div className="form-group">
-            <label className="field-label" htmlFor="maxPlayers">Max players <span className="field-hint">(incl. host)</span></label>
-            <input
-              id="maxPlayers"
-              type="number"
-              min={1}
-              max={50}
-              value={form.maxPlayers}
-              onChange={update('maxPlayers')}
-              required
-            />
-          </div>
-
-          <div className="form-group">
             <label className="field-label" htmlFor="minPlayers">
               Min players <span className="field-hint">— or it's canceled</span>
             </label>
@@ -72,6 +69,19 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
               required
             />
           </div>
+
+          <div className="form-group">
+            <label className="field-label" htmlFor="maxPlayers">Max players <span className="field-hint">(incl. host)</span></label>
+            <input
+              id="maxPlayers"
+              type="number"
+              min={1}
+              max={50}
+              value={form.maxPlayers}
+              onChange={update('maxPlayers')}
+              required
+            />
+          </div>
         </div>
         <div className="field-hint">
           At least 3. If fewer than the minimum confirm by the start time, the session is automatically canceled and removed.
@@ -81,15 +91,28 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
       <div className="form-section">
         <div className="form-section-title">Schedule</div>
 
-        <div className="form-group">
-          <label className="field-label" htmlFor="startsAt">Date & time</label>
-          <input
-            id="startsAt"
-            type="datetime-local"
-            value={form.startsAt}
-            onChange={update('startsAt')}
-            required
-          />
+        <div className="form-row">
+          <div className="form-group">
+            <label className="field-label" htmlFor="startsDate">Date</label>
+            <input
+              id="startsDate"
+              type="date"
+              value={startsDate}
+              onChange={setStartsDate}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="field-label" htmlFor="startsTime">Time</label>
+            <input
+              id="startsTime"
+              type="time"
+              value={startsTime}
+              onChange={setStartsTime}
+              required
+            />
+          </div>
         </div>
 
         <div className="form-group">

@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
-import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration, hasSessionStarted, isSessionFinished } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration, hasSessionStarted, isSessionFinished, sessionTitle } from '../lib/format'
 import Avatar from '../components/Avatar'
 import GameChip from '../components/GameChip'
 import StarRating from '../components/StarRating'
@@ -258,7 +258,7 @@ export default function SessionDetail() {
       <Link to="/" className="muted" style={{ fontSize: 14 }}>← Back to browse</Link>
 
       <div className="row-between" style={{ marginTop: 12 }}>
-        <h1 style={{ marginBottom: 0 }}>{session.title}</h1>
+        <h1 style={{ marginBottom: 0 }}>{sessionTitle(session)}</h1>
         <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
           <span className={'badge ' + (session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
             {session.recurrence === 'weekly' ? t('Weekly') : t('One-time')}

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { formatDateTime, playerCount, isSessionFull, isSessionFinished, locationLabel } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFull, isSessionFinished, locationLabel, sessionTitle } from '../lib/format'
 import { useLang } from '../lib/i18n'
 import Avatar from './Avatar'
 
@@ -14,7 +14,7 @@ export default function SessionCard({ session }) {
   return (
     <div className="card session-card" onClick={() => navigate(`/sessions/${session.id}`)}>
       <div className="row-between">
-        <span className="session-card-title">{session.title}</span>
+        <span className="session-card-title">{sessionTitle(session)}</span>
         <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
           <span className={'badge ' + (session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
             {session.recurrence === 'weekly' ? t('Weekly') : t('One-time')}

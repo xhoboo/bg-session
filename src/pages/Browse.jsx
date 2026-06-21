@@ -81,7 +81,7 @@ export default function Browse() {
 
     supabase
       .from('sessions')
-      .select('id, title, starts_at, region, area, max_players, board_games, session_type, recurrence, confirmed_count, host:profiles(display_name, avatar_url)')
+      .select('id, title, starts_at, region, area, max_players, board_games, session_type, recurrence, occurrence_number, confirmed_count, host:profiles(display_name, avatar_url)')
       .gte('starts_at', new Date().toISOString())
       .order('starts_at', { ascending: true })
       .then(({ data, error }) => {

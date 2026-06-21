@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
-import { formatDateTime, playerCount, isSessionFinished } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFinished, sessionTitle } from '../lib/format'
 import { SessionListSkeleton } from '../components/Skeleton'
 
 export default function MySessions() {
@@ -28,7 +28,7 @@ export default function MySessions() {
         .order('starts_at', { ascending: true }),
       supabase
         .from('join_requests')
-        .select('id, status, session:sessions(id, title, starts_at, duration_minutes, area, max_players, confirmed_count, session_type, recurrence)')
+        .select('id, status, session:sessions(id, title, starts_at, duration_minutes, area, max_players, confirmed_count, session_type, recurrence, occurrence_number)')
         .eq('guest_id', user.id)
         .order('created_at', { ascending: false }),
     ]).then(([hostRes, joinRes]) => {
@@ -68,7 +68,7 @@ export default function MySessions() {
           {hosting.map((s) => (
             <Link to={`/sessions/${s.id}`} key={s.id} className="card session-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="row-between">
-                <span className="session-card-title">{s.title}</span>
+                <span className="session-card-title">{sessionTitle(s)}</span>
                 <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
                   <span className={'badge ' + (s.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
                     {s.recurrence === 'weekly' ? t('Weekly') : t('One-time')}
@@ -99,7 +99,7 @@ export default function MySessions() {
           {joined.map((r) => (
             <Link to={`/sessions/${r.session.id}`} key={r.id} className="card session-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="row-between">
-                <span className="session-card-title">{r.session.title}</span>
+                <span className="session-card-title">{sessionTitle(r.session)}</span>
                 <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
                   <span className={'badge ' + (r.session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
                     {r.session.recurrence === 'weekly' ? t('Weekly') : t('One-time')}

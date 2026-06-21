@@ -72,12 +72,12 @@ export default function WeeklySessionForm({
 
         <div className="form-row">
           <div className="form-group">
-            <label className="field-label" htmlFor="maxPlayers">Max players <span className="field-hint">(incl. host)</span></label>
-            <input id="maxPlayers" type="number" min={1} max={50} value={form.maxPlayers} onChange={update('maxPlayers')} disabled={!can('players')} required />
-          </div>
-          <div className="form-group">
             <label className="field-label" htmlFor="minPlayers">Min players <span className="field-hint">— or it's canceled</span></label>
             <input id="minPlayers" type="number" min={3} max={50} value={form.minPlayers} onChange={update('minPlayers')} disabled={!can('players')} required />
+          </div>
+          <div className="form-group">
+            <label className="field-label" htmlFor="maxPlayers">Max players <span className="field-hint">(incl. host)</span></label>
+            <input id="maxPlayers" type="number" min={1} max={50} value={form.maxPlayers} onChange={update('maxPlayers')} disabled={!can('players')} required />
           </div>
         </div>
         <div className="field-hint">
