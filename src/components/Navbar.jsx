@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom'
+import GlobalSearch from './GlobalSearch'
 import NotificationBell from './NotificationBell'
 import ThemeToggle from './ThemeToggle'
 
-// Slim top utility bar: brand on the left, notifications + theme toggle on the
-// right. Primary navigation lives in the BottomNav; sign-out is on the Profile
-// page.
+// Slim top utility bar: brand on the left, search + notifications + theme toggle
+// on the right. Primary navigation lives in the BottomNav; sign-out is on the
+// Profile page.
 export default function Navbar() {
   return (
     <header className="top-bar">
@@ -13,6 +14,7 @@ export default function Navbar() {
         BG Session
       </Link>
       <div className="top-bar-actions">
+        <GlobalSearch />
         <NotificationBell />
         <ThemeToggle />
       </div>
