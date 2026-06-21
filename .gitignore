@@ -8,7 +8,8 @@ dist-ssr
 # Local-only admin tool — never commit or deploy (holds the service_role key)
 /admin/
 
-# Editor / OS
+# Editor / OS / tooling
+.claude/
 .vscode/*
 !.vscode/extensions.json
 .idea
