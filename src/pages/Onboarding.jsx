@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import ProfileForm, { profileToForm } from '../components/ProfileForm'
+import { nicknameFormatError, nicknameTakenError } from '../lib/nickname'
 
 // Required one-time profile setup, shown right after a user's first signup.
 // The OnboardingGate sends users here until profiles.onboarded = true.
@@ -17,10 +18,17 @@ export default function Onboarding() {
 
   const handleSubmit = async (vals) => {
     setError('')
-    if (!vals.nickname) return setError('Please enter a nickname.')
+    const nickErr = nicknameFormatError(vals.nickname)
+    if (nickErr) return setError(nickErr)
     if (vals.favoriteGames.length < 1) return setError('Add at least one favorite board game.')
 
     setBusy(true)
+    const takenErr = await nicknameTakenError(vals.nickname, user.id)
+    if (takenErr) {
+      setBusy(false)
+      return setError(takenErr)
+    }
+
     const { error: pubErr } = await supabase
       .from('profiles')
       .update({
@@ -35,7 +43,7 @@ export default function Onboarding() {
       .eq('id', user.id)
     if (pubErr) {
       setBusy(false)
-      return setError(pubErr.message)
+      return setError(pubErr.code === '23505' ? 'That nickname is already taken.' : pubErr.message)
     }
 
     const { error: privErr } = await supabase

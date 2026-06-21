@@ -35,7 +35,12 @@ export function useRegions() {
         ;(byRegion[rname] ||= []).push(a.name)
       }
 
-      const next = { regions: regs.map((r) => r.name), areasByRegion: byRegion }
+      // Present regions and areas alphabetically in the dropdowns — the DB
+      // sort_order is a curated/geographic order, but a picker is easier to scan
+      // by name. (Sorted client-side so it's independent of the query order.)
+      const byName = (a, b) => a.localeCompare(b)
+      for (const k of Object.keys(byRegion)) byRegion[k].sort(byName)
+      const next = { regions: regs.map((r) => r.name).sort(byName), areasByRegion: byRegion }
       if (!regRes.error && !areaRes.error) cache = next // cache only successful loads
       setData(next)
       setLoading(false)

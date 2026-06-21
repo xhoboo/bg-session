@@ -54,8 +54,21 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
         />
 
         <div className="form-group">
-          <label className="field-label" htmlFor="nickname">Nickname</label>
-          <input id="nickname" type="text" value={form.nickname} onChange={set('nickname')} placeholder="e.g. Andi" required />
+          <label className="field-label" htmlFor="nickname">
+            Nickname <span className="field-hint">— up to 20 chars; letters, numbers and . _ - only</span>
+          </label>
+          <input
+            id="nickname"
+            type="text"
+            value={form.nickname}
+            onChange={set('nickname')}
+            placeholder="e.g. Andi"
+            maxLength={20}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            required
+          />
         </div>
 
         <div className="form-group">

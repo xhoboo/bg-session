@@ -416,10 +416,12 @@ textarea { resize: vertical; min-height: 80px; }
 .profile-view-head h1 { margin: 8px 0 0; }
 .profile-view-head .avatar-fallback, .profile-view-head .avatar-img { border-radius: 28px; box-shadow: 0 10px 24px rgba(40,30,20,.18); }
 
-.name-row { position: relative; display: inline-flex; margin-top: 8px; }
+/* Name + online status stack vertically and stay centered. (They used to sit
+   side-by-side with the status absolutely positioned to the right of the name,
+   which overflowed off-screen on narrow phones when the name was long.) */
+.name-row { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 8px; }
 .name-row h1 { margin: 0; }
 .last-seen { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--slate-400); white-space: nowrap; }
-.name-row .last-seen { position: absolute; left: 100%; bottom: 4px; margin-left: 8px; }
 .last-seen-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--slate-400); flex-shrink: 0; }
 .last-seen.is-online { color: var(--good-ink); }
 .last-seen.is-online .last-seen-dot { background: var(--good); }
