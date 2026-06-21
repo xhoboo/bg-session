@@ -52,7 +52,7 @@ export default function WeeklySessionForm({
   }
 
   return (
-    <form className="card" onSubmit={handleSubmit}>
+    <form className="form-card-stack" onSubmit={handleSubmit}>
       <div className="form-section">
         <div className="form-section-title">Session details</div>
 
@@ -249,7 +249,7 @@ export default function WeeklySessionForm({
         </div>
       )}
 
-      <button className="btn btn-primary btn-block" type="submit" disabled={busy} style={{ marginTop: 18 }}>
+      <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
         {busy ? 'Saving…' : submitLabel}
       </button>
     </form>

@@ -27,7 +27,7 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
   }
 
   return (
-    <form className="card" onSubmit={handleSubmit}>
+    <form className="form-card-stack" onSubmit={handleSubmit}>
       <div className="form-section">
         <div className="form-section-title">Session details</div>
 

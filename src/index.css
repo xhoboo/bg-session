@@ -488,9 +488,19 @@ textarea { resize: vertical; min-height: 80px; }
 .choice-title { font-family: var(--font-head); font-weight: 700; font-size: 17px; margin-bottom: 4px; }
 .choice-desc { color: var(--slate-600); font-size: 13px; }
 
-/* ---------- Form sections (grouped fields with a divider) ---------- */
-.form-section { padding-top: 18px; margin-top: 18px; border-top: 1px solid var(--slate-200); }
-.form-section:first-of-type { padding-top: 0; margin-top: 0; border-top: none; }
+/* ---------- Form sections (each section is its own card) ---------- */
+/* The <form> is a transparent stack; every section reads as a distinct card so
+   the form feels like grouped steps rather than one long scroll. */
+.form-card-stack { display: flex; flex-direction: column; gap: 12px; }
+.form-section {
+  background: var(--surface);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+/* Even card padding: drop the trailing margin of whatever ends each section. */
+.form-section > :last-child { margin-bottom: 0; }
 .form-section-title { font-family: var(--font-head); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--slate-400); margin: 0 0 14px; }
 
 /* ---------- Co-host picker + permission checkboxes ---------- */
