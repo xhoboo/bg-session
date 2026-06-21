@@ -267,6 +267,9 @@ strong { font-weight: 700; }
 .badge-approved { background: var(--good-soft); color: var(--good-ink); }
 .badge-rejected { background: var(--red-soft); color: var(--red-600); }
 .badge-done { background: var(--neutral-soft); color: var(--slate-600); }
+.badge-weekly { background: var(--accent-soft); color: var(--accent-ink); }
+.badge-onetime { background: var(--neutral-soft); color: var(--slate-600); }
+.badge-cohost { background: var(--good-soft); color: var(--good-ink); }
 
 /* ---------- Forms ---------- */
 .form-group { margin-bottom: 16px; }
@@ -454,6 +457,25 @@ textarea { resize: vertical; min-height: 80px; }
 .last-seen-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--slate-400); flex-shrink: 0; }
 .last-seen.is-online { color: var(--good-ink); }
 .last-seen.is-online .last-seen-dot { background: var(--good); }
+
+/* ---------- Create-mode chooser ---------- */
+.choice-grid { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
+.choice-card { display: flex; gap: 14px; align-items: flex-start; width: 100%; text-align: left; cursor: pointer; }
+.choice-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+.choice-emoji { font-size: 30px; line-height: 1; flex: none; }
+.choice-title { font-family: var(--font-head); font-weight: 700; font-size: 17px; margin-bottom: 4px; }
+.choice-desc { color: var(--slate-600); font-size: 13px; }
+
+/* ---------- Co-host picker + permission checkboxes ---------- */
+.cohost-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+.cohost-chip { display: inline-flex; align-items: center; gap: 7px; background: var(--good-soft); color: var(--good-ink); font-weight: 600; font-size: 12px; padding: 6px 8px 6px 6px; border-radius: 999px; }
+.cohost-chip button { width: auto; background: none; border: none; color: inherit; cursor: pointer; font-size: 15px; line-height: 1; padding: 0 2px; opacity: .7; }
+.cohost-chip button:hover { opacity: 1; }
+.cohost-results { border: 1px solid var(--slate-200); border-radius: var(--radius-sm); overflow: hidden; }
+.check-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.check-pill { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--slate-200); border-radius: 999px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; background: var(--field); }
+.check-pill input { width: auto; margin: 0; }
+.check-pill.is-on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
 
 .chips { display: flex; flex-wrap: wrap; gap: 7px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; font-size: 12px; padding: 8px 12px; border-radius: 999px; }

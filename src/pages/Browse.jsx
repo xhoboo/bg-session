@@ -27,6 +27,10 @@ export default function Browse() {
     supabase.rpc('enqueue_rating_reminders')
     supabase.rpc('enqueue_session_reminders') // day-before reminder + attendance follow-up
     supabase.rpc('cancel_understaffed_sessions') // delete sessions that didn't reach min players
+    // Materialize the next week of each weekly session. A PostgREST builder is a
+    // lazy thenable, so we attach .then() to actually fire the request (and
+    // swallow errors — it's best-effort maintenance, like the calls above).
+    supabase.rpc('roll_weekly_sessions').then(() => {}, () => {})
     ;(async () => {
       const now = new Date().toISOString()
       const [hostRes, joinRes] = await Promise.all([
@@ -69,7 +73,7 @@ export default function Browse() {
 
     supabase
       .from('sessions')
-      .select('id, title, starts_at, region, area, max_players, board_games, session_type, confirmed_count, host:profiles(display_name, avatar_url)')
+      .select('id, title, starts_at, region, area, max_players, board_games, session_type, recurrence, confirmed_count, host:profiles(display_name, avatar_url)')
       .gte('starts_at', new Date().toISOString())
       .order('starts_at', { ascending: true })
       .then(({ data, error }) => {

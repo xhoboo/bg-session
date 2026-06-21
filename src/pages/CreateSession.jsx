@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import SessionForm from '../components/SessionForm'
+import { FALLBACK_DURATION_MIN } from '../lib/format'
 
 const initialForm = {
   title: '',
@@ -37,6 +38,31 @@ export default function CreateSession() {
     if (Number.isNaN(Date.parse(startsAtIso))) return setError('Please pick a valid date and time.')
 
     setBusy(true)
+
+    // Mirror the server-side limits (migration 0030) for instant feedback.
+    const dur = form.durationMinutes ? Number(form.durationMinutes) : FALLBACK_DURATION_MIN
+    const newStart = new Date(startsAtIso).getTime()
+    const newEnd = newStart + dur * 60_000
+    const { data: mine } = await supabase
+      .from('sessions')
+      .select('starts_at, duration_minutes, recurrence')
+      .eq('host_id', user.id)
+    const live = (mine ?? []).filter(
+      (s) => new Date(s.starts_at).getTime() + (s.duration_minutes || FALLBACK_DURATION_MIN) * 60_000 > Date.now()
+    )
+    const overlaps = live.some((s) => {
+      const st = new Date(s.starts_at).getTime()
+      const en = st + (s.duration_minutes || FALLBACK_DURATION_MIN) * 60_000
+      return st < newEnd && en > newStart
+    })
+    if (overlaps) {
+      setBusy(false)
+      return setError('You already host a session that overlaps this time — the next one can only start after the previous ends.')
+    }
+    if (live.filter((s) => s.recurrence !== 'weekly').length >= 2) {
+      setBusy(false)
+      return setError('You can host at most 2 active one-time sessions at a time.')
+    }
 
     // 1) Create the public session row (no address here).
     const { data: session, error: sessionErr } = await supabase

@@ -10,7 +10,9 @@ import Signup from './pages/Signup'
 import AuthCallback from './pages/AuthCallback'
 import Onboarding from './pages/Onboarding'
 import Browse from './pages/Browse'
+import CreateSessionChooser from './pages/CreateSessionChooser'
 import CreateSession from './pages/CreateSession'
+import CreateWeeklySession from './pages/CreateWeeklySession'
 import EditSession from './pages/EditSession'
 import SessionDetail from './pages/SessionDetail'
 import MySessions from './pages/MySessions'
@@ -38,7 +40,9 @@ export default function App() {
         <Route element={<OnboardingGate />}>
           <Route element={<Layout />}>
             <Route path="/" element={<Browse />} />
-            <Route path="/create" element={<CreateSession />} />
+            <Route path="/create" element={<CreateSessionChooser />} />
+            <Route path="/create/one-time" element={<CreateSession />} />
+            <Route path="/create/weekly" element={<CreateWeeklySession />} />
             <Route path="/my-sessions" element={<MySessions />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/edit" element={<EditProfile />} />

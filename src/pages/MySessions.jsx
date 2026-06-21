@@ -25,7 +25,7 @@ export default function MySessions() {
         .order('starts_at', { ascending: true }),
       supabase
         .from('join_requests')
-        .select('id, status, session:sessions(id, title, starts_at, duration_minutes, area, max_players, confirmed_count, session_type)')
+        .select('id, status, session:sessions(id, title, starts_at, duration_minutes, area, max_players, confirmed_count, session_type, recurrence)')
         .eq('guest_id', user.id)
         .order('created_at', { ascending: false }),
     ]).then(([hostRes, joinRes]) => {
@@ -58,8 +58,13 @@ export default function MySessions() {
             <Link to={`/sessions/${s.id}`} key={s.id} className="card session-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="row-between">
                 <span className="session-card-title">{s.title}</span>
-                <span className={'badge ' + (s.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
-                  {s.session_type === 'open' ? 'Open' : 'Approval'}
+                <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
+                  <span className={'badge ' + (s.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
+                    {s.recurrence === 'weekly' ? 'Weekly' : 'One-time'}
+                  </span>
+                  <span className={'badge ' + (s.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
+                    {s.session_type === 'open' ? 'Open' : 'Approval'}
+                  </span>
                 </span>
               </div>
               <div className="session-meta">
@@ -84,8 +89,13 @@ export default function MySessions() {
             <Link to={`/sessions/${r.session.id}`} key={r.id} className="card session-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="row-between">
                 <span className="session-card-title">{r.session.title}</span>
-                <span className={'badge badge-' + r.status}>
-                  {r.status === 'approved' ? 'Approved' : r.status === 'rejected' ? 'Declined' : 'Pending'}
+                <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
+                  <span className={'badge ' + (r.session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
+                    {r.session.recurrence === 'weekly' ? 'Weekly' : 'One-time'}
+                  </span>
+                  <span className={'badge badge-' + r.status}>
+                    {r.status === 'approved' ? 'Approved' : r.status === 'rejected' ? 'Declined' : 'Pending'}
+                  </span>
                 </span>
               </div>
               <div className="session-meta">

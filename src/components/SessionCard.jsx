@@ -13,13 +13,18 @@ export default function SessionCard({ session }) {
     <div className="card session-card" onClick={() => navigate(`/sessions/${session.id}`)}>
       <div className="row-between">
         <span className="session-card-title">{session.title}</span>
-        {finished ? (
-          <span className="badge badge-done">Done</span>
-        ) : (
-          <span className={'badge ' + (session.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
-            {session.session_type === 'open' ? 'Open' : 'Approval'}
+        <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
+          <span className={'badge ' + (session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
+            {session.recurrence === 'weekly' ? 'Weekly' : 'One-time'}
           </span>
-        )}
+          {finished ? (
+            <span className="badge badge-done">Done</span>
+          ) : (
+            <span className={'badge ' + (session.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
+              {session.session_type === 'open' ? 'Open' : 'Approval'}
+            </span>
+          )}
+        </span>
       </div>
 
       <div className="session-meta">

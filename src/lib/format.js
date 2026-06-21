@@ -104,3 +104,47 @@ export function formatDuration(minutes) {
   const h = minutes / 60
   return `~${h} hour${h > 1 ? 's' : ''}`
 }
+
+// ---------------------------------------------------------------------------
+// Weekly sessions
+// ---------------------------------------------------------------------------
+
+// Day index matches JS Date.getDay() and Postgres `dow`: 0 = Sunday.
+export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+export function dayLabel(n) {
+  return WEEKDAYS[Number(n)] ?? ''
+}
+
+// "One-time" / "Weekly" tag for a session row.
+export function recurrenceLabel(s) {
+  return s?.recurrence === 'weekly' ? 'Weekly' : 'One-time'
+}
+
+// Field-groups a host can grant co-hosts permission to edit. Keys match the
+// server-side checks in migration 0028 (enforce_cohost_edit_*).
+export const COHOST_FIELDS = [
+  { key: 'title', label: 'Title' },
+  { key: 'schedule', label: 'Day & time' },
+  { key: 'location', label: 'Location & address' },
+  { key: 'players', label: 'Player limits' },
+  { key: 'board_games', label: 'Board games' },
+  { key: 'session_type', label: 'Join type' },
+  { key: 'duration', label: 'Duration' },
+]
+
+// Next occurrence (a JS Date) for a given weekday + "HH:MM" time, strictly in
+// the future. Mirrors next_weekly_occurrence() in SQL; computed in the browser's
+// local time, which for this app's audience is WIB — fine for a preview label.
+export function nextWeeklyDate(weeklyDay, startTime) {
+  if (weeklyDay === '' || weeklyDay == null || !startTime) return null
+  const [h, m] = startTime.split(':').map(Number)
+  if (Number.isNaN(h) || Number.isNaN(m)) return null
+  const now = new Date()
+  const d = new Date(now)
+  const ahead = (((Number(weeklyDay) - now.getDay()) % 7) + 7) % 7
+  d.setDate(now.getDate() + ahead)
+  d.setHours(h, m, 0, 0)
+  if (d <= now) d.setDate(d.getDate() + 7)
+  return d
+}

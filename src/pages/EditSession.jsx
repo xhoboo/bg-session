@@ -3,14 +3,20 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import SessionForm from '../components/SessionForm'
-import { toDatetimeLocalValue, hasSessionStarted } from '../lib/format'
+import WeeklySessionForm from '../components/WeeklySessionForm'
+import { toDatetimeLocalValue, hasSessionStarted, nextWeeklyDate } from '../lib/format'
 
 export default function EditSession() {
   const { id } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
 
+  const [mode, setMode] = useState(null) // 'one_time' | 'weekly'
   const [initial, setInitial] = useState(null)
+  const [series, setSeries] = useState(null)
+  const [isHost, setIsHost] = useState(false)
+  const [origCohostIds, setOrigCohostIds] = useState([])
+  const [origSchedule, setOrigSchedule] = useState({ weeklyDay: '', startTime: '' })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -18,20 +24,30 @@ export default function EditSession() {
   useEffect(() => {
     let active = true
     ;(async () => {
-      const { data: s, error: sErr } = await supabase
-        .from('sessions')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle()
-
+      const { data: s, error: sErr } = await supabase.from('sessions').select('*').eq('id', id).maybeSingle()
       if (!active) return
       if (sErr || !s) {
         setError(sErr?.message || 'Session not found.')
         setLoading(false)
         return
       }
-      if (s.host_id !== user.id) {
-        setError('Only the host can edit this session.')
+
+      const host = s.host_id === user.id
+
+      // Weekly: co-hosts may also edit (the form/triggers limit which fields).
+      let cohost = false
+      let cohostsList = []
+      if (s.series_id) {
+        const { data: ch } = await supabase
+          .from('weekly_cohosts')
+          .select('user_id, profile:profiles(id, nickname, display_name, avatar_url)')
+          .eq('series_id', s.series_id)
+        cohostsList = (ch ?? []).map((r) => r.profile).filter(Boolean)
+        cohost = (ch ?? []).some((r) => r.user_id === user.id)
+      }
+
+      if (!host && !cohost) {
+        setError('Only the host or a co-host can edit this session.')
         setLoading(false)
         return
       }
@@ -41,26 +57,66 @@ export default function EditSession() {
         return
       }
 
-      // Host can read the address (RLS allows it).
-      const { data: addr } = await supabase
-        .from('session_addresses')
-        .select('full_address, maps_url')
-        .eq('session_id', id)
-        .maybeSingle()
+      // ---- One-time session ----
+      if (!s.series_id) {
+        const { data: addr } = await supabase
+          .from('session_addresses')
+          .select('full_address, maps_url')
+          .eq('session_id', id)
+          .maybeSingle()
+        setMode('one_time')
+        setIsHost(host)
+        setInitial({
+          title: s.title,
+          startsAt: toDatetimeLocalValue(s.starts_at),
+          region: s.region ?? '',
+          area: s.area,
+          fullAddress: addr?.full_address ?? '',
+          mapsUrl: addr?.maps_url ?? '',
+          minPlayers: s.min_players ?? 3,
+          maxPlayers: s.max_players,
+          durationMinutes: s.duration_minutes ? String(s.duration_minutes) : '',
+          boardGames: s.board_games,
+          sessionType: s.session_type,
+        })
+        setLoading(false)
+        return
+      }
 
+      // ---- Weekly occurrence: template lives in weekly_series ----
+      const { data: ws } = await supabase.from('weekly_series').select('*').eq('id', s.series_id).maybeSingle()
+      if (!ws) {
+        setError('Weekly session template not found.')
+        setLoading(false)
+        return
+      }
+      const startTime = (ws.start_time || '').slice(0, 5) // "HH:MM"
+      setSeries(ws)
+      setIsHost(host)
+      setOrigSchedule({ weeklyDay: String(ws.weekly_day), startTime })
+      setOrigCohostIds(cohostsList.map((c) => c.id))
       setInitial({
-        title: s.title,
-        startsAt: toDatetimeLocalValue(s.starts_at),
-        region: s.region ?? '',
-        area: s.area,
-        fullAddress: addr?.full_address ?? '',
-        mapsUrl: addr?.maps_url ?? '',
-        minPlayers: s.min_players ?? 1,
-        maxPlayers: s.max_players,
-        durationMinutes: s.duration_minutes ? String(s.duration_minutes) : '',
+        title: ws.title,
+        weeklyDay: String(ws.weekly_day),
+        startTime,
+        region: ws.region ?? '',
+        area: ws.area,
+        fullAddress: ws.full_address ?? '',
+        mapsUrl: ws.maps_url ?? '',
+        minPlayers: ws.min_players ?? 3,
+        maxPlayers: ws.max_players,
+        durationMinutes: ws.duration_minutes ? String(ws.duration_minutes) : '',
+        sessionType: ws.session_type,
         boardGames: s.board_games,
-        sessionType: s.session_type,
+        cohosts: cohostsList.map((c) => ({
+          id: c.id,
+          nickname: c.nickname,
+          display_name: c.display_name,
+          avatar_url: c.avatar_url,
+        })),
+        cohostEditable: ws.cohost_editable || [],
       })
+      setMode('weekly')
       setLoading(false)
     })()
     return () => {
@@ -68,7 +124,7 @@ export default function EditSession() {
     }
   }, [id, user.id])
 
-  const handleSubmit = async (form) => {
+  const handleSubmitOneTime = async (form) => {
     setError('')
     if (!form.region) return setError('Please choose a region.')
     if (!form.area) return setError('Please choose an area.')
@@ -80,7 +136,6 @@ export default function EditSession() {
     if (Number.isNaN(Date.parse(startsAtIso))) return setError('Please pick a valid date and time.')
 
     setBusy(true)
-
     const { error: sErr } = await supabase
       .from('sessions')
       .update({
@@ -101,14 +156,112 @@ export default function EditSession() {
       return setError(sErr.message)
     }
 
-    // Upsert the address (it may not exist yet for older sessions).
     const { error: aErr } = await supabase
       .from('session_addresses')
       .upsert({ session_id: id, full_address: form.fullAddress.trim(), maps_url: form.mapsUrl.trim() || null })
 
     setBusy(false)
     if (aErr) return setError(`Saved, but address update failed: ${aErr.message}`)
+    navigate(`/sessions/${id}`)
+  }
 
+  const handleSubmitWeekly = async (form) => {
+    setError('')
+    if (form.weeklyDay === '' || form.weeklyDay == null) return setError('Please choose which day of the week.')
+    if (!form.startTime) return setError('Please choose a start time.')
+    if (!form.region) return setError('Please choose a region.')
+    if (!form.area) return setError('Please choose an area.')
+    if (!form.fullAddress.trim()) return setError('Please enter the full address.')
+    if (Number(form.minPlayers) < 3) return setError('Min players must be at least 3.')
+    if (Number(form.minPlayers) > Number(form.maxPlayers)) return setError('Min players cannot be greater than max players.')
+
+    const editableKeys = isHost ? null : series?.cohost_editable || []
+    const canLocation = isHost || editableKeys.includes('location')
+
+    setBusy(true)
+
+    // 1) Update the series template (the source of truth for next weeks).
+    const seriesPayload = {
+      title: form.title.trim(),
+      weekly_day: Number(form.weeklyDay),
+      start_time: form.startTime,
+      duration_minutes: form.durationMinutes ? Number(form.durationMinutes) : null,
+      region: form.region,
+      area: form.area,
+      min_players: Number(form.minPlayers),
+      max_players: Number(form.maxPlayers),
+      session_type: form.sessionType,
+      full_address: form.fullAddress.trim(),
+      maps_url: form.mapsUrl.trim() || null,
+    }
+    if (isHost) seriesPayload.cohost_editable = form.cohostEditable || []
+    const { error: serErr } = await supabase.from('weekly_series').update(seriesPayload).eq('id', series.id)
+    if (serErr) {
+      setBusy(false)
+      return setError(serErr.message)
+    }
+
+    // 2) Sync this week's occurrence to match.
+    const occPayload = {
+      title: form.title.trim(),
+      region: form.region,
+      area: form.area,
+      min_players: Number(form.minPlayers),
+      max_players: Number(form.maxPlayers),
+      duration_minutes: form.durationMinutes ? Number(form.durationMinutes) : null,
+      session_type: form.sessionType,
+      board_games: form.boardGames.trim(),
+    }
+    // Only reschedule when the day/time actually changed (avoids needless
+    // starts_at churn and tz-drift between JS and the DB's WIB calculation).
+    const scheduleChanged =
+      String(form.weeklyDay) !== origSchedule.weeklyDay || form.startTime !== origSchedule.startTime
+    if (scheduleChanged) {
+      const next = nextWeeklyDate(form.weeklyDay, form.startTime)
+      if (next) occPayload.starts_at = next.toISOString()
+    }
+    const { error: occErr } = await supabase.from('sessions').update(occPayload).eq('id', id)
+    if (occErr) {
+      setBusy(false)
+      return setError(occErr.message)
+    }
+
+    // 3) Sync the occurrence address (only if this editor may change location).
+    // The address row already exists (the roll function created it), so UPDATE —
+    // not upsert — keeps a co-host clear of the host-only INSERT policy.
+    if (canLocation) {
+      const { error: addrErr } = await supabase
+        .from('session_addresses')
+        .update({ full_address: form.fullAddress.trim(), maps_url: form.mapsUrl.trim() || null })
+        .eq('session_id', id)
+      if (addrErr) {
+        setBusy(false)
+        return setError(`Saved, but address update failed: ${addrErr.message}`)
+      }
+    }
+
+    // 4) Apply co-host add/remove (host only).
+    if (isHost) {
+      const newIds = (form.cohosts || []).map((c) => c.id)
+      const added = newIds.filter((x) => !origCohostIds.includes(x))
+      const removed = origCohostIds.filter((x) => !newIds.includes(x))
+      for (const uid of added) {
+        const { error: e } = await supabase.rpc('add_weekly_cohost', { p_series_id: series.id, p_user_id: uid })
+        if (e) {
+          setBusy(false)
+          return setError(e.message)
+        }
+      }
+      for (const uid of removed) {
+        const { error: e } = await supabase.rpc('remove_weekly_cohost', { p_series_id: series.id, p_user_id: uid })
+        if (e) {
+          setBusy(false)
+          return setError(e.message)
+        }
+      }
+    }
+
+    setBusy(false)
     navigate(`/sessions/${id}`)
   }
 
@@ -126,12 +279,28 @@ export default function EditSession() {
   return (
     <div className="container container-narrow">
       <Link to={`/sessions/${id}`} className="muted" style={{ fontSize: 14 }}>← Back to session</Link>
-      <h1 style={{ marginTop: 12 }}>Edit session</h1>
-      <p className="subtitle">Update the details. Confirmed guests will see the new address.</p>
+      <h1 style={{ marginTop: 12 }}>Edit {mode === 'weekly' ? 'weekly session' : 'session'}</h1>
+      <p className="subtitle">
+        {mode === 'weekly'
+          ? 'Changes apply to this week and every week going forward. Board games are just for this week.'
+          : 'Update the details. Confirmed guests will see the new address.'}
+      </p>
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      <SessionForm initial={initial} submitLabel="Save changes" busy={busy} onSubmit={handleSubmit} />
+      {mode === 'weekly' ? (
+        <WeeklySessionForm
+          initial={initial}
+          submitLabel="Save changes"
+          busy={busy}
+          onSubmit={handleSubmitWeekly}
+          showCohostAdmin={isHost}
+          editableKeys={isHost ? null : series?.cohost_editable || []}
+          selfId={user.id}
+        />
+      ) : (
+        <SessionForm initial={initial} submitLabel="Save changes" busy={busy} onSubmit={handleSubmitOneTime} />
+      )}
     </div>
   )
 }

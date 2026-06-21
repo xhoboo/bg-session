@@ -82,7 +82,12 @@ export default function ProfileView({ profile, history = [], headerAction }) {
               >
                 <div className="row-between">
                   <span className="session-card-title">{session.title}</span>
-                  {role && <span className={'badge ' + (role === 'Host' ? 'badge-approval' : 'badge-approved')}>{role}</span>}
+                  <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
+                    <span className={'badge ' + (session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
+                      {session.recurrence === 'weekly' ? 'Weekly' : 'One-time'}
+                    </span>
+                    {role && <span className={'badge ' + (role === 'Host' ? 'badge-approval' : 'badge-approved')}>{role}</span>}
+                  </span>
                 </div>
                 <div className="session-history-meta">
                   {/* Date on its own line; area / players / rating fall into fixed

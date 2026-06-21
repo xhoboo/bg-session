@@ -24,6 +24,8 @@ export default function SessionDetail() {
   const [ratings, setRatings] = useState([])
   const [ratingValue, setRatingValue] = useState(0)
   const [reviewText, setReviewText] = useState('')
+  const [cohostIds, setCohostIds] = useState(() => new Set())
+  const [seriesEditable, setSeriesEditable] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -46,6 +48,22 @@ export default function SessionDetail() {
       return
     }
     setSession(s)
+
+    // Weekly: load the co-hosts (to badge them / gate co-host editing) and, for
+    // host + co-hosts, the series' editable-field permissions.
+    if (s.series_id) {
+      const { data: chs } = await supabase.from('weekly_cohosts').select('user_id').eq('series_id', s.series_id)
+      setCohostIds(new Set((chs ?? []).map((r) => r.user_id)))
+      const { data: ws } = await supabase
+        .from('weekly_series')
+        .select('cohost_editable')
+        .eq('id', s.series_id)
+        .maybeSingle()
+      setSeriesEditable(ws?.cohost_editable ?? [])
+    } else {
+      setCohostIds(new Set())
+      setSeriesEditable([])
+    }
 
     // Address — RLS returns a row only if we're the host or an approved guest.
     const { data: addr } = await supabase
@@ -122,10 +140,38 @@ export default function SessionDetail() {
   }
 
   const cancelSession = async () => {
-    if (!window.confirm('Cancel this session? This removes it for everyone and notifies no one. This cannot be undone.')) return
+    const weekly = !!session.series_id
+    const msg = weekly
+      ? "End this weekly session? This removes the upcoming session and stops it repeating. Past weeks stay in everyone's history."
+      : 'Cancel this session? This removes it for everyone and notifies no one. This cannot be undone.'
+    if (!window.confirm(msg)) return
     setBusy(true)
     setError('')
-    const { error } = await supabase.from('sessions').delete().eq('id', id)
+    const { error: e1 } = await supabase.from('sessions').delete().eq('id', id)
+    if (e1) {
+      setBusy(false)
+      return setError(e1.message)
+    }
+    if (weekly) {
+      // Deleting the series stops future weeks. Past occurrences keep their rows
+      // (series_id is set null on delete), so history is preserved.
+      const { error: e2 } = await supabase.from('weekly_series').delete().eq('id', session.series_id)
+      if (e2) {
+        setBusy(false)
+        return setError(e2.message)
+      }
+    }
+    setBusy(false)
+    navigate('/my-sessions', { replace: true })
+  }
+
+  // A co-host resigns: they're removed from the series and from this and any
+  // upcoming occurrence (their past weeks stay in their history).
+  const stepDown = async () => {
+    if (!window.confirm('Step down as co-host? You will be removed from this and every upcoming week.')) return
+    setBusy(true)
+    setError('')
+    const { error } = await supabase.rpc('step_down_cohost', { p_series_id: session.series_id })
     setBusy(false)
     if (error) return setError(error.message)
     navigate('/my-sessions', { replace: true })
@@ -178,6 +224,7 @@ export default function SessionDetail() {
 
   const started = hasSessionStarted(session)
   const finished = isSessionFinished(session)
+  const isCohost = !isHost && cohostIds.has(user.id)
   const isParticipant = isHost || myRequest?.status === 'approved'
   const myRating = ratings.find((r) => r.user_id === user.id)
   const avgRating = ratings.length
@@ -190,13 +237,18 @@ export default function SessionDetail() {
 
       <div className="row-between" style={{ marginTop: 12 }}>
         <h1 style={{ marginBottom: 0 }}>{session.title}</h1>
-        {finished ? (
-          <span className="badge badge-done">Done</span>
-        ) : (
-          <span className={'badge ' + (session.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
-            {session.session_type === 'open' ? 'Open' : 'Approval'}
+        <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
+          <span className={'badge ' + (session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
+            {session.recurrence === 'weekly' ? 'Weekly' : 'One-time'}
           </span>
-        )}
+          {finished ? (
+            <span className="badge badge-done">Done</span>
+          ) : (
+            <span className={'badge ' + (session.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
+              {session.session_type === 'open' ? 'Open' : 'Approval'}
+            </span>
+          )}
+        </span>
       </div>
       <p className="subtitle" style={{ marginTop: 8 }}>
         Hosted by{' '}
@@ -438,13 +490,36 @@ export default function SessionDetail() {
               Edit details
             </button>
             <button className="btn btn-danger" onClick={cancelSession} disabled={busy}>
-              Cancel session
+              {session.series_id ? 'End weekly session' : 'Cancel session'}
             </button>
           </div>
         </>
       )}
 
-      {isParticipant && <SessionParticipants sessionId={id} hostId={session.host_id} />}
+      {/* ---------------- Co-host controls (weekly sessions) ---------------- */}
+      {isCohost && !started && (
+        <>
+          <h2 className="section-title">Co-host</h2>
+          <div className="card">
+            <p className="muted" style={{ marginTop: 0 }}>
+              You're a co-host of this weekly session.
+              {seriesEditable.length === 0 && ' The host hasn’t given you edit permissions.'}
+            </p>
+            <div className="form-row">
+              {seriesEditable.length > 0 && (
+                <button className="btn btn-secondary" onClick={() => navigate(`/sessions/${id}/edit`)} disabled={busy}>
+                  Edit details
+                </button>
+              )}
+              <button className="btn btn-danger" onClick={stepDown} disabled={busy}>
+                Step down
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {isParticipant && <SessionParticipants sessionId={id} hostId={session.host_id} seriesId={session.series_id} />}
 
       {isParticipant && <SessionChat sessionId={id} readOnly={finished} />}
     </div>

@@ -9,9 +9,30 @@ import Avatar from './Avatar'
 // in-person photo — to help people recognize each other in person.
 // That private data is returned only for confirmed co-participants by
 // profile_private's RLS, so there's nothing to hide on the client here.
-export default function SessionParticipants({ sessionId, hostId }) {
+export default function SessionParticipants({ sessionId, hostId, seriesId }) {
   const { user } = useAuth()
   const [people, setPeople] = useState([])
+  const [cohostIds, setCohostIds] = useState(() => new Set())
+
+  // For weekly occurrences, find which approved participants are co-hosts so we
+  // can badge them. weekly_cohosts is readable to all authenticated users.
+  useEffect(() => {
+    if (!seriesId) {
+      setCohostIds(new Set())
+      return
+    }
+    let active = true
+    supabase
+      .from('weekly_cohosts')
+      .select('user_id')
+      .eq('series_id', seriesId)
+      .then(({ data }) => {
+        if (active) setCohostIds(new Set((data ?? []).map((r) => r.user_id)))
+      })
+    return () => {
+      active = false
+    }
+  }, [seriesId])
 
   useEffect(() => {
     let active = true
@@ -65,6 +86,7 @@ export default function SessionParticipants({ sessionId, hostId }) {
                 <Link to={`/users/${p.id}`} className="user-link">
                   {name}
                   {p.isHost && <span className="badge badge-area">Host</span>}
+                  {!p.isHost && cohostIds.has(p.id) && <span className="badge badge-cohost">Co-host</span>}
                   {p.id === user.id && <span className="muted" style={{ fontWeight: 400 }}>· you</span>}
                 </Link>
                 {extras.length > 0 && (
