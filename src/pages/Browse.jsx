@@ -24,13 +24,15 @@ export default function Browse() {
   // the backend to enqueue "rate this session" notifications for them.
   useEffect(() => {
     let active = true
-    supabase.rpc('enqueue_rating_reminders')
-    supabase.rpc('enqueue_session_reminders') // day-before reminder + attendance follow-up
-    supabase.rpc('cancel_understaffed_sessions') // delete sessions that didn't reach min players
-    // Materialize the next week of each weekly session. A PostgREST builder is a
-    // lazy thenable, so we attach .then() to actually fire the request (and
-    // swallow errors — it's best-effort maintenance, like the calls above).
-    supabase.rpc('roll_weekly_sessions').then(() => {}, () => {})
+    // Best-effort on-load maintenance. A PostgREST builder is a lazy thenable —
+    // it only sends when .then()/await is called — so each call needs .then() to
+    // actually fire (and we swallow errors; none of these block the page).
+    // pg_cron also runs roll + cancel on a schedule (migration 0033); these keep
+    // things fresh between cron ticks for whoever's looking.
+    supabase.rpc('enqueue_rating_reminders').then(() => {}, () => {})
+    supabase.rpc('enqueue_session_reminders').then(() => {}, () => {}) // day-before + attendance follow-up
+    supabase.rpc('cancel_understaffed_sessions').then(() => {}, () => {}) // remove under-min one-time sessions
+    supabase.rpc('roll_weekly_sessions').then(() => {}, () => {}) // materialize next week of each weekly session
     ;(async () => {
       const now = new Date().toISOString()
       const [hostRes, joinRes] = await Promise.all([

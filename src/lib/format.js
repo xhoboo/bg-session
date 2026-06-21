@@ -98,6 +98,13 @@ export function mapsLink(address, mapsUrl) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address || '')}`
 }
 
+// "Region · Area", or just whichever is present. Some regions have no sub-areas,
+// so a session can have a region with an empty area.
+export function locationLabel(region, area) {
+  if (region && area) return `${region} · ${area}`
+  return area || region || ''
+}
+
 export function formatDuration(minutes) {
   if (!minutes) return null
   if (minutes >= 360) return '6+ hours'

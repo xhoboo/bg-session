@@ -94,7 +94,7 @@ export default function ProfileView({ profile, history = [], headerAction }) {
                       columns so they line up across every card. */}
                   <span className="sh-date">📅 {formatDateTime(session.starts_at)}</span>
                   <div className="session-history-cols">
-                    <span><span className="badge badge-area">{session.area}</span></span>
+                    <span>{session.area && <span className="badge badge-area">{session.area}</span>}</span>
                     <span>👥 {playerCount(session)}</span>
                     {rating && <span><span className="star on">★</span> {rating}/10</span>}
                   </div>

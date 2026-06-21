@@ -69,7 +69,7 @@ export default function MySessions() {
               </div>
               <div className="session-meta">
                 <span>📅 {formatDateTime(s.starts_at)}</span>
-                <span><span className="badge badge-area">{s.area}</span></span>
+                {s.area && <span><span className="badge badge-area">{s.area}</span></span>}
                 <span>👥 {playerCount(s)}</span>
               </div>
             </Link>
@@ -100,7 +100,7 @@ export default function MySessions() {
               </div>
               <div className="session-meta">
                 <span>📅 {formatDateTime(r.session.starts_at)}</span>
-                <span><span className="badge badge-area">{r.session.area}</span></span>
+                {r.session.area && <span><span className="badge badge-area">{r.session.area}</span></span>}
               </div>
             </Link>
           ))}

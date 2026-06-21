@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext'
 import SessionForm from '../components/SessionForm'
 import { FALLBACK_DURATION_MIN } from '../lib/format'
 
+const parseGames = (text) => (text || '').split(',').map((s) => s.trim()).filter(Boolean)
+
 const initialForm = {
   title: '',
   startsAt: '',
@@ -29,8 +31,8 @@ export default function CreateSession() {
     setError('')
 
     if (!form.region) return setError('Please choose a region.')
-    if (!form.area) return setError('Please choose an area.')
     if (!form.fullAddress.trim()) return setError('Please enter the full address (kept private until you confirm a guest).')
+    if (parseGames(form.boardGames).length < 1) return setError('Please add at least one board game.')
     if (Number(form.minPlayers) < 3) return setError('Min players must be at least 3.')
     if (Number(form.minPlayers) > Number(form.maxPlayers)) return setError('Min players cannot be greater than max players.')
 

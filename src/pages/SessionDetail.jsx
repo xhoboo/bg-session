@@ -142,26 +142,15 @@ export default function SessionDetail() {
   const cancelSession = async () => {
     const weekly = !!session.series_id
     const msg = weekly
-      ? "End this weekly session? This removes the upcoming session and stops it repeating. Past weeks stay in everyone's history."
-      : 'Cancel this session? This removes it for everyone and notifies no one. This cannot be undone.'
+      ? "End this weekly session? This removes the upcoming session, stops it repeating, and notifies the confirmed guests. Past weeks stay in everyone's history."
+      : 'Cancel this session? This removes it for everyone and notifies the confirmed guests. This cannot be undone.'
     if (!window.confirm(msg)) return
     setBusy(true)
     setError('')
-    const { error: e1 } = await supabase.from('sessions').delete().eq('id', id)
-    if (e1) {
-      setBusy(false)
-      return setError(e1.message)
-    }
-    if (weekly) {
-      // Deleting the series stops future weeks. Past occurrences keep their rows
-      // (series_id is set null on delete), so history is preserved.
-      const { error: e2 } = await supabase.from('weekly_series').delete().eq('id', session.series_id)
-      if (e2) {
-        setBusy(false)
-        return setError(e2.message)
-      }
-    }
+    // RPC notifies approved guests before deleting (and ends the series if weekly).
+    const { error } = await supabase.rpc('cancel_session', { p_session_id: id })
     setBusy(false)
+    if (error) return setError(error.message)
     navigate('/my-sessions', { replace: true })
   }
 
@@ -269,7 +258,9 @@ export default function SessionDetail() {
           {session.region && (
             <div className="row-between"><span className="muted">Region</span><span className="badge badge-area">{session.region}</span></div>
           )}
-          <div className="row-between"><span className="muted">Area</span><span className="badge badge-area">{session.area}</span></div>
+          {session.area && (
+            <div className="row-between"><span className="muted">Area</span><span className="badge badge-area">{session.area}</span></div>
+          )}
           <div className="row-between"><span className="muted">Players</span><strong>{playerCount(session)}{isFull ? ' · full' : ''}{session.min_players > 1 ? ` · min ${session.min_players}` : ''}</strong></div>
           <div>
             <div className="muted" style={{ marginBottom: 4 }}>Board games</div>

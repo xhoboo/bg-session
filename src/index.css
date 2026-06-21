@@ -460,11 +460,16 @@ textarea { resize: vertical; min-height: 80px; }
 
 /* ---------- Create-mode chooser ---------- */
 .choice-grid { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
-.choice-card { display: flex; gap: 14px; align-items: flex-start; width: 100%; text-align: left; cursor: pointer; }
+.choice-card { display: flex; gap: 14px; align-items: flex-start; width: 100%; text-align: left; cursor: pointer; text-decoration: none; color: inherit; }
 .choice-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
 .choice-emoji { font-size: 30px; line-height: 1; flex: none; }
 .choice-title { font-family: var(--font-head); font-weight: 700; font-size: 17px; margin-bottom: 4px; }
 .choice-desc { color: var(--slate-600); font-size: 13px; }
+
+/* ---------- Form sections (grouped fields with a divider) ---------- */
+.form-section { padding-top: 18px; margin-top: 18px; border-top: 1px solid var(--slate-200); }
+.form-section:first-of-type { padding-top: 0; margin-top: 0; border-top: none; }
+.form-section-title { font-family: var(--font-head); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--slate-400); margin: 0 0 14px; }
 
 /* ---------- Co-host picker + permission checkboxes ---------- */
 .cohost-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
