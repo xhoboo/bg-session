@@ -69,7 +69,7 @@ export default function NotificationBell() {
   }
 
   return (
-    <div ref={panelRef} style={{ position: 'relative' }}>
+    <div ref={panelRef} style={{ display: 'inline-flex' }}>
       <button
         className="bell"
         aria-label={`Notifications${unread ? `, ${unread} unread` : ''}`}

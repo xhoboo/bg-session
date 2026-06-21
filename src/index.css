@@ -120,7 +120,10 @@ a { color: var(--accent-ink); }
   padding: 11px 16px;
   backdrop-filter: blur(8px);
 }
-.top-bar-actions { margin-left: auto; display: flex; align-items: center; gap: 9px; }
+/* position: relative so the search/notification dropdowns anchor to this row's
+   right edge (the column padding edge), not to their individual buttons — which
+   sit left of the screen edge and would push a right-aligned panel off-screen. */
+.top-bar-actions { margin-left: auto; display: flex; align-items: center; gap: 9px; position: relative; }
 .brand {
   font-family: var(--font-head);
   font-weight: 700;
@@ -383,7 +386,7 @@ textarea { resize: vertical; min-height: 80px; }
 }
 .notif-panel {
   position: absolute; right: 0; top: calc(100% + 8px);
-  width: min(340px, 86vw);
+  width: min(340px, calc(100vw - 32px));
   background: var(--surface); border: 1px solid var(--slate-200);
   border-radius: var(--radius); box-shadow: var(--shadow-lg);
   z-index: 30; overflow: hidden;
@@ -398,10 +401,10 @@ textarea { resize: vertical; min-height: 80px; }
 .notif-item-time { color: var(--slate-400); font-size: 11px; margin-top: 5px; font-family: var(--font-mono); }
 
 /* ---------- Global search ---------- */
-.search-wrap { position: relative; }
+.search-wrap { display: inline-flex; }
 .search-panel {
   position: absolute; right: 0; top: calc(100% + 8px);
-  width: min(340px, 86vw);
+  width: min(340px, calc(100vw - 32px));
   background: var(--surface); border: 1px solid var(--slate-200);
   border-radius: var(--radius); box-shadow: var(--shadow-lg);
   z-index: 30; overflow: hidden;
