@@ -128,9 +128,9 @@ export function recurrenceLabel(s) {
   return s?.recurrence === 'weekly' ? 'Weekly' : 'One-time'
 }
 
-// How many times a weekly series has run is shown as a separate "medal" badge
-// (see components/OccurrenceBadge) rather than baked into the title, so the plain
-// session.title is used directly wherever a session is named.
+// How many times a weekly series has run is folded into its recurrence tag
+// (see components/RecurrenceBadge — "Weekly #5") rather than baked into the
+// title, so the plain session.title is used directly wherever a session is named.
 
 // Field-groups a host can grant co-hosts permission to edit. Keys match the
 // server-side checks in migration 0028 (enforce_cohost_edit_*).

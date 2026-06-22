@@ -6,7 +6,7 @@ import { useLang } from '../lib/i18n'
 import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration, hasSessionStarted, isSessionFinished } from '../lib/format'
 import Avatar from '../components/Avatar'
 import GameChip from '../components/GameChip'
-import OccurrenceBadge from '../components/OccurrenceBadge'
+import RecurrenceBadge from '../components/RecurrenceBadge'
 import StarRating from '../components/StarRating'
 import SessionChat from '../components/SessionChat'
 import SessionParticipants from '../components/SessionParticipants'
@@ -33,7 +33,6 @@ export default function SessionDetail() {
   const [reviewText, setReviewText] = useState('')
   const [cohostIds, setCohostIds] = useState(() => new Set())
   const [seriesEditable, setSeriesEditable] = useState([])
-  const [transferTo, setTransferTo] = useState('') // chosen new host (weekly transfer)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -177,25 +176,6 @@ export default function SessionDetail() {
     navigate('/my-sessions', { replace: true })
   }
 
-  // Hand the weekly session to a confirmed participant. The RPC moves the series
-  // + upcoming occurrence to them, drops their join_request, and re-adds the old
-  // host (this user) as an approved participant — so we just leave to My sessions.
-  const transferHost = async () => {
-    if (!transferTo) return
-    const target = requests.find((r) => r.guest_id === transferTo)
-    const name = target?.guest?.display_name || t('this participant')
-    if (!window.confirm(t('Transfer hosting to {name}? They become the host of this weekly session and you stay on as a regular participant.', { name }))) return
-    setBusy(true)
-    setError('')
-    const { error } = await supabase.rpc('transfer_weekly_host', {
-      p_series_id: session.series_id,
-      p_new_host_id: transferTo,
-    })
-    setBusy(false)
-    if (error) return setError(error.message)
-    navigate('/my-sessions', { replace: true })
-  }
-
   // A co-host resigns: they're removed from the series and from this and any
   // upcoming occurrence (their past weeks stay in their history).
   const stepDown = async () => {
@@ -257,9 +237,6 @@ export default function SessionDetail() {
   // approvable once a spot opens). Open sessions auto-promote, so their waitlist
   // is usually empty by the time the host looks.
   const actionable = [...pending, ...waitlisted]
-  // Confirmed participants the host could hand the weekly session to (co-hosts
-  // are auto-approved, so they're eligible too).
-  const approvedGuests = requests.filter((r) => r.status === 'approved')
 
   const started = hasSessionStarted(session)
   const finished = isSessionFinished(session)
@@ -282,10 +259,7 @@ export default function SessionDetail() {
       <div className="row-between" style={{ marginTop: 12 }}>
         <h1 style={{ marginBottom: 0 }}>{session.title}</h1>
         <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
-          <span className={'badge ' + (session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
-            {session.recurrence === 'weekly' ? t('Weekly') : t('One-time')}
-          </span>
-          <OccurrenceBadge session={session} />
+          <RecurrenceBadge session={session} />
           {finished ? (
             <span className="badge badge-done">{t('Done')}</span>
           ) : (
@@ -344,9 +318,16 @@ export default function SessionDetail() {
                 {brought.map((r) => {
                   const bn = r.bringer?.nickname || r.bringer?.display_name || t('Player')
                   const mine = r.user_id === user.id
+                  // Like any other game, a brought game links to its catalog page
+                  // when we can match it; otherwise it stays plain text.
+                  const canonical = catalog.get(r.game_name.trim().toLowerCase())
                   return (
                     <span className="chip chip-bring" key={r.id} title={t('Brought by {name}', { name: bn })}>
-                      {r.game_name}
+                      {canonical ? (
+                        <Link to={`/games/${encodeURIComponent(canonical)}`} className="chip-bring-name">{canonical}</Link>
+                      ) : (
+                        r.game_name
+                      )}
                       <Avatar name={bn} src={r.bringer?.avatar_url} size={18} />
                       {mine && !finished && (
                         <button type="button" className="chip-x" onClick={() => removeBrought(r.id)} aria-label={`Remove ${r.game_name}`}>×</button>
@@ -590,27 +571,6 @@ export default function SessionDetail() {
               {isFull && <p className="muted" style={{ marginBottom: 0, marginTop: 8 }}>{t('Session is full — increase max players to approve more.')}</p>}
             </div>
           ))}
-
-          {/* Transfer host — weekly only, to a confirmed participant. */}
-          {session.series_id && approvedGuests.length > 0 && (
-            <div className="card" style={{ marginTop: 12 }}>
-              <div className="field-label">{t('Transfer host')}</div>
-              <p className="muted" style={{ marginTop: 0, fontSize: 14 }}>
-                {t('Hand this weekly session over to a confirmed participant. They become the host; you stay on as a regular participant.')}
-              </p>
-              <div className="form-row">
-                <select value={transferTo} onChange={(e) => setTransferTo(e.target.value)}>
-                  <option value="">{t('Choose a participant…')}</option>
-                  {approvedGuests.map((r) => (
-                    <option key={r.guest_id} value={r.guest_id}>{r.guest?.display_name || t('Player')}</option>
-                  ))}
-                </select>
-                <button className="btn btn-secondary" onClick={transferHost} disabled={busy || !transferTo}>
-                  {t('Transfer')}
-                </button>
-              </div>
-            </div>
-          )}
         </>
       )}
 

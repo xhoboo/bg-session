@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
-import { formatDateTime, playerCount, isSessionFinished } from '../lib/format'
+import { isSessionFinished } from '../lib/format'
 import { SessionListSkeleton } from '../components/Skeleton'
-import OccurrenceBadge from '../components/OccurrenceBadge'
+import SessionCard from '../components/SessionCard'
 
 export default function MySessions() {
   const { user } = useAuth()
@@ -23,13 +23,13 @@ export default function MySessions() {
     Promise.all([
       supabase
         .from('sessions')
-        .select('*')
+        .select('*, host:profiles(display_name, avatar_url)')
         .eq('host_id', user.id)
         .gte('starts_at', cutoff)
         .order('starts_at', { ascending: true }),
       supabase
         .from('join_requests')
-        .select('id, status, session:sessions(id, title, starts_at, duration_minutes, area, max_players, confirmed_count, session_type, recurrence, occurrence_number)')
+        .select('id, status, session:sessions(id, title, starts_at, duration_minutes, region, area, max_players, confirmed_count, session_type, recurrence, occurrence_number, host:profiles(display_name, avatar_url))')
         .eq('guest_id', user.id)
         .order('created_at', { ascending: false }),
     ]).then(([hostRes, joinRes]) => {
@@ -65,25 +65,7 @@ export default function MySessions() {
       ) : (
         <div className="session-list">
           {hosting.map((s) => (
-            <Link to={`/sessions/${s.id}`} key={s.id} className="card session-card" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div className="row-between">
-                <span className="session-card-title">{s.title}</span>
-                <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
-                  <span className={'badge ' + (s.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
-                    {s.recurrence === 'weekly' ? t('Weekly') : t('One-time')}
-                  </span>
-                  <OccurrenceBadge session={s} />
-                  <span className={'badge ' + (s.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
-                    {s.session_type === 'open' ? t('Open') : t('Approval')}
-                  </span>
-                </span>
-              </div>
-              <div className="session-meta">
-                <span>📅 {formatDateTime(s.starts_at)}</span>
-                {s.area && <span><span className="badge badge-area">{s.area}</span></span>}
-                <span>👥 {playerCount(s)}</span>
-              </div>
-            </Link>
+            <SessionCard key={s.id} session={s} />
           ))}
         </div>
       )}
@@ -97,24 +79,15 @@ export default function MySessions() {
       ) : (
         <div className="session-list">
           {joined.map((r) => (
-            <Link to={`/sessions/${r.session.id}`} key={r.id} className="card session-card" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div className="row-between">
-                <span className="session-card-title">{r.session.title}</span>
-                <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
-                  <span className={'badge ' + (r.session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
-                    {r.session.recurrence === 'weekly' ? t('Weekly') : t('One-time')}
-                  </span>
-                  <OccurrenceBadge session={r.session} />
-                  <span className={'badge badge-' + r.status}>
-                    {r.status === 'approved' ? t('Approved') : r.status === 'rejected' ? t('Declined') : r.status === 'waitlisted' ? t('Waitlist') : t('Pending')}
-                  </span>
+            <SessionCard
+              key={r.id}
+              session={r.session}
+              statusBadge={
+                <span className={'badge badge-' + r.status}>
+                  {r.status === 'approved' ? t('Approved') : r.status === 'rejected' ? t('Declined') : r.status === 'waitlisted' ? t('Waitlist') : t('Pending')}
                 </span>
-              </div>
-              <div className="session-meta">
-                <span>📅 {formatDateTime(r.session.starts_at)}</span>
-                {r.session.area && <span><span className="badge badge-area">{r.session.area}</span></span>}
-              </div>
-            </Link>
+              }
+            />
           ))}
         </div>
       )}

@@ -2,9 +2,13 @@ import { useNavigate } from 'react-router-dom'
 import { formatDateTime, playerCount, isSessionFull, isSessionFinished, locationLabel } from '../lib/format'
 import { useLang } from '../lib/i18n'
 import Avatar from './Avatar'
-import OccurrenceBadge from './OccurrenceBadge'
+import RecurrenceBadge from './RecurrenceBadge'
 
-export default function SessionCard({ session }) {
+// One session card, shared across Browse, My sessions and anywhere a session is
+// listed so every tab reads the same. `statusBadge`, when given, replaces the
+// default Open/Approval/Done badge — My sessions uses it to show a join-request
+// status (Pending/Approved/…) instead.
+export default function SessionCard({ session, statusBadge }) {
   const navigate = useNavigate()
   const { t } = useLang()
   const hostName = session.host?.display_name || 'Host'
@@ -17,17 +21,14 @@ export default function SessionCard({ session }) {
       <div className="row-between">
         <span className="session-card-title">{session.title}</span>
         <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
-          <span className={'badge ' + (session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
-            {session.recurrence === 'weekly' ? t('Weekly') : t('One-time')}
-          </span>
-          <OccurrenceBadge session={session} />
-          {finished ? (
+          <RecurrenceBadge session={session} />
+          {statusBadge ?? (finished ? (
             <span className="badge badge-done">{t('Done')}</span>
           ) : (
             <span className={'badge ' + (session.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
               {session.session_type === 'open' ? t('Open') : t('Approval')}
             </span>
-          )}
+          ))}
         </span>
       </div>
 
@@ -36,7 +37,7 @@ export default function SessionCard({ session }) {
       </div>
       <div className="session-meta">
         <span><span className="badge badge-area">{locationLabel(session.region, session.area)}</span></span>
-        <span>👥 {t('{n} players', { n: spots })}{isFull ? ` · ${t('full')}` : ''}</span>
+        <span className="session-players">👥 {t('{n} players', { n: spots })}{isFull ? ` · ${t('full')}` : ''}</span>
       </div>
 
       <div className="muted" style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 7 }}>

@@ -244,6 +244,8 @@ strong { font-weight: 700; }
 .session-card-title { font-family: var(--font-head); font-weight: 700; font-size: 17px; letter-spacing: -0.02em; }
 .session-meta { display: flex; flex-wrap: wrap; gap: 8px 14px; color: var(--slate-600); font-size: 13px; }
 .session-meta span { display: inline-flex; align-items: center; gap: 6px; }
+/* Player count sits flush right of its row so it lines up neatly across cards. */
+.session-players { margin-left: auto; }
 
 /* Session-history meta: the date sits on its own line, then area / players /
    rating line up in fixed columns so they align vertically across every card
@@ -263,6 +265,9 @@ strong { font-weight: 700; }
   padding: 4px 11px;
   border-radius: 999px;
   white-space: nowrap;
+  /* transparent by default so badges that opt into a coloured border (One-time,
+     the weekly count) stay the exact same height as the borderless ones. */
+  border: 1px solid transparent;
 }
 .badge-area { background: var(--neutral-soft); color: var(--slate-600); }
 .badge-open { background: var(--good-soft); color: var(--good-ink); }
@@ -272,10 +277,14 @@ strong { font-weight: 700; }
 .badge-rejected { background: var(--red-soft); color: var(--red-600); }
 .badge-done { background: var(--neutral-soft); color: var(--slate-600); }
 .badge-weekly { background: var(--accent-soft); color: var(--accent-ink); }
-.badge-onetime { background: var(--neutral-soft); color: var(--slate-600); }
+.badge-onetime { background: var(--neutral-soft); color: var(--slate-600); border-color: var(--slate-200); }
 .badge-cohost { background: var(--good-soft); color: var(--good-ink); }
-/* "Medal" badge for a weekly session's occurrence count (e.g. 🏅 #5). */
-.badge-occurrence { background: var(--medal-soft); color: var(--medal-ink); display: inline-flex; align-items: center; gap: 3px; }
+/* Weekly tag carrying its occurrence count (e.g. "Weekly #5") — a soft accent
+   glow marks it as the running count of the series. */
+.badge-weekly-count { border-color: var(--accent); box-shadow: 0 0 7px rgba(194, 107, 74, 0.45); }
+/* On the dark surface the soft fill nearly disappears, so lean on a clearer
+   border to keep the One-time tag legible. */
+html[data-theme="dark"] .badge-onetime { border-color: #5c5347; }
 
 /* ---------- Forms ---------- */
 .form-group { margin-bottom: 16px; }
@@ -324,6 +333,11 @@ textarea { resize: vertical; min-height: 80px; }
    neighbour. The columns stretch to equal height; justify-end pins the inputs to
    a shared baseline. */
 .form-row > * { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; }
+
+/* Transfer-host control: a wide participant select with a compact button beside it. */
+.transfer-row { display: flex; gap: 8px; align-items: stretch; }
+.transfer-row select { flex: 1; min-width: 0; }
+.transfer-row .btn { flex: none; }
 
 /* ---------- Buttons ---------- */
 .btn {
@@ -490,9 +504,14 @@ textarea { resize: vertical; min-height: 80px; }
 /* ---------- Profile view (read-only) ---------- */
 /* A compact identity row: small avatar on the left, then name / online status /
    domicile stacked and left-aligned beside it. */
-.profile-view-head { display: flex; flex-direction: row; align-items: center; gap: 14px; margin-bottom: 20px; }
+.profile-view-head { display: flex; flex-direction: row; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
 .profile-view-head .avatar-fallback, .profile-view-head .avatar-img { border-radius: 20px; box-shadow: 0 8px 20px rgba(40,30,20,.16); }
-.profile-view-info { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
+/* Avatar stacks over its action (e.g. the "Message" button) so the button sits
+   directly under the photo rather than crowding the name. */
+.profile-view-avatar { display: flex; flex-direction: column; align-items: center; gap: 10px; flex: none; }
+.profile-view-action { display: flex; justify-content: center; }
+.profile-view-action .btn { white-space: nowrap; }
+.profile-view-info { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; padding-top: 4px; }
 .profile-view-info h1 { margin: 0; }
 .last-seen { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--slate-400); white-space: nowrap; }
 .last-seen-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--slate-400); flex-shrink: 0; }
@@ -532,8 +551,10 @@ textarea { resize: vertical; min-height: 80px; }
 .cohost-option + .cohost-option { border-top: 1px solid var(--slate-200); }
 .cohost-option.is-on, .cohost-option.is-on:hover { background: var(--good-soft); color: var(--good-ink); }
 .cohost-option-check { margin-left: auto; font-weight: 800; color: var(--good-ink); }
-.check-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-.check-pill { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--slate-200); border-radius: 999px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; background: var(--field); }
+/* Two even columns so the permission checkboxes line up in a tidy, symmetric
+   grid (each pill fills its cell and rows share a height). */
+.check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.check-pill { display: flex; align-items: center; gap: 8px; border: 1px solid var(--slate-200); border-radius: 999px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; background: var(--field); }
 .check-pill input { width: auto; margin: 0; }
 .check-pill.is-on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
 
@@ -554,6 +575,9 @@ textarea { resize: vertical; min-height: 80px; }
    the bringer's avatar tucked on the right. */
 .chip-bring { background: var(--surface); border: 1px solid var(--slate-200); color: var(--ink); gap: 7px; padding-right: 6px; }
 .chip-bring .avatar-img, .chip-bring .avatar-fallback { border-radius: 50%; }
+/* The game name in a brought chip links to its catalog page like any other game. */
+.chip-bring-name { color: var(--accent-ink); text-decoration: none; cursor: pointer; }
+.chip-bring-name:hover { text-decoration: underline; }
 
 /* ---------- Autocomplete ---------- */
 .autocomplete { position: relative; }

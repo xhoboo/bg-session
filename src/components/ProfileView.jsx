@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Avatar from './Avatar'
 import GameChip from './GameChip'
-import OccurrenceBadge from './OccurrenceBadge'
+import RecurrenceBadge from './RecurrenceBadge'
 import { useGameCatalog } from '../lib/useGameCatalog'
 import { formatDateTime, playerCount, lastSeen } from '../lib/format'
 
@@ -34,14 +34,16 @@ export default function ProfileView({ profile, history = [], headerAction }) {
   return (
     <>
       <div className="profile-view-head">
-        <Avatar name={name} src={profile.avatar_url} size={64} />
+        <div className="profile-view-avatar">
+          <Avatar name={name} src={profile.avatar_url} size={64} />
+          {headerAction && <div className="profile-view-action">{headerAction}</div>}
+        </div>
         <div className="profile-view-info">
           <h1>{name}</h1>
           <span className={'last-seen' + (seen.online ? ' is-online' : '')} title={seen.label}>
             <span className="last-seen-dot" />{seen.label}
           </span>
           {profile.domicile && <p className="muted" style={{ margin: 0 }}>📍 {profile.domicile}</p>}
-          {headerAction && <div style={{ marginTop: 8 }}>{headerAction}</div>}
         </div>
       </div>
 
@@ -84,10 +86,7 @@ export default function ProfileView({ profile, history = [], headerAction }) {
                 <div className="row-between">
                   <span className="session-card-title">{session.title}</span>
                   <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
-                    <span className={'badge ' + (session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
-                      {session.recurrence === 'weekly' ? 'Weekly' : 'One-time'}
-                    </span>
-                    <OccurrenceBadge session={session} />
+                    <RecurrenceBadge session={session} />
                     {role && <span className={'badge ' + (role === 'Host' ? 'badge-approval' : 'badge-approved')}>{role}</span>}
                   </span>
                 </div>

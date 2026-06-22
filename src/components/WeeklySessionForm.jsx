@@ -12,6 +12,8 @@ import { WEEKDAYS, COHOST_FIELDS, nextWeeklyDate, formatDateTime } from '../lib/
 //  - showCohostAdmin: render the co-host picker + permission checkboxes (host only).
 //  - editableKeys: null = everything editable (host); otherwise an array of
 //    permitted field keys — fields outside it are disabled (co-host editing).
+//  - onTransfer: when given (host editing only), renders a "Transfer host"
+//    section below co-hosts; receives the chosen participant id.
 export default function WeeklySessionForm({
   initial,
   submitLabel,
@@ -21,8 +23,10 @@ export default function WeeklySessionForm({
   editableKeys = null,
   selfId,
   candidates = [],
+  onTransfer = null,
 }) {
   const [form, setForm] = useState(initial)
+  const [transferTo, setTransferTo] = useState('')
   const { regions, areasByRegion, loading: locLoading } = useRegions()
   const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
   const setRegion = (e) => setForm((f) => ({ ...f, region: e.target.value, area: '' }))
@@ -244,6 +248,28 @@ export default function WeeklySessionForm({
                   </label>
                 )
               })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCohostAdmin && onTransfer && candidates.length > 0 && (
+        <div className="form-section">
+          <div className="form-section-title">Transfer host</div>
+          <div className="form-group">
+            <label className="field-label">
+              Hand this weekly session to a confirmed participant <span className="field-hint">— they become host; you stay on as a regular participant</span>
+            </label>
+            <div className="transfer-row">
+              <select value={transferTo} onChange={(e) => setTransferTo(e.target.value)}>
+                <option value="">Choose a participant…</option>
+                {candidates.map((c) => (
+                  <option key={c.id} value={c.id}>{c.nickname || c.display_name || 'Player'}</option>
+                ))}
+              </select>
+              <button type="button" className="btn btn-secondary" onClick={() => onTransfer(transferTo)} disabled={busy || !transferTo}>
+                Transfer
+              </button>
             </div>
           </div>
         </div>

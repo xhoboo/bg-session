@@ -279,6 +279,25 @@ export default function EditSession() {
     navigate(`/sessions/${id}`)
   }
 
+  // Hand the weekly session to a confirmed participant. The RPC moves the series
+  // + upcoming occurrence to them, drops their join_request, and re-adds the old
+  // host (this user) as an approved participant — so we just leave to My sessions.
+  const handleTransfer = async (newHostId) => {
+    if (!newHostId) return
+    const target = candidates.find((c) => c.id === newHostId)
+    const name = target?.nickname || target?.display_name || 'this participant'
+    if (!window.confirm(`Transfer hosting to ${name}? They become the host of this weekly session and you stay on as a regular participant.`)) return
+    setBusy(true)
+    setError('')
+    const { error: e } = await supabase.rpc('transfer_weekly_host', {
+      p_series_id: series.id,
+      p_new_host_id: newHostId,
+    })
+    setBusy(false)
+    if (e) return setError(e.message)
+    navigate('/my-sessions', { replace: true })
+  }
+
   if (loading) return <div className="spinner" aria-label="Loading" />
 
   if (!initial) {
@@ -312,6 +331,7 @@ export default function EditSession() {
           editableKeys={isHost ? null : series?.cohost_editable || []}
           selfId={user.id}
           candidates={candidates}
+          onTransfer={isHost ? handleTransfer : null}
         />
       ) : (
         <SessionForm initial={initial} submitLabel="Save changes" busy={busy} onSubmit={handleSubmitOneTime} />
