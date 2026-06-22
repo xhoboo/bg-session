@@ -3,9 +3,10 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
-import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration, hasSessionStarted, isSessionFinished, sessionTitle } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration, hasSessionStarted, isSessionFinished } from '../lib/format'
 import Avatar from '../components/Avatar'
 import GameChip from '../components/GameChip'
+import OccurrenceBadge from '../components/OccurrenceBadge'
 import StarRating from '../components/StarRating'
 import SessionChat from '../components/SessionChat'
 import SessionParticipants from '../components/SessionParticipants'
@@ -23,6 +24,7 @@ export default function SessionDetail() {
 
   const [session, setSession] = useState(null)
   const [address, setAddress] = useState(null)
+  const [brought, setBrought] = useState([]) // games participants pledged to bring
   const [myRequest, setMyRequest] = useState(null)
   const [requests, setRequests] = useState([]) // host view
   const [message, setMessage] = useState('')
@@ -109,6 +111,15 @@ export default function SessionDetail() {
     setRatingValue(own?.rating ?? 0)
     setReviewText(own?.review ?? '')
 
+    // Games participants pledged to bring — RLS returns rows only to this
+    // session's participants, so they fold into the board-games list for them.
+    const { data: bg } = await supabase
+      .from('session_brought_games')
+      .select('id, game_name, user_id, bringer:profiles(nickname, display_name, avatar_url)')
+      .eq('session_id', id)
+      .order('created_at', { ascending: true })
+    setBrought(bg ?? [])
+
     setLoading(false)
   }, [id, user.id])
 
@@ -134,6 +145,12 @@ export default function SessionDetail() {
     setBusy(false)
     if (error) return setError(error.message)
     await loadAll()
+  }
+
+  // Drop one of my own brought-game pledges (the × on its chip in the list).
+  const removeBrought = async (bid) => {
+    const { error } = await supabase.from('session_brought_games').delete().eq('id', bid)
+    if (!error) setBrought((prev) => prev.filter((r) => r.id !== bid))
   }
 
   const decide = async (requestId, status) => {
@@ -246,6 +263,11 @@ export default function SessionDetail() {
 
   const started = hasSessionStarted(session)
   const finished = isSessionFinished(session)
+  // Host-listed games; brought pledges are deduped against these so nobody
+  // pledges a game that's already on the bill.
+  const listedGames = session.board_games
+    ? session.board_games.split(',').map((g) => g.trim()).filter(Boolean)
+    : []
   const isCohost = !isHost && cohostIds.has(user.id)
   const isParticipant = isHost || myRequest?.status === 'approved'
   const myRating = ratings.find((r) => r.user_id === user.id)
@@ -258,11 +280,12 @@ export default function SessionDetail() {
       <Link to="/" className="muted" style={{ fontSize: 14 }}>← Back to browse</Link>
 
       <div className="row-between" style={{ marginTop: 12 }}>
-        <h1 style={{ marginBottom: 0 }}>{sessionTitle(session)}</h1>
+        <h1 style={{ marginBottom: 0 }}>{session.title}</h1>
         <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
           <span className={'badge ' + (session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
             {session.recurrence === 'weekly' ? t('Weekly') : t('One-time')}
           </span>
+          <OccurrenceBadge session={session} />
           {finished ? (
             <span className="badge badge-done">{t('Done')}</span>
           ) : (
@@ -280,8 +303,18 @@ export default function SessionDetail() {
         </Link>
       </p>
 
-      <div style={{ marginBottom: 16 }}>
+      <div className="detail-actions">
         <ShareSessionButton session={session} address={address} hostName={session.host?.display_name} />
+        {isHost && !started && (
+          <div className="detail-actions-right">
+            <button className="btn btn-secondary btn-sm" onClick={() => navigate(`/sessions/${id}/edit`)} disabled={busy}>
+              {t('Edit details')}
+            </button>
+            <button className="btn btn-danger btn-sm" onClick={cancelSession} disabled={busy}>
+              {session.series_id ? t('End weekly session') : t('Cancel session')}
+            </button>
+          </div>
+        )}
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
@@ -301,11 +334,26 @@ export default function SessionDetail() {
           <div className="row-between"><span className="muted">{t('Players')}</span><strong>{playerCount(session)}{isFull ? ` ${t('· full')}` : ''}{session.min_players > 1 ? ` ${t('· min {n}', { n: session.min_players })}` : ''}</strong></div>
           <div>
             <div className="muted" style={{ marginBottom: 4 }}>{t('Board games')}</div>
-            {session.board_games ? (
+            {listedGames.length > 0 || brought.length > 0 ? (
               <div className="chips">
-                {session.board_games.split(',').map((g) => g.trim()).filter(Boolean).map((g) => (
+                {listedGames.map((g) => (
                   <GameChip key={g} name={g} catalog={catalog} loading={catalogLoading} />
                 ))}
+                {/* Games a participant pledged to bring — shown with the bringer's
+                    avatar so everyone sees the full table at a glance. */}
+                {brought.map((r) => {
+                  const bn = r.bringer?.nickname || r.bringer?.display_name || t('Player')
+                  const mine = r.user_id === user.id
+                  return (
+                    <span className="chip chip-bring" key={r.id} title={t('Brought by {name}', { name: bn })}>
+                      {r.game_name}
+                      <Avatar name={bn} src={r.bringer?.avatar_url} size={18} />
+                      {mine && !finished && (
+                        <button type="button" className="chip-x" onClick={() => removeBrought(r.id)} aria-label={`Remove ${r.game_name}`}>×</button>
+                      )}
+                    </span>
+                  )
+                })}
               </div>
             ) : (
               <div>{t('To be decided')}</div>
@@ -543,16 +591,6 @@ export default function SessionDetail() {
             </div>
           ))}
 
-          <h2 className="section-title">{t('Manage session')}</h2>
-          <div className="form-row">
-            <button className="btn btn-secondary" onClick={() => navigate(`/sessions/${id}/edit`)} disabled={busy}>
-              {t('Edit details')}
-            </button>
-            <button className="btn btn-danger" onClick={cancelSession} disabled={busy}>
-              {session.series_id ? t('End weekly session') : t('Cancel session')}
-            </button>
-          </div>
-
           {/* Transfer host — weekly only, to a confirmed participant. */}
           {session.series_id && approvedGuests.length > 0 && (
             <div className="card" style={{ marginTop: 12 }}>
@@ -601,7 +639,9 @@ export default function SessionDetail() {
 
       {isParticipant && <SessionParticipants sessionId={id} hostId={session.host_id} seriesId={session.series_id} />}
 
-      {isParticipant && <SessionBringList sessionId={id} readOnly={finished} />}
+      {isParticipant && !finished && (
+        <SessionBringList sessionId={id} brought={brought} setBrought={setBrought} sessionGames={listedGames} />
+      )}
 
       {isParticipant && <SessionChat sessionId={id} readOnly={finished} />}
     </div>

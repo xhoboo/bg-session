@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom'
-import { formatDateTime, playerCount, isSessionFull, isSessionFinished, locationLabel, sessionTitle } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFull, isSessionFinished, locationLabel } from '../lib/format'
 import { useLang } from '../lib/i18n'
 import Avatar from './Avatar'
+import OccurrenceBadge from './OccurrenceBadge'
 
 export default function SessionCard({ session }) {
   const navigate = useNavigate()
@@ -14,11 +15,12 @@ export default function SessionCard({ session }) {
   return (
     <div className="card session-card" onClick={() => navigate(`/sessions/${session.id}`)}>
       <div className="row-between">
-        <span className="session-card-title">{sessionTitle(session)}</span>
+        <span className="session-card-title">{session.title}</span>
         <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
           <span className={'badge ' + (session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
             {session.recurrence === 'weekly' ? t('Weekly') : t('One-time')}
           </span>
+          <OccurrenceBadge session={session} />
           {finished ? (
             <span className="badge badge-done">{t('Done')}</span>
           ) : (
@@ -35,7 +37,6 @@ export default function SessionCard({ session }) {
       <div className="session-meta">
         <span><span className="badge badge-area">{locationLabel(session.region, session.area)}</span></span>
         <span>👥 {t('{n} players', { n: spots })}{isFull ? ` · ${t('full')}` : ''}</span>
-        <span>🎲 {session.board_games ? truncate(session.board_games, 40) : t('TBD')}</span>
       </div>
 
       <div className="muted" style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 7 }}>
@@ -44,8 +45,4 @@ export default function SessionCard({ session }) {
       </div>
     </div>
   )
-}
-
-function truncate(s, n) {
-  return s.length > n ? s.slice(0, n - 1) + '…' : s
 }

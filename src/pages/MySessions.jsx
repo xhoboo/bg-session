@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
-import { formatDateTime, playerCount, isSessionFinished, sessionTitle } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFinished } from '../lib/format'
 import { SessionListSkeleton } from '../components/Skeleton'
+import OccurrenceBadge from '../components/OccurrenceBadge'
 
 export default function MySessions() {
   const { user } = useAuth()
@@ -46,7 +47,6 @@ export default function MySessions() {
     return (
       <div className="container">
         <h1>{t('My sessions')}</h1>
-        <p className="subtitle">{t("Sessions you host and sessions you've joined.")}</p>
         <SessionListSkeleton count={3} />
       </div>
     )
@@ -55,7 +55,6 @@ export default function MySessions() {
   return (
     <div className="container">
       <h1>{t('My sessions')}</h1>
-      <p className="subtitle">{t("Sessions you host and sessions you've joined.")}</p>
 
       <h2 className="section-title">{t('Hosting ({n})', { n: hosting.length })}</h2>
       {hosting.length === 0 ? (
@@ -68,11 +67,12 @@ export default function MySessions() {
           {hosting.map((s) => (
             <Link to={`/sessions/${s.id}`} key={s.id} className="card session-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="row-between">
-                <span className="session-card-title">{sessionTitle(s)}</span>
+                <span className="session-card-title">{s.title}</span>
                 <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
                   <span className={'badge ' + (s.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
                     {s.recurrence === 'weekly' ? t('Weekly') : t('One-time')}
                   </span>
+                  <OccurrenceBadge session={s} />
                   <span className={'badge ' + (s.session_type === 'open' ? 'badge-open' : 'badge-approval')}>
                     {s.session_type === 'open' ? t('Open') : t('Approval')}
                   </span>
@@ -99,11 +99,12 @@ export default function MySessions() {
           {joined.map((r) => (
             <Link to={`/sessions/${r.session.id}`} key={r.id} className="card session-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="row-between">
-                <span className="session-card-title">{sessionTitle(r.session)}</span>
+                <span className="session-card-title">{r.session.title}</span>
                 <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
                   <span className={'badge ' + (r.session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
                     {r.session.recurrence === 'weekly' ? t('Weekly') : t('One-time')}
                   </span>
+                  <OccurrenceBadge session={r.session} />
                   <span className={'badge badge-' + r.status}>
                     {r.status === 'approved' ? t('Approved') : r.status === 'rejected' ? t('Declined') : r.status === 'waitlisted' ? t('Waitlist') : t('Pending')}
                   </span>

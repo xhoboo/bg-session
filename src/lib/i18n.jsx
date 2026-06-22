@@ -64,6 +64,7 @@ const ID = {
 
   // ---- Session card / shared badges ----
   Weekly: 'Mingguan',
+  'Week {n}': 'Minggu ke-{n}',
   'One-time': 'Sekali',
   Open: 'Terbuka',
   Approval: 'Persetujuan',
@@ -146,10 +147,11 @@ const ID = {
     'Kamu memblokir {name}. Mereka tidak bisa mengirimimu pesan.',
 
   // ---- Bring list (games I'll bring) ----
-  'Games being brought': 'Game yang dibawa',
-  'Nothing pledged yet.': 'Belum ada yang menyanggupi membawa.',
-  ' Add what you can bring so nobody doubles up.':
-    ' Tambahkan yang bisa kamu bawa supaya tidak dobel.',
+  'Bring a board game': 'Bawa board game',
+  'Brought by {name}': 'Dibawa oleh {name}',
+  'Add what you can bring and it shows in the board games list above, so nobody doubles up.':
+    'Tambahkan yang bisa kamu bawa dan akan muncul di daftar board game di atas, supaya tidak dobel.',
+  'That game is already on the session list.': 'Game itu sudah ada di daftar sesi.',
   'Quick add from your collection': 'Tambah cepat dari koleksimu',
   "Add a game you'll bring…": 'Tambah game yang akan kamu bawa…',
   '+ Add': '+ Tambah',

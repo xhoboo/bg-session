@@ -24,13 +24,13 @@ export default function Profile() {
       const [hostRes, joinRes] = await Promise.all([
         supabase
           .from('sessions')
-          .select('id, title, starts_at, duration_minutes, area, confirmed_count, max_players, session_type, recurrence')
+          .select('id, title, starts_at, duration_minutes, area, confirmed_count, max_players, session_type, recurrence, occurrence_number')
           .eq('host_id', user.id)
           .lt('starts_at', now)
           .order('starts_at', { ascending: false }),
         supabase
           .from('join_requests')
-          .select('id, session:sessions(id, title, starts_at, duration_minutes, area, confirmed_count, max_players, session_type, recurrence)')
+          .select('id, session:sessions(id, title, starts_at, duration_minutes, area, confirmed_count, max_players, session_type, recurrence, occurrence_number)')
           .eq('guest_id', user.id)
           .eq('status', 'approved'),
       ])

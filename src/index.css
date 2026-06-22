@@ -18,6 +18,8 @@
   --good: #15B886;
   --good-soft: #e2f7f0;
   --good-ink: #15967a;
+  --medal-soft: #f5e6c8;
+  --medal-ink: #9c6b1d;
   --neutral-soft: #e9e6df;
   --track: #e9e3d6;
 
@@ -60,6 +62,8 @@ html[data-theme="dark"] {
   --good: #4ecf9e;
   --good-soft: #13352a;
   --good-ink: #7ee0a0;
+  --medal-soft: #3a2f1a;
+  --medal-ink: #d7a85c;
   --neutral-soft: #2a2620;
   --track: #2a2620;
 
@@ -270,6 +274,8 @@ strong { font-weight: 700; }
 .badge-weekly { background: var(--accent-soft); color: var(--accent-ink); }
 .badge-onetime { background: var(--neutral-soft); color: var(--slate-600); }
 .badge-cohost { background: var(--good-soft); color: var(--good-ink); }
+/* "Medal" badge for a weekly session's occurrence count (e.g. 🏅 #5). */
+.badge-occurrence { background: var(--medal-soft); color: var(--medal-ink); display: inline-flex; align-items: center; gap: 3px; }
 
 /* ---------- Forms ---------- */
 .form-group { margin-bottom: 16px; }
@@ -370,6 +376,11 @@ textarea { resize: vertical; min-height: 80px; }
 
 .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 18px; }
 .toolbar select { flex: 1; min-width: 0; font-size: 13px; padding: 11px 30px 11px 12px; }
+
+/* Top-of-detail action row: Share on the left, the host's small Edit / Cancel
+   buttons pushed to the right edge beside it. */
+.detail-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.detail-actions-right { margin-left: auto; display: flex; gap: 8px; }
 
 .address-box { background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius-sm); padding: 13px; }
 .address-locked { background: var(--neutral-soft); border: 1px dashed var(--slate-200); border-radius: var(--radius-sm); padding: 13px; color: var(--slate-600); }
@@ -477,15 +488,12 @@ textarea { resize: vertical; min-height: 80px; }
 .avatar-fallback { color: #fff; font-family: var(--font-head); font-weight: 700; line-height: 1; letter-spacing: -0.02em; border: none; }
 
 /* ---------- Profile view (read-only) ---------- */
-.profile-view-head { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; margin-bottom: 20px; }
-.profile-view-head h1 { margin: 8px 0 0; }
-.profile-view-head .avatar-fallback, .profile-view-head .avatar-img { border-radius: 28px; box-shadow: 0 10px 24px rgba(40,30,20,.18); }
-
-/* Name + online status stack vertically and stay centered. (They used to sit
-   side-by-side with the status absolutely positioned to the right of the name,
-   which overflowed off-screen on narrow phones when the name was long.) */
-.name-row { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 8px; }
-.name-row h1 { margin: 0; }
+/* A compact identity row: small avatar on the left, then name / online status /
+   domicile stacked and left-aligned beside it. */
+.profile-view-head { display: flex; flex-direction: row; align-items: center; gap: 14px; margin-bottom: 20px; }
+.profile-view-head .avatar-fallback, .profile-view-head .avatar-img { border-radius: 20px; box-shadow: 0 8px 20px rgba(40,30,20,.16); }
+.profile-view-info { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
+.profile-view-info h1 { margin: 0; }
 .last-seen { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--slate-400); white-space: nowrap; }
 .last-seen-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--slate-400); flex-shrink: 0; }
 .last-seen.is-online { color: var(--good-ink); }
@@ -542,6 +550,10 @@ textarea { resize: vertical; min-height: 80px; }
 .chip-add:disabled { opacity: .55; cursor: not-allowed; }
 .chip-x { background: none; border: none; cursor: pointer; font-size: 16px; line-height: 1; color: inherit; opacity: 0.6; padding: 0 2px; }
 .chip-x:hover { opacity: 1; }
+/* A board-game chip pledged by a participant: same shape as a game chip, with
+   the bringer's avatar tucked on the right. */
+.chip-bring { background: var(--surface); border: 1px solid var(--slate-200); color: var(--ink); gap: 7px; padding-right: 6px; }
+.chip-bring .avatar-img, .chip-bring .avatar-fallback { border-radius: 50%; }
 
 /* ---------- Autocomplete ---------- */
 .autocomplete { position: relative; }

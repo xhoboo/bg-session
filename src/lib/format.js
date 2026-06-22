@@ -128,17 +128,9 @@ export function recurrenceLabel(s) {
   return s?.recurrence === 'weekly' ? 'Weekly' : 'One-time'
 }
 
-// Display title for a session. A weekly occurrence is numbered by how many times
-// its series has actually run — `occurrence_number` (set server-side at roll
-// time) is appended as "#N", e.g. "Ayo Main Hansa #5". Skipped weeks are deleted
-// and leave no gap in the count. One-time sessions, or rows fetched without the
-// number, show the plain title.
-export function sessionTitle(s) {
-  if (s?.recurrence === 'weekly' && s?.occurrence_number) {
-    return `${s.title} #${s.occurrence_number}`
-  }
-  return s?.title ?? ''
-}
+// How many times a weekly series has run is shown as a separate "medal" badge
+// (see components/OccurrenceBadge) rather than baked into the title, so the plain
+// session.title is used directly wherever a session is named.
 
 // Field-groups a host can grant co-hosts permission to edit. Keys match the
 // server-side checks in migration 0028 (enforce_cohost_edit_*).

@@ -1,43 +1,34 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
-import Avatar from './Avatar'
 
-// Confirmed participants pledge which board games they'll bring to a session, so
-// the table is covered without duplicates. Quick-add pulls from the player's own
-// collection (profiles.owned_games); freeform names are allowed too. Visibility
-// + write access are enforced by session_brought_games RLS (migration 0039).
-export default function SessionBringList({ sessionId, readOnly = false }) {
+// Lets a confirmed participant pledge board games they'll bring. Pledges surface
+// (with the bringer's avatar) in the session's "Board games" list above, so the
+// whole table is visible at a glance without doubling up. Games the host already
+// listed can't be pledged here — no point bringing what's already on the bill.
+// The list itself lives in SessionDetail (`brought`/`setBrought`); this is just
+// the add control. `sessionGames` is the host's listed games.
+export default function SessionBringList({ sessionId, brought, setBrought, sessionGames = [] }) {
   const { user, profile } = useAuth()
   const { t } = useLang()
-  const [rows, setRows] = useState([])
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    let active = true
-    supabase
-      .from('session_brought_games')
-      .select('id, game_name, user_id, bringer:profiles(nickname, display_name, avatar_url)')
-      .eq('session_id', sessionId)
-      .order('created_at', { ascending: true })
-      .then(({ data }) => {
-        if (active) setRows(data ?? [])
-      })
-    return () => {
-      active = false
-    }
-  }, [sessionId])
-
-  const mineLower = new Set(rows.filter((r) => r.user_id === user.id).map((r) => r.game_name.toLowerCase()))
-  // Games from my collection I haven't pledged here yet — offered as quick adds.
-  const quickAdd = (profile?.owned_games ?? []).filter((g) => !mineLower.has(g.toLowerCase()))
+  const mineLower = new Set(brought.filter((r) => r.user_id === user.id).map((r) => r.game_name.toLowerCase()))
+  const listedLower = new Set(sessionGames.map((g) => g.toLowerCase()))
+  // Games from my collection I haven't pledged and the host hasn't already listed.
+  const quickAdd = (profile?.owned_games ?? []).filter(
+    (g) => !mineLower.has(g.toLowerCase()) && !listedLower.has(g.toLowerCase()),
+  )
 
   const add = async (name) => {
     const n = name.trim()
-    if (!n || mineLower.has(n.toLowerCase())) return
+    if (!n) return
+    const low = n.toLowerCase()
+    if (mineLower.has(low)) return
+    if (listedLower.has(low)) return setError(t('That game is already on the session list.'))
     setBusy(true)
     setError('')
     const { data, error } = await supabase
@@ -48,81 +39,37 @@ export default function SessionBringList({ sessionId, readOnly = false }) {
     setBusy(false)
     if (error) return setError(error.message)
     setText('')
-    if (data) setRows((prev) => [...prev, data])
-  }
-
-  const remove = async (id) => {
-    setBusy(true)
-    const { error } = await supabase.from('session_brought_games').delete().eq('id', id)
-    setBusy(false)
-    if (!error) setRows((prev) => prev.filter((r) => r.id !== id))
-  }
-
-  // Group pledges by game so multiple bringers of the same title sit together.
-  const byGame = new Map()
-  for (const r of rows) {
-    if (!byGame.has(r.game_name)) byGame.set(r.game_name, [])
-    byGame.get(r.game_name).push(r)
+    if (data) setBrought((prev) => [...prev, data])
   }
 
   return (
     <>
-      <h2 className="section-title">{t('Games being brought')}</h2>
-      {rows.length === 0 ? (
-        <p className="muted" style={{ marginTop: -4 }}>
-          {t('Nothing pledged yet.')}{!readOnly && t(' Add what you can bring so nobody doubles up.')}
-        </p>
-      ) : (
-        <div className="stack" style={{ gap: 8 }}>
-          {[...byGame.entries()].map(([game, list]) => (
-            <div className="card" key={game} style={{ padding: 12 }}>
-              <strong>🎲 {game}</strong>
-              <div className="member-grid" style={{ marginTop: 8 }}>
-                {list.map((r) => {
-                  const name = r.bringer?.nickname || r.bringer?.display_name || 'Player'
-                  const mine = r.user_id === user.id
-                  return (
-                    <span className="member-card" key={r.id}>
-                      <Avatar name={name} src={r.bringer?.avatar_url} size={24} />
-                      <span className="member-name">{name}{mine ? ' · you' : ''}</span>
-                      {mine && !readOnly && (
-                        <button type="button" className="chip-x" onClick={() => remove(r.id)} aria-label={`Remove ${game}`}>×</button>
-                      )}
-                    </span>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {!readOnly && (
-        <div style={{ marginTop: 12 }}>
-          {quickAdd.length > 0 && (
-            <>
-              <div className="field-hint" style={{ marginBottom: 6 }}>{t('Quick add from your collection')}</div>
-              <div className="chips" style={{ marginBottom: 10 }}>
-                {quickAdd.map((g) => (
-                  <button type="button" className="chip-add" key={g} onClick={() => add(g)} disabled={busy}>+ {g}</button>
-                ))}
-              </div>
-            </>
-          )}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input
-              type="text"
-              value={text}
-              placeholder={t("Add a game you'll bring…")}
-              maxLength={80}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(text) } }}
-            />
-            <button type="button" className="btn btn-secondary btn-sm" onClick={() => add(text)} disabled={busy || !text.trim()}>{t('+ Add')}</button>
+      <h2 className="section-title">{t('Bring a board game')}</h2>
+      <p className="muted" style={{ marginTop: -4 }}>
+        {t("Add what you can bring and it shows in the board games list above, so nobody doubles up.")}
+      </p>
+      {quickAdd.length > 0 && (
+        <>
+          <div className="field-hint" style={{ marginBottom: 6 }}>{t('Quick add from your collection')}</div>
+          <div className="chips" style={{ marginBottom: 10 }}>
+            {quickAdd.map((g) => (
+              <button type="button" className="chip-add" key={g} onClick={() => add(g)} disabled={busy}>+ {g}</button>
+            ))}
           </div>
-          {error && <p className="center" style={{ color: 'var(--red-600)', fontSize: 13, marginTop: 8, marginBottom: 0 }}>{error}</p>}
-        </div>
+        </>
       )}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input
+          type="text"
+          value={text}
+          placeholder={t("Add a game you'll bring…")}
+          maxLength={80}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(text) } }}
+        />
+        <button type="button" className="btn btn-secondary btn-sm" onClick={() => add(text)} disabled={busy || !text.trim()}>{t('+ Add')}</button>
+      </div>
+      {error && <p className="center" style={{ color: 'var(--red-600)', fontSize: 13, marginTop: 8, marginBottom: 0 }}>{error}</p>}
     </>
   )
 }

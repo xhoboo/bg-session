@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Avatar from './Avatar'
 import GameChip from './GameChip'
+import OccurrenceBadge from './OccurrenceBadge'
 import { useGameCatalog } from '../lib/useGameCatalog'
 import { formatDateTime, playerCount, lastSeen } from '../lib/format'
 
@@ -33,15 +34,15 @@ export default function ProfileView({ profile, history = [], headerAction }) {
   return (
     <>
       <div className="profile-view-head">
-        <Avatar name={name} src={profile.avatar_url} size={88} />
-        <div className="name-row">
-          <h1 style={{ margin: 0 }}>{name}</h1>
+        <Avatar name={name} src={profile.avatar_url} size={64} />
+        <div className="profile-view-info">
+          <h1>{name}</h1>
           <span className={'last-seen' + (seen.online ? ' is-online' : '')} title={seen.label}>
             <span className="last-seen-dot" />{seen.label}
           </span>
+          {profile.domicile && <p className="muted" style={{ margin: 0 }}>📍 {profile.domicile}</p>}
+          {headerAction && <div style={{ marginTop: 8 }}>{headerAction}</div>}
         </div>
-        {profile.domicile && <p className="muted" style={{ margin: '2px 0 0' }}>📍 {profile.domicile}</p>}
-        {headerAction && <div style={{ marginTop: 10 }}>{headerAction}</div>}
       </div>
 
       <div className="card stack">
@@ -86,6 +87,7 @@ export default function ProfileView({ profile, history = [], headerAction }) {
                     <span className={'badge ' + (session.recurrence === 'weekly' ? 'badge-weekly' : 'badge-onetime')}>
                       {session.recurrence === 'weekly' ? 'Weekly' : 'One-time'}
                     </span>
+                    <OccurrenceBadge session={session} />
                     {role && <span className={'badge ' + (role === 'Host' ? 'badge-approval' : 'badge-approved')}>{role}</span>}
                   </span>
                 </div>
