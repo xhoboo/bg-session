@@ -95,7 +95,7 @@ src/
   lib/            supabaseClient.js, format.js, useRegions.js,
                   useGameCatalog.js, useDebouncedCallback.js
   context/        AuthContext.jsx        (session + profile)
-  components/     Layout, Navbar, BottomNav, NotificationBell, ThemeToggle,
+  components/     Layout, Navbar, BottomNav, NotificationBell, SettingsMenu,
                   ProfileForm/ProfileView, SessionForm/SessionCard,
                   SessionChat, StarRating, Avatar, …
   pages/          Login, Signup, AuthCallback, Onboarding, Browse,

@@ -64,7 +64,7 @@ export default function MySessions() {
           <Link to="/create" className="btn btn-primary">{t('Host a session')}</Link>
         </div>
       ) : (
-        <div className="stack">
+        <div className="session-list">
           {hosting.map((s) => (
             <Link to={`/sessions/${s.id}`} key={s.id} className="card session-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="row-between">
@@ -95,7 +95,7 @@ export default function MySessions() {
           <Link to="/" className="btn btn-secondary">{t('Browse sessions')}</Link>
         </div>
       ) : (
-        <div className="stack">
+        <div className="session-list">
           {joined.map((r) => (
             <Link to={`/sessions/${r.session.id}`} key={r.id} className="card session-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="row-between">

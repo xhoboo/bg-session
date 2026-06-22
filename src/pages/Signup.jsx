@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import GoogleButton from '../components/GoogleButton'
-import ThemeToggle from '../components/ThemeToggle'
+import SettingsMenu from '../components/SettingsMenu'
 
 export default function Signup() {
   const { signUpWithEmail } = useAuth()
@@ -42,7 +42,7 @@ export default function Signup() {
 
   return (
     <div className="container container-narrow">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 8 }}><ThemeToggle /></div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 8 }}><SettingsMenu /></div>
       <div className="spacer" />
       <div className="center" style={{ marginBottom: 24 }}>
         <h1 style={{ color: 'var(--teal-700)' }}>BG Session</h1>

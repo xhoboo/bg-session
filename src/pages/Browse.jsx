@@ -6,7 +6,6 @@ import { useLang } from '../lib/i18n'
 import { isSessionFinished } from '../lib/format'
 import { useRegions } from '../lib/useRegions'
 import SessionCard from '../components/SessionCard'
-import SessionsMap from '../components/SessionsMap'
 import { SessionListSkeleton } from '../components/Skeleton'
 
 // Parse a session's comma-separated board_games text into a clean list.
@@ -20,8 +19,6 @@ export default function Browse() {
   const [region, setRegion] = useState('')
   const [area, setArea] = useState('')
   const [game, setGame] = useState('')
-  const [view, setView] = useState('list') // 'list' | 'map'
-  const [mapRegion, setMapRegion] = useState(null) // region tapped on the map
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [toRate, setToRate] = useState([])
@@ -119,9 +116,8 @@ export default function Browse() {
     return true
   })
 
-  // Changing a parent filter invalidates its narrower children (and any map pin
-  // selection, which is region-scoped).
-  const onRegionChange = (e) => { setRegion(e.target.value); setArea(''); setGame(''); setMapRegion(null) }
+  // Changing a parent filter invalidates its narrower children.
+  const onRegionChange = (e) => { setRegion(e.target.value); setArea(''); setGame('') }
   const onAreaChange = (e) => { setArea(e.target.value); setGame('') }
 
   return (
@@ -175,39 +171,17 @@ export default function Browse() {
         </select>
       </div>
 
-      <div className="seg-toggle" role="tablist" aria-label="View mode">
-        <button role="tab" aria-selected={view === 'list'} className={view === 'list' ? 'is-on' : ''} onClick={() => setView('list')}>{t('List')}</button>
-        <button role="tab" aria-selected={view === 'map'} className={view === 'map' ? 'is-on' : ''} onClick={() => setView('map')}>{t('Map')}</button>
-      </div>
-
       {error && <div className="alert alert-error">{error}</div>}
 
       {loading ? (
         <SessionListSkeleton />
-      ) : view === 'map' ? (
-        <>
-          <SessionsMap sessions={visible} selectedRegion={mapRegion} onSelectRegion={setMapRegion} />
-          {mapRegion ? (
-            <div className="row-between" style={{ margin: '14px 0 4px' }}>
-              <strong>{mapRegion}</strong>
-              <button className="btn btn-secondary btn-sm" onClick={() => setMapRegion(null)}>{t('Show all')}</button>
-            </div>
-          ) : (
-            <p className="muted" style={{ margin: '14px 0 4px', fontSize: 13 }}>{t('Tap a marker to see sessions in that area.')}</p>
-          )}
-          <div className="stack">
-            {(mapRegion ? visible.filter((s) => s.region === mapRegion) : visible).map((s) => (
-              <SessionCard key={s.id} session={s} />
-            ))}
-          </div>
-        </>
       ) : visible.length === 0 ? (
         <div className="empty-state">
           <p>{t('No upcoming sessions yet.')}</p>
           <Link to="/create" className="btn btn-primary">{t('Be the first to host')}</Link>
         </div>
       ) : (
-        <div className="stack">
+        <div className="session-list">
           {visible.map((s) => (
             <SessionCard key={s.id} session={s} />
           ))}

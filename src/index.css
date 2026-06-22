@@ -312,8 +312,12 @@ textarea { resize: vertical; min-height: 80px; }
 .review-input-wrap textarea { padding-bottom: 48px; }
 .review-send-btn { position: absolute; right: 8px; bottom: 8px; }
 
-.form-row { display: flex; gap: 12px; }
-.form-row > * { flex: 1; min-width: 0; }
+.form-row { display: flex; gap: 12px; align-items: stretch; }
+/* Bottom-align each field so a label that wraps to two lines (e.g. "Min players
+   — or it's canceled") doesn't push its input lower than its single-line
+   neighbour. The columns stretch to equal height; justify-end pins the inputs to
+   a shared baseline. */
+.form-row > * { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; }
 
 /* ---------- Buttons ---------- */
 .btn {
@@ -358,32 +362,14 @@ textarea { resize: vertical; min-height: 80px; }
 .spacer { height: 16px; }
 .row-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .stack { display: flex; flex-direction: column; gap: 12px; }
+/* Session lists are a single column on phones and flow into a grid on wider
+   screens (see desktop media query) so they fill the page instead of leaving a
+   narrow strip. */
+.session-list { display: flex; flex-direction: column; gap: 12px; }
 .empty-state { text-align: center; color: var(--slate-600); padding: 44px 16px; }
 
 .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 18px; }
 .toolbar select { flex: 1; min-width: 0; font-size: 13px; padding: 11px 30px 11px 12px; }
-
-/* ---------- List / Map segmented toggle ---------- */
-.seg-toggle { display: inline-flex; background: var(--neutral-soft); border-radius: 999px; padding: 3px; gap: 2px; margin-bottom: 16px; }
-.seg-toggle button { border: none; background: none; cursor: pointer; font: 700 13px var(--font-head); color: var(--slate-600); padding: 7px 18px; border-radius: 999px; transition: background .15s, color .15s; }
-.seg-toggle button.is-on { background: var(--surface); color: var(--accent-ink); box-shadow: var(--shadow); }
-
-/* ---------- Map ---------- */
-.map-wrap { position: relative; }
-.map-canvas { height: 340px; width: 100%; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--slate-200); z-index: 0; }
-.map-wrap .spinner { position: absolute; inset: 0; }
-/* Reset Leaflet's default white divIcon box so our pin shows through. */
-.map-pin-wrap { background: transparent !important; border: 0 !important; }
-.map-pin {
-  display: flex; align-items: center; justify-content: center;
-  width: 100%; height: 100%;
-  background: var(--accent); color: #fff;
-  font: 800 13px var(--font-body);
-  border-radius: 50%; border: 2px solid #fff;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
-  cursor: pointer;
-}
-.map-pin.is-active { background: var(--good); }
 
 .address-box { background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius-sm); padding: 13px; }
 .address-locked { background: var(--neutral-soft); border: 1px dashed var(--slate-200); border-radius: var(--radius-sm); padding: 13px; color: var(--slate-600); }
@@ -450,6 +436,31 @@ textarea { resize: vertical; min-height: 80px; }
 .search-result-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .search-result-icon { font-size: 18px; width: 30px; text-align: center; flex: none; }
 .search-hint { color: var(--slate-600); font-size: 13px; padding: 16px 12px; margin: 0; text-align: center; }
+
+/* ---------- Settings menu (language + theme) ---------- */
+/* relative so the panel anchors to this wrapper on the auth pages too, where
+   there's no positioned .top-bar-actions around it. */
+.settings-wrap { position: relative; display: inline-flex; }
+.settings-panel {
+  position: absolute; right: 0; top: calc(100% + 8px);
+  width: 220px; max-width: calc(100vw - 32px);
+  background: var(--surface); border: 1px solid var(--slate-200);
+  border-radius: var(--radius); box-shadow: var(--shadow-lg);
+  z-index: 30; padding: 12px;
+}
+.settings-group + .settings-group { margin-top: 12px; }
+.settings-group-label { font: 700 11px var(--font-head); text-transform: uppercase; letter-spacing: 0.04em; color: var(--slate-400); margin-bottom: 7px; }
+.settings-options { display: flex; gap: 6px; }
+.settings-opt {
+  flex: 1; min-width: 0;
+  border: 1px solid var(--slate-200); background: var(--field); color: var(--slate-600);
+  font: 700 13px var(--font-head); cursor: pointer;
+  padding: 9px 8px; border-radius: var(--radius-sm);
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.settings-opt:hover { background: var(--slate-50); }
+.settings-opt.is-on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
 
 /* ---------- Avatars ---------- */
 .avatar-img, .avatar-fallback {
@@ -676,6 +687,60 @@ html[data-theme="dark"] .skeleton::after {
   .modal-overlay, .modal { animation: none; }
 }
 
-@media (max-width: 380px) {
-  .form-row { gap: 8px; }
+/* ============================================================
+   Responsive sizing — compact on phones, full-width on desktop.
+   ============================================================ */
+
+/* ---- Desktop: use the screen instead of a phone-width strip ---- */
+@media (min-width: 768px) {
+  .top-bar { max-width: 1120px; }
+  /* Browse / My-sessions use the plain .container and go wide; forms & detail
+     keep .container-narrow so reading width stays comfortable. */
+  .container:not(.container-narrow) { max-width: 1120px; }
+  .session-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; align-items: start; }
+}
+@media (min-width: 1100px) {
+  .session-list { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ---- Phones: shrink type + spacing so one card no longer fills the screen ---- */
+@media (max-width: 480px) {
+  .container { padding: 14px 13px 92px; }
+
+  h1 { font-size: 21px; }
+  .section-title { font-size: 15px; margin: 20px 0 10px; }
+  .subtitle { font-size: 13px; margin-bottom: 16px; }
+
+  .top-bar { gap: 9px; padding: 9px 13px; }
+  .top-bar-actions { gap: 7px; }
+  .brand { font-size: 16px; }
+  .brand-dot { width: 25px; height: 25px; }
+  .icon-btn, .bell { width: 34px; height: 34px; border-radius: 10px; font-size: 14px; }
+
+  .card, .form-section { padding: 13px; border-radius: 14px; }
+  .card + .card { margin-top: 10px; }
+
+  .session-card { gap: 8px; }
+  .session-card-title { font-size: 15px; }
+  .session-meta { font-size: 12px; gap: 6px 12px; }
+
+  label.field-label { font-size: 12px; margin-bottom: 6px; }
+  .field-hint { font-size: 11px; }
+  .form-group { margin-bottom: 13px; }
+  .form-card-stack { gap: 10px; }
+  .form-section-title { margin-bottom: 12px; }
+  input, select, textarea { font-size: 13px; padding: 10px 11px; }
+  select { background-position: calc(100% - 16px) 16px, calc(100% - 11px) 16px; padding-right: 30px; }
+  .form-row { gap: 9px; }
+
+  .btn { font-size: 14px; padding: 11px 15px; }
+  .btn-sm { font-size: 12px; padding: 7px 11px; }
+
+  .badge { font-size: 10px; padding: 3px 9px; }
+
+  /* Bottom nav + FAB scale down with everything else. */
+  .bottom-nav { height: 64px; }
+  .bottom-nav-item { font-size: 9px; gap: 3px; padding: 6px 0; }
+  .bottom-nav-item svg { width: 20px; height: 20px; }
+  .fab { width: 50px; height: 50px; border-radius: 16px; top: -19px; }
 }

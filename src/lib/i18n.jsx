@@ -2,8 +2,8 @@ import { createContext, useContext, useState, useCallback, useEffect } from 'rea
 
 // Lightweight i18n. Strings are keyed by their English source text, so a missing
 // translation falls back to readable English rather than a blank key. The active
-// language is persisted to localStorage and defaults to Indonesian — this is an
-// Indonesia-first app — with an EN/ID toggle in the top bar.
+// language is persisted to localStorage and defaults to English, with an EN/ID
+// switch in the top-bar settings menu.
 //
 // The Indonesian below is written to read naturally to a native speaker (not a
 // word-for-word gloss): "host" becomes "tuan rumah", "approval" becomes
@@ -17,9 +17,11 @@ const ID = {
   Messages: 'Pesan',
   Profile: 'Profil',
   'Host a session': 'Buat sesi',
-  'Switch language': 'Ganti bahasa',
-  'Switch to dark theme': 'Beralih ke tema gelap',
-  'Switch to light theme': 'Beralih ke tema terang',
+  Settings: 'Pengaturan',
+  Language: 'Bahasa',
+  Theme: 'Tema',
+  Light: 'Terang',
+  Dark: 'Gelap',
 
   // ---- Auth (Login / Signup) ----
   'Host & join board game meetups in your area.': 'Buat & ikuti meetup board game di areamu.',
@@ -53,10 +55,6 @@ const ID = {
   'Filter by region': 'Saring per wilayah',
   'Filter by area': 'Saring per area',
   'Filter by board game': 'Saring per board game',
-  List: 'Daftar',
-  Map: 'Peta',
-  'Tap a marker to see sessions in that area.': 'Ketuk penanda untuk melihat sesi di area itu.',
-  'Show all': 'Tampilkan semua',
   'No upcoming sessions yet.': 'Belum ada sesi mendatang.',
   'Be the first to host': 'Jadi yang pertama buat sesi',
   'Rate your finished session': 'Beri rating sesimu yang sudah selesai',
@@ -146,11 +144,6 @@ const ID = {
   '🚫 Block': '🚫 Blokir',
   'You blocked {name}. They can’t message you.':
     'Kamu memblokir {name}. Mereka tidak bisa mengirimimu pesan.',
-
-  // ---- Map ----
-  "Couldn't load the map. Check your connection and try again.":
-    'Gagal memuat peta. Periksa koneksimu lalu coba lagi.',
-  '{region} · {n} sessions': '{region} · {n} sesi',
 
   // ---- Bring list (games I'll bring) ----
   'Games being brought': 'Game yang dibawa',
@@ -259,9 +252,9 @@ const LangContext = createContext(null)
 export function LanguageProvider({ children }) {
   const [lang, setLang] = useState(() => {
     try {
-      return localStorage.getItem('bg-lang') || 'id'
+      return localStorage.getItem('bg-lang') || 'en'
     } catch {
-      return 'id'
+      return 'en'
     }
   })
 
