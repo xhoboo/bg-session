@@ -61,6 +61,25 @@ export default function CreateSession() {
       setBusy(false)
       return setError('You already host a session that overlaps this time — the next one can only start after the previous ends.')
     }
+
+    // You also can't host on top of a session you're attending (migration 0042).
+    const { data: joined } = await supabase
+      .from('join_requests')
+      .select('session:sessions(starts_at, duration_minutes)')
+      .eq('guest_id', user.id)
+      .eq('status', 'approved')
+    const attends = (joined ?? [])
+      .map((r) => r.session)
+      .filter(Boolean)
+      .some((s) => {
+        const st = new Date(s.starts_at).getTime()
+        const en = st + (s.duration_minutes || FALLBACK_DURATION_MIN) * 60_000
+        return en > Date.now() && st < newEnd && en > newStart
+      })
+    if (attends) {
+      setBusy(false)
+      return setError('You are already attending a session at this time. Pick a different day or time for the one you host.')
+    }
     if (live.filter((s) => s.recurrence !== 'weekly').length >= 2) {
       setBusy(false)
       return setError('You can host at most 2 active one-time sessions at a time.')

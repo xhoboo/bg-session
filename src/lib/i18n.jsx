@@ -205,6 +205,8 @@ const ID = {
   'Say hi, mention your experience level…': 'Sapa dulu, sebutkan tingkat pengalamanmu…',
   'Join session': 'Gabung sesi',
   'Request to join': 'Minta gabung',
+  'You already have a session at this day and time. Leave that one first, or pick a session at a different time.':
+    'Kamu sudah punya sesi di hari dan jam ini. Tinggalkan dulu sesi itu, atau pilih sesi di waktu yang berbeda.',
   'Your request is': 'Permintaanmu',
   Withdraw: 'Tarik kembali',
   "You'll be notified when the host responds.": 'Kamu akan diberi tahu saat tuan rumah merespons.',

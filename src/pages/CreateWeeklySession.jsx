@@ -73,6 +73,26 @@ export default function CreateWeeklySession() {
         setBusy(false)
         return setError('Your first weekly session would overlap another session you host. Pick a different day or time.')
       }
+
+      // Same rule against sessions you attend. The weekly roll inserts the
+      // occurrence with bg.skip_limits, so this is the only guard for that case.
+      const { data: joined } = await supabase
+        .from('join_requests')
+        .select('session:sessions(starts_at, duration_minutes)')
+        .eq('guest_id', user.id)
+        .eq('status', 'approved')
+      const attends = (joined ?? [])
+        .map((r) => r.session)
+        .filter(Boolean)
+        .some((s) => {
+          const st = new Date(s.starts_at).getTime()
+          const en = st + (s.duration_minutes || FALLBACK_DURATION_MIN) * 60_000
+          return en > Date.now() && st < firstEnd && en > firstStart
+        })
+      if (attends) {
+        setBusy(false)
+        return setError('Your first weekly session would overlap a session you attend. Pick a different day or time.')
+      }
     }
 
     // 1) Create the series (template / source of truth).

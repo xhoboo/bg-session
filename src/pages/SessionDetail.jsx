@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
-import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration, hasSessionStarted, isSessionFinished } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration, hasSessionStarted, isSessionFinished, FALLBACK_DURATION_MIN } from '../lib/format'
 import Avatar from '../components/Avatar'
 import GameChip from '../components/GameChip'
 import RecurrenceBadge from '../components/RecurrenceBadge'
@@ -129,6 +129,33 @@ export default function SessionDetail() {
   const requestToJoin = async () => {
     setBusy(true)
     setError('')
+
+    // Instant feedback for the no-double-booking rule (also enforced by the DB
+    // trigger in migration 0042). A "commitment" is a session you host or are
+    // already approved into; pending/waitlist requests don't count.
+    const dur = session.duration_minutes || FALLBACK_DURATION_MIN
+    const start = new Date(session.starts_at).getTime()
+    const end = start + dur * 60_000
+    const [{ data: hosted }, { data: approved }] = await Promise.all([
+      supabase.from('sessions').select('id, starts_at, duration_minutes').eq('host_id', user.id),
+      supabase
+        .from('join_requests')
+        .select('session:sessions(id, starts_at, duration_minutes)')
+        .eq('guest_id', user.id)
+        .eq('status', 'approved'),
+    ])
+    const commitments = [...(hosted ?? []), ...(approved ?? []).map((r) => r.session).filter(Boolean)]
+    const clash = commitments.some((s) => {
+      if (s.id === session.id) return false
+      const st = new Date(s.starts_at).getTime()
+      const en = st + (s.duration_minutes || FALLBACK_DURATION_MIN) * 60_000
+      return en > Date.now() && st < end && en > start
+    })
+    if (clash) {
+      setBusy(false)
+      return setError(t('You already have a session at this day and time. Leave that one first, or pick a session at a different time.'))
+    }
+
     const { error } = await supabase
       .from('join_requests')
       .insert({ session_id: id, guest_id: user.id, message: message.trim() })

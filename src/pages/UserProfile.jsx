@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import ProfileView from '../components/ProfileView'
 import { ProfileSkeleton } from '../components/Skeleton'
-import UserSafetyActions from '../components/UserSafetyActions'
 
 // Public, read-only view of another player's profile (linked from sessions).
 // Only public fields are shown — real name / in-person photo are
@@ -94,7 +93,6 @@ export default function UserProfile() {
               <Link to={`/messages/${id}`} className="btn btn-secondary btn-sm">💬 Message {name}</Link>
             }
           />
-          <UserSafetyActions targetId={id} targetName={name} />
         </>
       ) : (
         <div className="alert alert-error">Player not found.</div>
