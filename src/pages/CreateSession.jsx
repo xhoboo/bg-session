@@ -38,7 +38,7 @@ export default function CreateSession() {
 
     const startsAtIso = new Date(form.startsAt).toISOString()
     if (Number.isNaN(Date.parse(startsAtIso))) return setError('Please pick a valid date and time.')
-    if (new Date(startsAtIso).getTime() <= Date.now()) return setError('Please pick a date and time in the future.')
+    if (new Date(startsAtIso).getTime() <= Date.now()) return setError("You can't use a date and time that has already passed.")
 
     setBusy(true)
 

@@ -29,9 +29,14 @@ export default function Onboarding() {
       return setError(takenErr)
     }
 
+    // Upsert (not update): the row is normally created by the on_auth_user_created
+    // trigger, but if it's missing an update would silently match 0 rows and the
+    // later profile_private upsert would then fail the FK. Upserting guarantees
+    // the parent profiles row exists first.
     const { error: pubErr } = await supabase
       .from('profiles')
-      .update({
+      .upsert({
+        id: user.id,
         avatar_url: vals.avatarUrl || null,
         nickname: vals.nickname,
         display_name: vals.nickname, // keep the public name in sync
@@ -40,7 +45,6 @@ export default function Onboarding() {
         owned_games: vals.ownedGames,
         onboarded: true,
       })
-      .eq('id', user.id)
     if (pubErr) {
       setBusy(false)
       return setError(pubErr.code === '23505' ? 'That nickname is already taken.' : pubErr.message)
