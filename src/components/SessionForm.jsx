@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useRegions } from '../lib/useRegions'
+import { toDatetimeLocalValue } from '../lib/format'
 import GameTagInput from './GameTagInput'
 
 // Presentational form shared by Create and Edit. It owns the field state
@@ -26,6 +27,8 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
   // field. Each setter rewrites only its half of the combined value.
   const startsDate = (form.startsAt || '').split('T')[0] || ''
   const startsTime = (form.startsAt || '').split('T')[1] || ''
+  // Stop the native date picker from offering days that have already passed.
+  const todayDate = toDatetimeLocalValue(new Date()).split('T')[0]
   const setStartsDate = (e) =>
     setForm((f) => ({ ...f, startsAt: `${e.target.value}T${(f.startsAt || '').split('T')[1] || ''}` }))
   const setStartsTime = (e) =>
@@ -97,6 +100,7 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
             <input
               id="startsDate"
               type="date"
+              min={todayDate}
               value={startsDate}
               onChange={setStartsDate}
               required

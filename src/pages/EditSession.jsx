@@ -146,6 +146,7 @@ export default function EditSession() {
 
     const startsAtIso = new Date(form.startsAt).toISOString()
     if (Number.isNaN(Date.parse(startsAtIso))) return setError('Please pick a valid date and time.')
+    if (new Date(startsAtIso).getTime() <= Date.now()) return setError('Please pick a date and time in the future.')
 
     setBusy(true)
     const { error: sErr } = await supabase
