@@ -11,7 +11,7 @@ import { useLang } from '../lib/i18n'
 // RLS returned the full address), it's folded into the message — that's the
 // whole point of the safety use case. For anyone just browsing, only the public
 // listing details + link are shared.
-export default function ShareSessionButton({ session, address, hostName, label = '🔗 Share', className = 'btn btn-secondary btn-sm' }) {
+export default function ShareSessionButton({ session, address, hostName, label = 'Share', className = 'btn btn-secondary btn-sm' }) {
   const { t } = useLang()
   const [copied, setCopied] = useState(false)
 
@@ -59,6 +59,13 @@ export default function ShareSessionButton({ session, address, hostName, label =
 
   return (
     <button type="button" className={className} onClick={onShare}>
+      <svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-0.12em', marginRight: 6 }}>
+        <circle cx="18" cy="5" r="2.5" />
+        <circle cx="6" cy="12" r="2.5" />
+        <circle cx="18" cy="19" r="2.5" />
+        <path d="M8.4 10.9l7.2-4.2" />
+        <path d="M8.4 13.1l7.2 4.2" />
+      </svg>
       {copied ? t('✓ Copied') : t(label)}
     </button>
   )

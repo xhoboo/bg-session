@@ -389,7 +389,7 @@ export default function SessionDetail() {
                       session={session}
                       address={address}
                       hostName={session.host?.display_name}
-                      label="📤 Share with a friend"
+                      label="Share with a friend"
                     />
                   </div>
                 </div>

@@ -116,8 +116,8 @@ const ID = {
     'Blokir {name}? Mereka tidak akan bisa mengirimimu pesan, dan obrolan kalian disembunyikan dari kotak masukmu.',
 
   // ---- Share ----
-  '🔗 Share': '🔗 Bagikan',
-  '📤 Share with a friend': '📤 Bagikan ke teman',
+  'Share': 'Bagikan',
+  'Share with a friend': 'Bagikan ke teman',
   '✓ Copied': '✓ Tersalin',
 
   // ---- Report dialog ----

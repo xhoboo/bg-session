@@ -56,7 +56,18 @@ export default function GameDetail() {
       {/* Name + type label. overflowWrap/wordBreak let very long names wrap
           instead of pushing the page wider than the screen (e.g. iPhone SE). */}
       <h1 style={{ marginTop: 12, marginBottom: 4, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
-        🎲 {gameName}{' '}
+        <svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-0.12em', flex: 'none' }}>
+          <path d="M12 2L22 7L12 12L2 7Z" />
+          <path d="M22 7L22 17L12 22L12 12Z" />
+          <path d="M2 7L12 12L12 22L2 17Z" />
+          <circle cx="12" cy="7" r="1.3" fill="currentColor" stroke="none" />
+          <circle cx="19" cy="12" r="1.1" fill="currentColor" stroke="none" />
+          <circle cx="15" cy="18" r="1.1" fill="currentColor" stroke="none" />
+          <circle cx="5" cy="11" r="1.1" fill="currentColor" stroke="none" />
+          <circle cx="7" cy="14.5" r="1.1" fill="currentColor" stroke="none" />
+          <circle cx="9" cy="18" r="1.1" fill="currentColor" stroke="none" />
+        </svg>{' '}
+        {gameName}{' '}
         <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--slate-600)', whiteSpace: 'nowrap' }}>
           · {game ? (game.category === 'expansion' ? 'Expansion' : 'Base game') : 'Not in the catalog yet'}
         </span>
@@ -68,7 +79,14 @@ export default function GameDetail() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          🔗 View on BoardGameGeek ↗
+          <svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-0.12em' }}>
+            <circle cx="18" cy="5" r="2.5" />
+            <circle cx="6" cy="12" r="2.5" />
+            <circle cx="18" cy="19" r="2.5" />
+            <path d="M8.4 10.9l7.2-4.2" />
+            <path d="M8.4 13.1l7.2 4.2" />
+          </svg>{' '}
+          View on BoardGameGeek ↗
         </a>
       </div>
 

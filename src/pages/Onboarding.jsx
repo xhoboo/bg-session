@@ -64,7 +64,20 @@ export default function Onboarding() {
     <div className="container container-narrow">
       <div className="spacer" />
       <div className="center" style={{ marginBottom: 20 }}>
-        <h1 style={{ color: 'var(--teal-700)' }}>Welcome to BG Session 🎲</h1>
+        <h1 style={{ color: 'var(--teal-700)' }}>
+          Welcome to BG Session{' '}
+          <svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-0.12em' }}>
+            <path d="M12 2L22 7L12 12L2 7Z" />
+            <path d="M22 7L22 17L12 22L12 12Z" />
+            <path d="M2 7L12 12L12 22L2 17Z" />
+            <circle cx="12" cy="7" r="1.3" fill="currentColor" stroke="none" />
+            <circle cx="19" cy="12" r="1.1" fill="currentColor" stroke="none" />
+            <circle cx="15" cy="18" r="1.1" fill="currentColor" stroke="none" />
+            <circle cx="5" cy="11" r="1.1" fill="currentColor" stroke="none" />
+            <circle cx="7" cy="14.5" r="1.1" fill="currentColor" stroke="none" />
+            <circle cx="9" cy="18" r="1.1" fill="currentColor" stroke="none" />
+          </svg>
+        </h1>
         <p className="subtitle" style={{ margin: 0 }}>
           Tell us a bit about yourself to finish setting up your account.
         </p>

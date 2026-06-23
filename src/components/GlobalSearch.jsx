@@ -159,7 +159,19 @@ export default function GlobalSearch() {
                     <div className="search-group">Board games</div>
                     {games.map((g) => (
                       <button key={g.name} type="button" className="search-result" onClick={() => goGame(g)}>
-                        <span className="search-result-icon" aria-hidden="true">🎲</span>
+                        <span className="search-result-icon" aria-hidden="true">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}>
+                            <path d="M12 2L22 7L12 12L2 7Z" />
+                            <path d="M22 7L22 17L12 22L12 12Z" />
+                            <path d="M2 7L12 12L12 22L2 17Z" />
+                            <circle cx="12" cy="7" r="1.3" fill="currentColor" stroke="none" />
+                            <circle cx="19" cy="12" r="1.1" fill="currentColor" stroke="none" />
+                            <circle cx="15" cy="18" r="1.1" fill="currentColor" stroke="none" />
+                            <circle cx="5" cy="11" r="1.1" fill="currentColor" stroke="none" />
+                            <circle cx="7" cy="14.5" r="1.1" fill="currentColor" stroke="none" />
+                            <circle cx="9" cy="18" r="1.1" fill="currentColor" stroke="none" />
+                          </svg>
+                        </span>
                         <span className="search-result-name">{g.name}</span>
                         {g.category === 'expansion' && <span className="muted" style={{ fontSize: 12 }}>· Expansion</span>}
                       </button>
