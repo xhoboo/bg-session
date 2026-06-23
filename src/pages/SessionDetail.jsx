@@ -14,6 +14,7 @@ import SessionBringList from '../components/SessionBringList'
 import { useGameCatalog } from '../lib/useGameCatalog'
 import { SessionDetailSkeleton } from '../components/Skeleton'
 import ShareSessionButton from '../components/ShareSessionButton'
+import { userPath } from '../lib/nickname'
 
 export default function SessionDetail() {
   const { id } = useParams()
@@ -45,7 +46,7 @@ export default function SessionDetail() {
 
     const { data: s, error: sErr } = await supabase
       .from('sessions')
-      .select('*, host:profiles(display_name, avatar_url)')
+      .select('*, host:profiles(nickname, display_name, avatar_url)')
       .eq('id', id)
       .maybeSingle()
 
@@ -84,7 +85,7 @@ export default function SessionDetail() {
       // Host: load every request with the guest's public name.
       const { data: reqs } = await supabase
         .from('join_requests')
-        .select('*, guest:profiles(display_name, avatar_url)')
+        .select('*, guest:profiles(nickname, display_name, avatar_url)')
         .eq('session_id', id)
         .order('created_at', { ascending: true })
       setRequests(reqs ?? [])
@@ -298,7 +299,7 @@ export default function SessionDetail() {
       </div>
       <p className="subtitle" style={{ marginTop: 8 }}>
         {t('Hosted by')}{' '}
-        <Link to={`/users/${session.host_id}`} className="user-link">
+        <Link to={userPath(session.host?.nickname || session.host_id)} className="user-link">
           <Avatar name={session.host?.display_name || t('Host')} src={session.host?.avatar_url} size={24} />
           {session.host?.display_name || t('Host')}
         </Link>
@@ -473,7 +474,7 @@ export default function SessionDetail() {
               <div>
                 {ratings.filter((r) => r.user_id !== user.id && r.review).map((r) => (
                   <div className="review-item" key={r.id}>
-                    <Link to={`/users/${r.user_id}`} className="user-link">
+                    <Link to={userPath(r.rater?.nickname || r.user_id)} className="user-link">
                       <Avatar name={r.rater?.nickname || r.rater?.display_name || t('Player')} src={r.rater?.avatar_url} size={24} />
                       {r.rater?.nickname || r.rater?.display_name || t('Player')}
                     </Link>
@@ -569,11 +570,11 @@ export default function SessionDetail() {
             <div className="card" key={r.id}>
               <div className="row-between">
                 <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  <Link to={`/users/${r.guest_id}`} className="user-link">
+                  <Link to={userPath(r.guest?.nickname || r.guest_id)} className="user-link">
                     <Avatar name={r.guest?.display_name || 'Guest'} src={r.guest?.avatar_url} size={32} />
                   </Link>
                   <div>
-                    <Link to={`/users/${r.guest_id}`} className="user-link"><strong>{r.guest?.display_name || 'Guest'}</strong></Link>
+                    <Link to={userPath(r.guest?.nickname || r.guest_id)} className="user-link"><strong>{r.guest?.display_name || 'Guest'}</strong></Link>
                     {r.message && <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>“{r.message}”</div>}
                   </div>
                 </div>

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import Avatar from './Avatar'
 import { timeAgo } from '../lib/format'
+import { userPath } from '../lib/nickname'
 
 // Group chat for a session, shown to confirmed participants (RLS-gated). Once
 // the session is finished the thread becomes read-only history (`readOnly`).
@@ -109,7 +110,7 @@ export default function SessionChat({ sessionId, readOnly = false }) {
                   {!mine && <Avatar name={name} src={author?.avatar_url} size={28} />}
                   <div className={'bubble ' + (mine ? 'me' : 'them')}>
                     {!mine && (
-                      <Link to={`/users/${m.user_id}`} className="bubble-author">{name}</Link>
+                      <Link to={userPath(author?.nickname || m.user_id)} className="bubble-author">{name}</Link>
                     )}
                     {m.body}
                     <span className="bubble-time">{timeAgo(m.created_at)}</span>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useDebouncedCallback } from '../lib/useDebouncedCallback'
+import { userPath } from '../lib/nickname'
 import Avatar from './Avatar'
 
 // Magnifier icon shared by the trigger button and the input.
@@ -78,7 +79,7 @@ export default function GlobalSearch() {
 
   const goMember = (m) => {
     close()
-    navigate(`/users/${m.id}`)
+    navigate(userPath(m.nickname || m.id))
   }
 
   const goGame = (g) => {

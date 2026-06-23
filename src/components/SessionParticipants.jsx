@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { userPath } from '../lib/nickname'
 import Avatar from './Avatar'
 
 // Shown to confirmed participants (host + approved guests) of a session. Lists
@@ -83,7 +84,7 @@ export default function SessionParticipants({ sessionId, hostId, seriesId }) {
             <div className="participant-card card" key={p.id}>
               <Avatar name={name} src={p.photo_url || p.avatar_url} size={52} />
               <div style={{ minWidth: 0 }}>
-                <Link to={`/users/${p.id}`} className="user-link">
+                <Link to={userPath(p.nickname || p.id)} className="user-link">
                   {name}
                   {p.isHost && <span className="badge badge-area">Host</span>}
                   {!p.isHost && cohostIds.has(p.id) && <span className="badge badge-cohost">Co-host</span>}

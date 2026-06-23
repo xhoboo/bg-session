@@ -7,6 +7,18 @@ import { supabase } from './supabaseClient'
 export const NICKNAME_MAX = 20
 const NICKNAME_RE = /^[A-Za-z0-9._-]+$/
 
+// Matches a v4-style UUID. Profile links carry the nickname now, but older
+// shared links still pass the raw user id — UserProfile uses this to tell them
+// apart and look up the right column.
+export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+// Canonical path to a user's public profile. Prefer the unique, URL-safe
+// nickname so links read /users/Andi instead of /users/<uuid>; pass the id only
+// as a fallback when the nickname isn't loaded. UserProfile resolves either.
+export function userPath(handle) {
+  return `/users/${encodeURIComponent(handle || '')}`
+}
+
 // Returns a user-facing error string if the nickname's format is invalid, else
 // '' (valid). Trims first, so trailing spaces don't trip the no-spaces rule.
 export function nicknameFormatError(nickname) {

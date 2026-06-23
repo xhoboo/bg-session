@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import Avatar from '../components/Avatar'
 import Skeleton from '../components/Skeleton'
 import { bggLink } from '../lib/format'
+import { userPath } from '../lib/nickname'
 
 // Detail page for a board game (by name): its category (if it's in the catalog)
 // plus the members who favorite it and who own it.
@@ -106,7 +107,7 @@ function MemberGrid({ members, emptyText }) {
       {members.map((m) => {
         const nm = m.nickname || m.display_name || 'Player'
         return (
-          <Link to={`/users/${m.id}`} key={m.id} className="member-card">
+          <Link to={userPath(m.nickname || m.id)} key={m.id} className="member-card">
             <Avatar name={nm} src={m.avatar_url} size={32} />
             <span className="member-name">{nm}</span>
           </Link>

@@ -7,6 +7,7 @@ import ReportDialog from '../components/ReportDialog'
 import { useBlock } from '../lib/useBlock'
 import { useLang } from '../lib/i18n'
 import { timeAgo } from '../lib/format'
+import { userPath } from '../lib/nickname'
 
 export default function Conversation() {
   const { userId } = useParams()
@@ -110,7 +111,7 @@ export default function Conversation() {
     <div className="container container-narrow">
       <Link to="/messages" className="muted" style={{ fontSize: 14 }}>← Messages</Link>
       <div className="row-between" style={{ marginTop: 12, marginBottom: 12 }}>
-        <Link to={`/users/${userId}`} className="user-link" style={{ fontSize: 18 }}>
+        <Link to={userPath(other?.nickname || userId)} className="user-link" style={{ fontSize: 18 }}>
           <Avatar name={name} src={other?.avatar_url} size={36} />
           {name}
         </Link>
