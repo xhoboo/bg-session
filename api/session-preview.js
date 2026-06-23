@@ -87,7 +87,6 @@ function buildTags({ origin, id, session }) {
     const players = (session.confirmed_count ?? 0) + 1
     const full = players >= session.max_players
     bits.push(`👥 ${players}/${session.max_players}${full ? ' · full' : ''}`)
-    if (session.host_name) bits.push(`Host: ${session.host_name}`)
 
     desc = `${bits.join(' · ')} — Join this board game session on ${SITE_NAME}!`
     image = `${origin}/api/session-image?id=${encodeURIComponent(id)}`

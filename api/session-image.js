@@ -139,13 +139,9 @@ function card(session) {
         h('div', { style: { display: 'flex', fontSize: 70, fontWeight: 700, color: INK, lineHeight: 1.08 } }, title),
         h('div', { style: { display: 'flex', flexDirection: 'column', marginTop: 34 } }, rows),
       ]),
-      // Footer: host + CTA
+      // Footer: tagline + CTA (host intentionally omitted from the preview)
       h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, [
-        h(
-          'div',
-          { style: { display: 'flex', fontSize: 30, color: MUTED } },
-          session && session.host_name ? `Hosted by ${session.host_name}` : 'Find your next table'
-        ),
+        h('div', { style: { display: 'flex', fontSize: 30, color: MUTED } }, 'Find your next table'),
         pill(session ? 'Join this session  →' : 'Browse sessions  →', { bg: TERRA, color: WHITE, size: 30 }),
       ]),
     ]

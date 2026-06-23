@@ -9,17 +9,24 @@
 -- address-free slice of a session without opening a blanket anon policy on the
 -- base tables. A SECURITY DEFINER *function* with a pinned search_path is the
 -- idiomatic Supabase way to expose exactly that — same data, same anon-only
--- grant, but the linter is satisfied and `sessions`/`profiles` stay fully
--- closed to anon.
+-- grant, but the linter is satisfied and `sessions` stays fully closed to anon.
 --
--- Returns only the safe public listing columns (no address; that lives in
--- session_addresses and is never touched here), joined to the host's profile.
+-- The RPC also requires a specific session id (the share link's UUID), so anon
+-- can no longer enumerate every session the way `select * from <view>` allowed.
+--
+-- Returns only the safe public listing columns: no address (that lives in
+-- session_addresses and is never touched here) and no host identity — the
+-- preview card intentionally omits the host, so we don't even join `profiles`.
 -- ============================================================================
 
 -- The view this replaces (migration 0043).
 drop view if exists public.public_session_preview;
 
-create or replace function public.get_session_preview(p_id uuid)
+-- Idempotent: the OUT columns below differ from any earlier draft of this
+-- function, and `create or replace` can't change a function's return shape.
+drop function if exists public.get_session_preview(uuid);
+
+create function public.get_session_preview(p_id uuid)
 returns table (
   id                uuid,
   title             text,
@@ -33,9 +40,7 @@ returns table (
   max_players       int,
   confirmed_count   int,
   recurrence        text,
-  occurrence_number int,
-  host_name         text,
-  host_avatar       text
+  occurrence_number int
 )
 language sql
 security definer
@@ -55,11 +60,8 @@ as $$
     s.max_players,
     s.confirmed_count,
     s.recurrence,
-    s.occurrence_number,
-    p.display_name as host_name,
-    p.avatar_url   as host_avatar
+    s.occurrence_number
   from public.sessions s
-  join public.profiles p on p.id = s.host_id
   where s.id = p_id;
 $$;
 
@@ -70,4 +72,4 @@ revoke all on function public.get_session_preview(uuid) from public;
 grant execute on function public.get_session_preview(uuid) to anon;
 
 comment on function public.get_session_preview(uuid) is
-  'Anon-readable public listing fields for share/link-preview cards. No address. Replaces the 0043 view. See migration 0044.';
+  'Anon-readable public listing fields for share/link-preview cards. No address, no host identity. Replaces the 0043 view. See migration 0044.';
