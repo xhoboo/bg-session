@@ -486,6 +486,14 @@ textarea { resize: vertical; min-height: 80px; }
 }
 .settings-opt:hover { background: var(--slate-50); }
 .settings-opt.is-on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+.settings-signout {
+  width: 100%;
+  border: 1px solid var(--slate-200); background: var(--field); color: var(--slate-600);
+  font: 700 13px var(--font-head); cursor: pointer;
+  padding: 9px 8px; border-radius: var(--radius-sm);
+  transition: background .15s, color .15s, border-color .15s;
+}
+.settings-signout:hover { background: var(--slate-50); }
 
 /* ---------- Avatars ---------- */
 .avatar-img, .avatar-fallback {

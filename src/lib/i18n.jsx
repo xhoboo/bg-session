@@ -22,6 +22,7 @@ const ID = {
   Theme: 'Tema',
   Light: 'Terang',
   Dark: 'Gelap',
+  'Sign out': 'Keluar',
 
   // ---- Auth (Login / Signup) ----
   'Host & join board game meetups in your area.': 'Buat & ikuti meetup board game di areamu.',

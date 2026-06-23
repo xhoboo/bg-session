@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useLang } from '../lib/i18n'
+import { useAuth } from '../context/AuthContext'
 
 // One top-bar button that opens a small dropdown holding both preferences:
 // language (EN/ID) and theme (light/dark). Replaces the two separate toggles
@@ -9,6 +11,8 @@ const currentTheme = () => document.documentElement.getAttribute('data-theme') |
 
 export default function SettingsMenu() {
   const { lang, setLang, t } = useLang()
+  const { user, signOut } = useAuth()
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [theme, setTheme] = useState(currentTheme)
   const wrapRef = useRef(null)
@@ -27,6 +31,12 @@ export default function SettingsMenu() {
       document.removeEventListener('keydown', onKey)
     }
   }, [open])
+
+  const handleSignOut = async () => {
+    setOpen(false)
+    await signOut()
+    navigate('/login', { replace: true })
+  }
 
   const applyTheme = (next) => {
     document.documentElement.setAttribute('data-theme', next)
@@ -65,6 +75,11 @@ export default function SettingsMenu() {
               <button className={'settings-opt' + (theme === 'dark' ? ' is-on' : '')} onClick={() => applyTheme('dark')}>☾ {t('Dark')}</button>
             </div>
           </div>
+          {user && (
+            <div className="settings-group">
+              <button className="settings-signout" onClick={handleSignOut}>{t('Sign out')}</button>
+            </div>
+          )}
         </div>
       )}
     </div>
