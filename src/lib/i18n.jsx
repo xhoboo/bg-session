@@ -247,6 +247,73 @@ const ID = {
     'Batalkan sesi ini? Sesi dihapus untuk semua orang dan tamu yang sudah konfirmasi diberi tahu. Tindakan ini tidak bisa dibatalkan.',
   'Step down as co-host? You will be removed from this and every upcoming week.':
     'Mundur sebagai co-host? Kamu akan dikeluarkan dari sesi ini dan semua minggu mendatang.',
+
+  // ---- Game scores ----
+  Scores: 'Skor',
+  Score: 'Skor',
+  'Game results': 'Hasil permainan',
+  'Record scores': 'Catat skor',
+  'Record a result': 'Catat hasil',
+  'No results recorded yet.': 'Belum ada hasil yang dicatat.',
+  'No games have been scored yet.': 'Belum ada permainan yang diberi skor.',
+  'Played {n}×': 'Dimainkan {n}×',
+  'Scoring is open': 'Pencatatan skor dibuka',
+  'Scoring closes {time}': 'Pencatatan ditutup {time}',
+  'Scoring opens once the session starts.': 'Pencatatan skor dibuka setelah sesi dimulai.',
+  'Scoring for this session has closed.': 'Pencatatan skor untuk sesi ini sudah ditutup.',
+  'Add the result of a game played from this session’s line-up. Anyone here can record a game.':
+    'Catat hasil permainan dari daftar game sesi ini. Siapa saja di sini bisa mencatat permainan.',
+  'Choose a game': 'Pilih permainan',
+  'Being recorded by {name}': 'Sedang dicatat oleh {name}',
+  'Being recorded right now': 'Sedang dicatat sekarang',
+  'Recording…': 'Mencatat…',
+  'How were the scores kept?': 'Bagaimana skor dihitung?',
+  'Who played?': 'Siapa yang bermain?',
+  'Pick at least two players.': 'Pilih minimal dua pemain.',
+  'Pick at least one player.': 'Pilih minimal satu pemain.',
+  'Lowest score wins': 'Skor terendah menang',
+  'Mark the winner': 'Tandai pemenang',
+  'Mark the winning team': 'Tandai tim pemenang',
+  'Did the table win?': 'Apakah meja menang?',
+  Won: 'Menang',
+  Lost: 'Kalah',
+  Winner: 'Pemenang',
+  'Team {letter}': 'Tim {letter}',
+  Team: 'Tim',
+  'Add team': '+ Tambah tim',
+  'Save result': 'Simpan hasil',
+  'Saving…': 'Menyimpan…',
+  Discard: 'Buang',
+  'Cancel this result': 'Batalkan hasil ini',
+  'Remove this game from the session record? This can’t be undone.':
+    'Hapus permainan ini dari catatan sesi? Tindakan ini tidak bisa dibatalkan.',
+  'You can cancel within 30 minutes of recording.':
+    'Kamu bisa membatalkan dalam 30 menit setelah mencatat.',
+  'This result is final.': 'Hasil ini final.',
+  'Recorded by {name}': 'Dicatat oleh {name}',
+  '← Back to session': '← Kembali ke sesi',
+  'Score a game': 'Beri skor permainan',
+  'Tap a player to add them, then enter how it went.':
+    'Ketuk pemain untuk menambahkan, lalu isi hasilnya.',
+  'No games on this session’s list yet.': 'Belum ada game di daftar sesi ini.',
+  'Score (optional)': 'Skor (opsional)',
+  'Team score (optional)': 'Skor tim (opsional)',
+  // Score-mode labels & hints (mirror SCORE_MODES in lib/format.js)
+  'Individual scores': 'Skor individu',
+  'Everyone keeps their own score; the highest wins.':
+    'Tiap pemain punya skor sendiri; yang tertinggi menang.',
+  'Team scores': 'Skor tim',
+  'Split players into teams. Enter individual scores (a team’s total is the sum) or score each team directly.':
+    'Bagi pemain ke dalam tim. Isi skor individu (skor tim = jumlahnya) atau beri skor tiap tim langsung.',
+  'Win / loss': 'Menang / kalah',
+  'Pick the one winner. Scores are optional.':
+    'Pilih satu pemenang. Skor opsional.',
+  'Team win / loss': 'Menang / kalah tim',
+  'Pick the winning team. Team scores are optional.':
+    'Pilih tim pemenang. Skor tim opsional.',
+  'Co-op (vs. the game)': 'Kooperatif (lawan game)',
+  'Everyone wins or loses together. Scores are optional.':
+    'Semua menang atau kalah bersama. Skor opsional.',
 }
 
 const translations = { id: ID }

@@ -3,9 +3,12 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
+import { isScoringOpen } from '../lib/format'
 
-// Primary mobile navigation: four tabs with a center "host a session" FAB.
-// The Messages tab carries a live unread direct-message badge.
+// Primary mobile navigation: four tabs with a center FAB. The FAB hosts a new
+// session normally, but turns into a "score a game" shortcut while the user has
+// a session in progress (scoring window open). The Messages tab carries a live
+// unread direct-message badge.
 function Icon({ name }) {
   const common = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }
   if (name === 'browse') return <svg {...common}><rect x="3" y="3" width="7" height="7" rx="2" /><rect x="14" y="3" width="7" height="7" rx="2" /><rect x="3" y="14" width="7" height="7" rx="2" /><rect x="14" y="14" width="7" height="7" rx="2" /></svg>
@@ -19,6 +22,7 @@ export default function BottomNav() {
   const { t } = useLang()
   const navigate = useNavigate()
   const [unread, setUnread] = useState(0)
+  const [activeSession, setActiveSession] = useState(null)
 
   useEffect(() => {
     if (!user) return
@@ -42,6 +46,30 @@ export default function BottomNav() {
     }
   }, [user])
 
+  // Is one of the user's sessions (hosted or joined) in its scoring window right
+  // now? If so the FAB becomes a shortcut to record scores for it. Re-checked on
+  // a minute timer so it flips on as a session starts and off after it closes.
+  useEffect(() => {
+    if (!user) return
+    let active = true
+    const check = async () => {
+      const [{ data: hosted }, { data: approved }] = await Promise.all([
+        supabase.from('sessions').select('id, starts_at, duration_minutes').eq('host_id', user.id),
+        supabase
+          .from('join_requests')
+          .select('session:sessions(id, starts_at, duration_minutes)')
+          .eq('guest_id', user.id)
+          .eq('status', 'approved'),
+      ])
+      const all = [...(hosted ?? []), ...(approved ?? []).map((r) => r.session).filter(Boolean)]
+      const open = all.filter(isScoringOpen).sort((a, b) => new Date(b.starts_at) - new Date(a.starts_at))
+      if (active) setActiveSession(open[0] || null)
+    }
+    check()
+    const timer = setInterval(() => { if (document.visibilityState === 'visible') check() }, 60_000)
+    return () => { active = false; clearInterval(timer) }
+  }, [user])
+
   const cls = ({ isActive }) => 'bottom-nav-item' + (isActive ? ' active' : '')
 
   return (
@@ -55,9 +83,16 @@ export default function BottomNav() {
       </NavLink>
       <NavLink to="/profile" className={cls}><Icon name="profile" /><span>{t('Profile')}</span></NavLink>
 
-      <button className="fab" onClick={() => navigate('/create')} aria-label={t('Host a session')}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-      </button>
+      {activeSession ? (
+        <button className="fab fab-score" onClick={() => navigate(`/sessions/${activeSession.id}/score`)} aria-label={t('Score a game')}>
+          {/* Trophy — "record a result for your live session" */}
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4h12v3a6 6 0 0 1-12 0V4z" /><path d="M6 6H3v1a3 3 0 0 0 3 3M18 6h3v1a3 3 0 0 1-3 3M9 17h6M10 17v3M14 17v3M8 20h8" /></svg>
+        </button>
+      ) : (
+        <button className="fab" onClick={() => navigate('/create')} aria-label={t('Host a session')}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+        </button>
+      )}
     </nav>
   )
 }

@@ -780,3 +780,130 @@ html[data-theme="dark"] .skeleton::after {
   .bottom-nav-item svg { width: 20px; height: 20px; }
   .fab { width: 50px; height: 50px; border-radius: 16px; top: -19px; }
 }
+
+/* ============================================================
+   Game scores (in-session results + recording form)
+   ============================================================ */
+
+/* FAB in its "score a game" state — a touch greener so it reads as a different
+   action from the usual "+ host". */
+.fab-score { background: var(--good); box-shadow: 0 10px 22px rgba(21, 184, 134, 0.5); }
+
+/* Result chips on SessionDetail (link to the score page). */
+.chip-score { text-decoration: none; cursor: pointer; }
+.chip-score:hover { filter: brightness(0.97); }
+.chip-count { font-weight: 800; opacity: 0.75; }
+
+/* Scoring-window banner */
+.score-window-open,
+.score-window-closed {
+  margin-top: 14px; padding: 10px 13px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600;
+}
+.score-window-open { background: var(--good-soft); color: var(--good-ink); border: 1px solid var(--good); }
+.score-window-closed { background: var(--neutral-soft); color: var(--slate-600); }
+
+/* Game chooser grid (start a recording) */
+.score-game-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.score-game-btn {
+  display: flex; flex-direction: column; gap: 4px; text-align: left;
+  background: var(--surface); border: 1px solid var(--slate-200); border-radius: var(--radius-sm);
+  padding: 12px 13px; cursor: pointer; transition: box-shadow .15s, transform .12s;
+}
+.score-game-btn:hover:not(:disabled) { box-shadow: var(--shadow); transform: translateY(-1px); }
+.score-game-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.score-game-name { font-family: var(--font-head); font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+.score-game-add { font-size: 12px; font-weight: 600; color: var(--accent-ink); }
+.score-game-lock { font-size: 12px; color: var(--slate-600); }
+
+/* ---- Recording form ---- */
+.record-form { margin-top: 14px; }
+.check-row { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+.check-row input { width: auto; }
+
+.mode-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.mode-btn {
+  background: var(--surface); border: 1px solid var(--slate-200); border-radius: var(--radius-sm);
+  padding: 10px 12px; cursor: pointer; text-align: left; transition: border-color .12s, background .12s;
+}
+.mode-btn.is-active { border-color: var(--accent); background: var(--accent-soft); }
+.mode-btn-label { font-weight: 600; font-size: 13px; color: var(--ink); }
+
+.winloss-toggle { display: flex; gap: 10px; }
+.wl-btn {
+  flex: 1; padding: 12px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 700;
+  border: 1px solid var(--slate-200); background: var(--surface); color: var(--slate-600);
+}
+.wl-btn.wl-won.is-active { background: var(--good-soft); color: var(--good-ink); border-color: var(--good); }
+.wl-btn.wl-lost.is-active { background: var(--red-soft); color: var(--red-600); border-color: var(--red-600); }
+
+/* Player picker (toggle chips) */
+.player-pick { display: flex; flex-wrap: wrap; gap: 8px; }
+.pick-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--surface); border: 1px solid var(--slate-200); border-radius: 999px;
+  padding: 5px 12px 5px 6px; font-weight: 600; font-size: 13px; color: var(--ink); cursor: pointer;
+}
+.pick-chip.is-on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+
+/* Per-player input rows */
+.score-input-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.score-input-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 10px; border: 1px solid var(--slate-200); border-radius: var(--radius-sm); background: var(--surface);
+}
+.score-input-who { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; min-width: 0; }
+.score-input-who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.score-input-controls { display: inline-flex; align-items: center; gap: 8px; flex: none; }
+.score-num { width: 84px; text-align: center; }
+
+.team-picker { display: inline-flex; gap: 4px; }
+.team-opt {
+  width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 13px;
+  border: 1px solid var(--slate-200); background: var(--surface); color: var(--slate-600);
+}
+.team-opt.is-on { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.winner-pick {
+  width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 16px;
+  border: 1px solid var(--slate-200); background: var(--surface); filter: grayscale(1); opacity: 0.6;
+}
+.winner-pick.is-on { filter: none; opacity: 1; border-color: var(--medal-ink); background: var(--medal-soft); }
+
+.team-block { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.team-row { display: flex; align-items: center; gap: 10px; }
+.team-row-name { font-weight: 700; font-size: 14px; min-width: 64px; }
+.team-row .score-num { margin-left: auto; }
+
+/* ---- Result cards ---- */
+.score-card-game { font-family: var(--font-head); font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+.score-card-game .chip-bring-name { font-size: 16px; }
+.score-card-mode { font-size: 12px; color: var(--slate-600); margin-top: 2px; }
+.score-card-foot { font-size: 12px; margin-top: 12px; }
+
+.score-players { display: flex; flex-direction: column; gap: 6px; }
+.score-player {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 6px 8px; border-radius: 10px;
+}
+.score-player.is-winner { background: var(--medal-soft); }
+.score-player .user-link { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.score-player-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.score-trophy { flex: none; }
+.score-value { font-family: var(--font-mono); font-weight: 700; font-size: 15px; color: var(--ink); margin-left: auto; }
+.score-value-sm { font-size: 13px; color: var(--slate-600); }
+
+.score-teams { display: flex; flex-direction: column; gap: 10px; }
+.score-team { border: 1px solid var(--slate-200); border-radius: var(--radius-sm); padding: 10px; }
+.score-team.is-winner { border-color: var(--medal-ink); background: var(--medal-soft); }
+.score-team-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.score-team-name { font-family: var(--font-head); font-weight: 700; font-size: 14px; }
+
+.coop-banner { text-align: center; font-family: var(--font-head); font-weight: 700; font-size: 18px; padding: 10px; border-radius: var(--radius-sm); margin-bottom: 10px; }
+.coop-banner.coop-won { background: var(--good-soft); color: var(--good-ink); }
+.coop-banner.coop-lost { background: var(--red-soft); color: var(--red-600); }
+
+@media (max-width: 480px) {
+  .score-game-grid { grid-template-columns: 1fr; }
+  .score-num { width: 72px; }
+}

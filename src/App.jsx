@@ -15,6 +15,7 @@ import CreateSession from './pages/CreateSession'
 import CreateWeeklySession from './pages/CreateWeeklySession'
 import EditSession from './pages/EditSession'
 import SessionDetail from './pages/SessionDetail'
+import SessionScore from './pages/SessionScore'
 import MySessions from './pages/MySessions'
 import Profile from './pages/Profile'
 import EditProfile from './pages/EditProfile'
@@ -51,6 +52,7 @@ export default function App() {
             <Route path="/messages" element={<Messages />} />
             <Route path="/messages/:userId" element={<Conversation />} />
             <Route path="/sessions/:id" element={<SessionDetail />} />
+            <Route path="/sessions/:id/score" element={<SessionScore />} />
             <Route path="/sessions/:id/edit" element={<EditSession />} />
           </Route>
         </Route>

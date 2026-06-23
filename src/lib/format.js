@@ -82,6 +82,70 @@ export function isSessionFinished(s) {
   return new Date(s.starts_at).getTime() + mins * 60_000 <= Date.now()
 }
 
+// ---------------------------------------------------------------------------
+// Game scores (in-session results)
+//
+// Scoring opens when the session starts and closes one hour after it finishes,
+// matching submit_game_play()/start_game_play() in migration 0046. After that
+// the session's results are locked for good.
+// ---------------------------------------------------------------------------
+export const SCORE_LOCK_GRACE_MIN = 60
+
+export function scoringClosesAt(s) {
+  const mins = s.duration_minutes || FALLBACK_DURATION_MIN
+  return new Date(new Date(s.starts_at).getTime() + (mins + SCORE_LOCK_GRACE_MIN) * 60_000)
+}
+
+export function isScoringOpen(s) {
+  const now = Date.now()
+  return new Date(s.starts_at).getTime() <= now && now <= scoringClosesAt(s).getTime()
+}
+
+// The five score modes the recorder can pick per play. `team`, `lowestOption`,
+// and the winner/score shapes drive the recording form and the result cards.
+// Labels/hints are English source strings; the UI runs them through t().
+export const SCORE_MODES = [
+  {
+    key: 'individual_score',
+    label: 'Individual scores',
+    hint: 'Everyone keeps their own score; the highest wins.',
+    team: false, scores: 'required', winner: 'derived', lowestOption: true,
+  },
+  {
+    key: 'team_score',
+    label: 'Team scores',
+    hint: 'Split players into teams. Enter individual scores (a team’s total is the sum) or score each team directly.',
+    team: true, scores: 'team', winner: 'derived', lowestOption: true,
+  },
+  {
+    key: 'individual_winloss',
+    label: 'Win / loss',
+    hint: 'Pick the one winner. Scores are optional.',
+    team: false, scores: 'optional', winner: 'pick-player', lowestOption: false,
+  },
+  {
+    key: 'team_winloss',
+    label: 'Team win / loss',
+    hint: 'Pick the winning team. Team scores are optional.',
+    team: true, scores: 'team-optional', winner: 'pick-team', lowestOption: false,
+  },
+  {
+    key: 'cooperative',
+    label: 'Co-op (vs. the game)',
+    hint: 'Everyone wins or loses together. Scores are optional.',
+    team: false, scores: 'optional', winner: 'coop', lowestOption: false,
+  },
+]
+
+export function scoreMode(key) {
+  return SCORE_MODES.find((m) => m.key === key) || null
+}
+
+// Team index → "A", "B", "C"… for display (teams are stored as 1, 2, 3…).
+export function teamLetter(n) {
+  return String.fromCharCode(64 + Number(n))
+}
+
 // The host counts as a player, so total players = approved guests + 1.
 export function playerCount(s) {
   return `${(s.confirmed_count ?? 0) + 1}/${s.max_players}`
