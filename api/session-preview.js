@@ -4,7 +4,7 @@
 // still boot the React app as usual and ignore the tags.
 //
 // Mapped from /sessions/:id by vercel.json. Crawlers are anonymous, so it reads
-// only the public `public_session_preview` view (migration 0043) — never the
+// only the public `get_session_preview` RPC (migration 0044) — never the
 // address. Supabase creds come from the project's existing env vars (Vercel
 // exposes them to functions at runtime, VITE_ prefix and all).
 
@@ -57,7 +57,7 @@ async function getTemplate(origin) {
 async function getSession(id) {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !id) return null
   try {
-    const url = `${SUPABASE_URL}/rest/v1/public_session_preview?id=eq.${encodeURIComponent(id)}&select=*`
+    const url = `${SUPABASE_URL}/rest/v1/rpc/get_session_preview?p_id=${encodeURIComponent(id)}`
     const r = await fetch(url, {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
     })

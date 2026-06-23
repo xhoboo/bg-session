@@ -3,7 +3,7 @@
 // title, when/where, players and host, plus a "Join this session" call-out.
 //
 // Called as /api/session-image?id=<uuid> (and with no id for a generic brand
-// card). Reads only the public `public_session_preview` view (migration 0043);
+// card). Reads only the public `get_session_preview` RPC (migration 0044);
 // never the address. Colors mirror src/index.css.
 
 import { ImageResponse } from '@vercel/og'
@@ -49,7 +49,7 @@ async function getSession(id) {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !id) return null
   try {
     const r = await fetch(
-      `${SUPABASE_URL}/rest/v1/public_session_preview?id=eq.${encodeURIComponent(id)}&select=*`,
+      `${SUPABASE_URL}/rest/v1/rpc/get_session_preview?p_id=${encodeURIComponent(id)}`,
       { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
     )
     if (!r.ok) return null
