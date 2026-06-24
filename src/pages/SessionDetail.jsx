@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
-import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration, hasSessionStarted, isSessionFinished, isScoringOpen, FALLBACK_DURATION_MIN } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration, hasSessionStarted, isSessionFinished, isScoringOpen, gameAnchor, FALLBACK_DURATION_MIN } from '../lib/format'
 import Avatar from '../components/Avatar'
 import GameChip from '../components/GameChip'
 import RecurrenceBadge from '../components/RecurrenceBadge'
@@ -435,7 +435,7 @@ export default function SessionDetail() {
                 {scoreGames.map((g) => {
                   const canonical = catalog.get(g.name.trim().toLowerCase())
                   return (
-                    <Link key={g.name} to={`/sessions/${id}/score`} className="chip chip-score">
+                    <Link key={g.name} to={`/sessions/${id}/score#${gameAnchor(g.name)}`} className="chip chip-score">
                       <span>{canonical || g.name}</span>
                       {g.n > 1 && <span className="chip-count">×{g.n}</span>}
                     </Link>

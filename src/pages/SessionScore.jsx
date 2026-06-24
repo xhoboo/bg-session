@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import { useGameCatalog } from '../lib/useGameCatalog'
 import {
   isScoringOpen, scoringClosesAt, hasSessionStarted, SCORE_MODES, scoreMode,
-  teamLetter, formatDateShort,
+  teamLetter, formatDateShort, gameAnchor,
 } from '../lib/format'
 import Avatar from '../components/Avatar'
 import GameScoreCard from '../components/GameScoreCard'
@@ -25,6 +25,7 @@ export default function SessionScore() {
   const { user } = useAuth()
   const { t } = useLang()
   const navigate = useNavigate()
+  const location = useLocation()
   const { catalog } = useGameCatalog()
 
   const [session, setSession] = useState(null)
@@ -131,6 +132,26 @@ export default function SessionScore() {
     plays.forEach((p) => m.set(p.game_name.toLowerCase(), (m.get(p.game_name.toLowerCase()) || 0) + 1))
     return m
   }, [plays])
+
+  // The first (top) card for each game gets a deep-link anchor id (play.id →
+  // anchor), so a game chip on the session page can jump straight to it.
+  const anchorFor = useMemo(() => {
+    const seen = new Set()
+    const m = new Map()
+    plays.forEach((p) => {
+      const low = p.game_name.toLowerCase()
+      if (!seen.has(low)) { seen.add(low); m.set(p.id, gameAnchor(p.game_name)) }
+    })
+    return m
+  }, [plays])
+
+  // Arriving from a game chip (…/score#game-x): once the results are rendered,
+  // scroll that game's card into view. The :target CSS then highlights it.
+  useEffect(() => {
+    if (loading || !location.hash) return
+    const el = document.getElementById(location.hash.slice(1))
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [loading, location.hash])
 
   const startRecording = async (gameName) => {
     setBusy(true)
@@ -279,6 +300,7 @@ export default function SessionScore() {
             return (
               <GameScoreCard
                 key={p.id}
+                id={anchorFor.get(p.id)}
                 play={p}
                 catalog={catalog}
                 onCancel={cancellable && scoringOpen ? cancelResult : undefined}
