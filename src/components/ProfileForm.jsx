@@ -46,6 +46,7 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
           value={form.avatarUrl}
           name={form.nickname}
           onChange={setField('avatarUrl')}
+          maxDim={512}
         />
 
         <div className="form-group">
@@ -102,6 +103,7 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
           value={form.photoUrl}
           name={form.nickname}
           onChange={setField('photoUrl')}
+          maxDim={1024}
         />
 
         <div className="form-group">

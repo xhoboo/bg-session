@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import ProfileForm, { profileToForm } from '../components/ProfileForm'
 import { nicknameFormatError, nicknameTakenError } from '../lib/nickname'
+import { cleanupReplacedAvatars } from '../lib/avatarStorage'
 
 // Required one-time profile setup, shown right after a user's first signup.
 // The OnboardingGate sends users here until profiles.onboarded = true.
@@ -60,6 +61,11 @@ export default function Onboarding() {
     setBusy(false)
 
     if (privErr) return setError(privErr.message)
+    // Clean up any earlier photo this user had on file that's now been replaced.
+    await cleanupReplacedAvatars(
+      { avatarUrl: profile?.avatar_url, photoUrl: profile?.photo_url },
+      { avatarUrl: vals.avatarUrl, photoUrl: vals.photoUrl },
+    )
     await refreshProfile()
     navigate('/', { replace: true })
   }

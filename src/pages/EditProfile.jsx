@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import ProfileForm, { profileToForm } from '../components/ProfileForm'
 import { nicknameFormatError, nicknameTakenError } from '../lib/nickname'
+import { cleanupReplacedAvatars } from '../lib/avatarStorage'
 
 export default function EditProfile() {
   const { user, profile, refreshProfile } = useAuth()
@@ -50,6 +51,11 @@ export default function EditProfile() {
     setBusy(false)
 
     if (privErr) return setError(privErr.message)
+    // New URLs are now persisted — safe to delete the files they replaced.
+    await cleanupReplacedAvatars(
+      { avatarUrl: profile?.avatar_url, photoUrl: profile?.photo_url },
+      { avatarUrl: vals.avatarUrl, photoUrl: vals.photoUrl },
+    )
     await refreshProfile()
     navigate('/profile')
   }
