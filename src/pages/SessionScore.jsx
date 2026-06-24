@@ -6,7 +6,7 @@ import { useLang } from '../lib/i18n'
 import { useGameCatalog } from '../lib/useGameCatalog'
 import {
   isScoringOpen, scoringClosesAt, hasSessionStarted, SCORE_MODES, scoreMode,
-  teamLetter, formatDateShort, gameAnchor,
+  teamLetter, formatDateShort, gameAnchor, GAME_COOLDOWN_MIN,
 } from '../lib/format'
 import Avatar from '../components/Avatar'
 import GameScoreCard from '../components/GameScoreCard'
@@ -130,6 +130,20 @@ export default function SessionScore() {
   const playCount = useMemo(() => {
     const m = new Map()
     plays.forEach((p) => m.set(p.game_name.toLowerCase(), (m.get(p.game_name.toLowerCase()) || 0) + 1))
+    return m
+  }, [plays])
+
+  // Per-game 30-minute cooldown (migration 0053): a game can't be re-scored until
+  // 30 min after its most recent submitted play. Map of lower(game) -> the time
+  // the cooldown lifts (ms); a game is on cooldown while now < that.
+  const cooldownUntil = useMemo(() => {
+    const m = new Map()
+    plays.forEach((p) => {
+      if (!p.submitted_at) return
+      const low = p.game_name.toLowerCase()
+      const until = new Date(p.submitted_at).getTime() + GAME_COOLDOWN_MIN * 60_000
+      if (until > (m.get(low) || 0)) m.set(low, until)
+    })
     return m
   }, [plays])
 
@@ -315,18 +329,23 @@ export default function SessionScore() {
                 {available.map((g) => {
                   const locker = lockedBy.get(g.toLowerCase())
                   const n = playCount.get(g.toLowerCase()) || 0
+                  const onCooldown = !locker && (cooldownUntil.get(g.toLowerCase()) || 0) > Date.now()
                   return (
                     <button
                       key={g}
                       type="button"
                       className="score-game-btn"
-                      disabled={busy || !!locker}
+                      disabled={busy || !!locker || onCooldown}
                       onClick={() => startRecording(g)}
                     >
                       <span className="score-game-name">{g}</span>
                       {locker ? (
                         <span className="score-game-lock">
                           {t('Being recorded by {name}', { name: locker.nickname || locker.display_name || t('Player') })}
+                        </span>
+                      ) : onCooldown ? (
+                        <span className="score-game-lock">
+                          {n > 0 ? t('Played {n}×', { n }) + ' · ' : ''}{t('Just scored — try again in a bit')}
                         </span>
                       ) : (
                         <span className="score-game-add">

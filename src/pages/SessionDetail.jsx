@@ -15,6 +15,7 @@ import InviteMemberBox from '../components/InviteMemberBox'
 import { useGameCatalog } from '../lib/useGameCatalog'
 import { SessionDetailSkeleton } from '../components/Skeleton'
 import ShareSessionButton from '../components/ShareSessionButton'
+import ShareScoreButton from '../components/ShareScoreButton'
 import { userPath } from '../lib/nickname'
 
 export default function SessionDetail() {
@@ -379,7 +380,14 @@ export default function SessionDetail() {
       </p>
 
       <div className="detail-actions">
-        <ShareSessionButton session={session} address={address} hostName={session.host?.display_name} />
+        {/* Once the session is over, "share" becomes "share a game's result" —
+            the listing is past and its address is hidden anyway. Falls back to the
+            normal session share if no games were scored. */}
+        {finished && scoreGames.length > 0 ? (
+          <ShareScoreButton session={session} />
+        ) : (
+          <ShareSessionButton session={session} address={address} hostName={session.host?.display_name} />
+        )}
         {isHost && !started && (
           <div className="detail-actions-right">
             <button className="btn btn-secondary btn-sm" onClick={() => navigate(`/sessions/${id}/edit`)} disabled={busy}>

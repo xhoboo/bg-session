@@ -136,6 +136,8 @@ const ID = {
   Send: 'Kirim',
   'Say hello 👋': 'Sapa dulu 👋',
   'You can no longer message this user.': 'Kamu tidak bisa lagi mengirim pesan ke pengguna ini.',
+  'You’re sending messages too quickly. Wait a moment and try again.':
+    'Kamu mengirim pesan terlalu cepat. Tunggu sebentar lalu coba lagi.',
   'You blocked {name}.': 'Kamu memblokir {name}.',
   'Unblock to message': 'Buka blokir untuk mengirim pesan',
   'Block {name}? They won’t be able to message you.':
@@ -146,6 +148,10 @@ const ID = {
   // ---- Share ----
   'Share': 'Bagikan',
   'Share with a friend': 'Bagikan ke teman',
+  'Share score': 'Bagikan skor',
+  'Share a game result': 'Bagikan hasil permainan',
+  'Pick a game to share its scores.': 'Pilih permainan untuk membagikan skornya.',
+  'Copy this game’s result:': 'Salin hasil permainan ini:',
   '✓ Copied': '✓ Tersalin',
 
   // ---- Report dialog ----
@@ -321,6 +327,8 @@ const ID = {
   'No games have been scored yet.': 'Belum ada permainan yang diberi skor.',
   'Played {n}×': 'Dimainkan {n}×',
   'Play {n} of {total}': 'Main ke-{n} dari {total}',
+  'Game {n}': 'Permainan ke-{n}',
+  'Just scored — try again in a bit': 'Baru saja dicatat — coba lagi sebentar',
   'Scoring is open': 'Pencatatan skor dibuka',
   'Scoring closes {time}': 'Pencatatan ditutup {time}',
   'Scoring opens once the session starts.': 'Pencatatan skor dibuka setelah sesi dimulai.',

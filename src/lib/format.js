@@ -91,6 +91,11 @@ export function isSessionFinished(s) {
 // ---------------------------------------------------------------------------
 export const SCORE_LOCK_GRACE_MIN = 60
 
+// After a game's result is submitted, the same game (and any player in it) is on a
+// 30-minute cooldown before it can be scored again — mirrors start_game_play()/
+// submit_game_play() in migration 0053.
+export const GAME_COOLDOWN_MIN = 30
+
 export function scoringClosesAt(s) {
   const mins = s.duration_minutes || FALLBACK_DURATION_MIN
   return new Date(new Date(s.starts_at).getTime() + (mins + SCORE_LOCK_GRACE_MIN) * 60_000)

@@ -89,7 +89,11 @@ export default function Conversation() {
       .select('*')
       .single()
     if (error) {
-      setSendError(t('You can no longer message this user.'))
+      // 53400 = the rate-limit trigger (migration 0052); anything else here is the
+      // block trigger (migration 0037) rejecting the message.
+      setSendError(error.code === '53400'
+        ? t('You’re sending messages too quickly. Wait a moment and try again.')
+        : t('You can no longer message this user.'))
       return
     }
     setText('')

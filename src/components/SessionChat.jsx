@@ -13,6 +13,7 @@ export default function SessionChat({ sessionId, readOnly = false }) {
   const [messages, setMessages] = useState([])
   const [authors, setAuthors] = useState({}) // userId -> profile
   const [text, setText] = useState('')
+  const [sendError, setSendError] = useState('')
   const endRef = useRef(null)
   const knownAuthors = useRef(new Set()) // uids already fetched/cached
 
@@ -78,12 +79,21 @@ export default function SessionChat({ sessionId, readOnly = false }) {
     if (readOnly) return
     const body = text.trim()
     if (!body) return
-    setText('')
-    const { data } = await supabase
+    setSendError('')
+    // Keep the text until the insert succeeds, so a rejected send (e.g. the
+    // rate-limit trigger in migration 0052) doesn't lose what was typed.
+    const { data, error } = await supabase
       .from('session_messages')
       .insert({ session_id: sessionId, user_id: user.id, body })
       .select('*, author:profiles(id, display_name, nickname, avatar_url)')
       .single()
+    if (error) {
+      setSendError(error.code === '53400'
+        ? 'You’re sending messages too quickly. Wait a moment and try again.'
+        : 'Couldn’t send your message. Please try again.')
+      return
+    }
+    setText('')
     if (data) {
       setMessages((prev) => (prev.some((x) => x.id === data.id) ? prev : [...prev, data]))
       if (data.author) {
@@ -127,10 +137,15 @@ export default function SessionChat({ sessionId, readOnly = false }) {
             This session has ended — chat is now read-only.
           </p>
         ) : (
-          <form className="chat-input-row" onSubmit={send}>
-            <input type="text" value={text} onChange={(e) => setText(e.target.value)} placeholder="Message participants…" maxLength={2000} />
-            <button className="btn btn-primary" type="submit" disabled={!text.trim()}>Send</button>
-          </form>
+          <>
+            <form className="chat-input-row" onSubmit={send}>
+              <input type="text" value={text} onChange={(e) => { setText(e.target.value); if (sendError) setSendError('') }} placeholder="Message participants…" maxLength={2000} />
+              <button className="btn btn-primary" type="submit" disabled={!text.trim()}>Send</button>
+            </form>
+            {sendError && (
+              <p className="center" style={{ color: 'var(--red-600)', fontSize: 13, marginTop: 8, marginBottom: 0 }}>{sendError}</p>
+            )}
+          </>
         )}
       </div>
     </>
