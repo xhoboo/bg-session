@@ -71,22 +71,25 @@ The app handles Google OAuth and email/password out of the box. New users get a
 
 ## 5. Email notifications (optional but recommended)
 
-In-app notifications work with zero extra setup. To also send **emails**:
+In-app notifications work with zero extra setup. Emails are sent straight from
+the database: a trigger on `notifications` (`send_notification_email()`, see
+migrations `0003` and `0047`) posts to [Resend](https://resend.com) via `pg_net`
+— no edge function or webhook to deploy. To enable it:
 
-1. Deploy the edge function:
-   ```bash
-   supabase functions deploy send-notification-email --no-verify-jwt
-   supabase secrets set RESEND_API_KEY=re_xxx
-   supabase secrets set EMAIL_FROM="BG Session <notify@yourdomain.com>"
-   supabase secrets set APP_URL=https://your-deployed-app
+1. Enable the `pg_net` extension (Dashboard → Database → Extensions).
+2. Add your Resend settings to the `app_config` table:
+   ```sql
+   insert into app_config (key, value) values
+     ('resend_api_key', 're_xxx'),
+     ('email_from',     'BG Session <notify@yourdomain.com>'),
+     ('app_url',        'https://your-deployed-app')
+   on conflict (key) do update set value = excluded.value;
    ```
-2. Create a **Database Webhook** (Dashboard → Database → Webhooks):
-   - Table: `notifications`, Events: **INSERT**
-   - Type: **Supabase Edge Function** → `send-notification-email`
 
-Every new in-app notification then triggers a matching email to the recipient.
-Without `RESEND_API_KEY` the function no-ops gracefully and in-app notifications
-still work.
+Every new in-app notification of an important type (join approvals/confirmations/
+rejections, session reminders, cancellations — see migration `0047`) then sends a
+matching email. Without `resend_api_key` the trigger no-ops gracefully and in-app
+notifications still work.
 
 ## 6. Project structure
 
@@ -102,8 +105,7 @@ src/
                   Create/EditSession, SessionDetail, MySessions, Profile,
                   EditProfile, UserProfile, GameDetail, Messages, Conversation
 supabase/
-  migrations/     0001_init.sql … 0023_drop_domiciles.sql
-  functions/      send-notification-email/
+  migrations/     0001_init.sql … (email is sent from the DB via pg_net; see 0003 & 0047)
 ```
 
 > Regions & areas (the Host form's location pickers and Browse filters) and the

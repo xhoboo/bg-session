@@ -100,15 +100,13 @@ export default function UserProfile() {
       <Link to="/" className="muted" style={{ fontSize: 14 }}>← Back to browse</Link>
       <div className="spacer" />
       {profile ? (
-        <>
-          <ProfileView
-            profile={profile}
-            history={history}
-            headerAction={
-              <Link to={`/messages/${profile.id}`} className="btn btn-secondary btn-sm">💬 Message {name}</Link>
-            }
-          />
-        </>
+        <ProfileView
+          profile={profile}
+          history={history}
+          headerAction={
+            <Link to={`/messages/${profile.id}`} className="btn btn-secondary btn-sm">💬 Message {name}</Link>
+          }
+        />
       ) : (
         <div className="alert alert-error">Player not found.</div>
       )}

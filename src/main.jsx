@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import App from './App'
 import { AuthProvider } from './context/AuthContext'
 import { LanguageProvider } from './lib/i18n'
@@ -14,6 +15,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <App />
         </AuthProvider>
       </LanguageProvider>
+      {/* Vercel Web Analytics — privacy-friendly page-view + visitor counts. */}
+      <Analytics />
     </BrowserRouter>
   </React.StrictMode>,
 )

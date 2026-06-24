@@ -626,7 +626,7 @@ function RecordForm({ playId, gameName, participants, busy, setBusy, onSubmitted
                 className="score-num"
                 type="text"
                 inputMode="numeric"
-                placeholder={mode.key === 'team_winloss' ? t('Team score (optional)') : t('Team score (optional)')}
+                placeholder={t('Team score (optional)')}
                 value={teamScores[tm] ?? ''}
                 onChange={(e) => setTeamScore(tm, e.target.value)}
               />

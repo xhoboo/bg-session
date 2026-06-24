@@ -42,7 +42,9 @@ Google name + avatar.
 ## 2. Email notifications (~15 min)
 
 In-app notifications already work. This adds real emails on top, using
-[Resend](https://resend.com) + a Supabase Edge Function + a Database Webhook.
+[Resend](https://resend.com) sent **directly from the database** — a trigger on
+`notifications` (`send_notification_email()`, migrations `0003` + `0047`) posts to
+Resend via the `pg_net` extension. No edge function or webhook to deploy.
 
 ### a. Resend
 1. Sign up at https://resend.com.
@@ -50,34 +52,27 @@ In-app notifications already work. This adds real emails on top, using
    testing you can send *from* `onboarding@resend.dev` to your own email.
 3. **API Keys → Create** → copy the key (`re_...`).
 
-### b. Deploy the Edge Function
-Install the Supabase CLI if needed (`npm i -g supabase`), then from the project:
+### b. Enable pg_net
+Supabase Dashboard → **Database → Extensions** → enable **`pg_net`** (the trigger
+uses `net.http_post` to call Resend asynchronously).
 
-```bash
-supabase login
-supabase link --project-ref tylooqnsukrbxuangjbp
-supabase functions deploy send-notification-email --no-verify-jwt
+### c. Configure the trigger
+The migrations create the trigger already; it reads its settings from the
+`app_config` table. Add your keys (Dashboard → **SQL Editor**):
 
-supabase secrets set RESEND_API_KEY=re_xxxxxxxx
-supabase secrets set EMAIL_FROM="BG Session <onboarding@resend.dev>"
-supabase secrets set APP_URL=http://localhost:5173
+```sql
+insert into app_config (key, value) values
+  ('resend_api_key', 're_xxxxxxxx'),
+  ('email_from',     'BG Session <onboarding@resend.dev>'),
+  ('app_url',        'http://localhost:5173')
+on conflict (key) do update set value = excluded.value;
 ```
-
-(`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected automatically.)
-
-### c. Create the Database Webhook
-Supabase Dashboard → **Database → Webhooks → Create a new hook**:
-- Name: `notify-email`
-- Table: **`notifications`**
-- Events: **Insert**
-- Type: **Supabase Edge Function** → `send-notification-email`
-- Method: POST (default)
 
 ### d. Test
 Have one account request to join another account's session → the host should get
-an email; on approve/reject the guest gets one. If `RESEND_API_KEY` is missing
-the function no-ops (in-app notifications still work). Check logs in
-**Edge Functions → send-notification-email → Logs** if an email doesn't arrive.
+an email; on approve/reject the guest gets one. If `resend_api_key` is missing
+the trigger no-ops (in-app notifications still work). Check delivery in the
+**Resend dashboard → Logs** if an email doesn't arrive.
 
 ---
 

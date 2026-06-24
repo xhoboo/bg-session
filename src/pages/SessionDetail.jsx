@@ -317,7 +317,7 @@ export default function SessionDetail() {
 
   return (
     <div className="container container-narrow">
-      <Link to="/" className="muted" style={{ fontSize: 14 }}>← Back to browse</Link>
+      <Link to="/" className="muted" style={{ fontSize: 14 }}>{t('← Back to browse')}</Link>
 
       <div className="row-between" style={{ marginTop: 12 }}>
         <h1 style={{ marginBottom: 0 }}>{session.title}</h1>
