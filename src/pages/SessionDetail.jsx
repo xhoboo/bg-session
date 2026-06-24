@@ -11,6 +11,7 @@ import StarRating from '../components/StarRating'
 import SessionChat from '../components/SessionChat'
 import SessionParticipants from '../components/SessionParticipants'
 import SessionBringList from '../components/SessionBringList'
+import InviteMemberBox from '../components/InviteMemberBox'
 import { useGameCatalog } from '../lib/useGameCatalog'
 import { SessionDetailSkeleton } from '../components/Skeleton'
 import ShareSessionButton from '../components/ShareSessionButton'
@@ -28,6 +29,7 @@ export default function SessionDetail() {
   const [brought, setBrought] = useState([]) // games participants pledged to bring
   const [playsSummary, setPlaysSummary] = useState([]) // submitted game results (for the chips)
   const [myRequest, setMyRequest] = useState(null)
+  const [myInvite, setMyInvite] = useState(null) // a pending invite addressed to me
   const [requests, setRequests] = useState([]) // host view
   const [message, setMessage] = useState('')
   const [ratings, setRatings] = useState([])
@@ -112,6 +114,17 @@ export default function SessionDetail() {
         .eq('guest_id', user.id)
         .maybeSingle()
       setMyRequest(mine ?? null)
+
+      // A pending invite addressed to me (someone already in the session asked
+      // me to join). Drives the "you've been invited" banner below.
+      const { data: inv } = await supabase
+        .from('session_invites')
+        .select('id, status, inviter:profiles!session_invites_inviter_id_fkey(nickname, display_name, avatar_url)')
+        .eq('session_id', id)
+        .eq('invitee_id', user.id)
+        .eq('status', 'pending')
+        .maybeSingle()
+      setMyInvite(inv ?? null)
     }
 
     // Ratings — RLS returns rows only to participants of this session.
@@ -177,16 +190,41 @@ export default function SessionDetail() {
     })
     if (clash) {
       setBusy(false)
-      return setError(t('You already have a session at this day and time. Leave that one first, or pick a session at a different time.'))
+      setError(t('You already have a session at this day and time. Leave that one first, or pick a session at a different time.'))
+      return false
     }
 
     const { error } = await supabase
       .from('join_requests')
       .insert({ session_id: id, guest_id: user.id, message: message.trim() })
     setBusy(false)
-    if (error) return setError(error.message)
+    if (error) {
+      setError(error.message)
+      return false
+    }
     setMessage('')
     await loadAll()
+    return true
+  }
+
+  // Accept an invite: join through the very same request flow (so capacity,
+  // approval, and the no-double-booking rule all still apply), then mark the
+  // invite accepted so the inviter is notified. If the join is blocked (e.g. a
+  // time clash), the error shows and the invite stays open.
+  const acceptInvite = async () => {
+    const ok = await requestToJoin()
+    if (!ok) return
+    await supabase.from('session_invites').update({ status: 'accepted' }).eq('id', myInvite.id)
+    setMyInvite(null)
+  }
+
+  const declineInvite = async () => {
+    setBusy(true)
+    setError('')
+    const { error } = await supabase.from('session_invites').update({ status: 'declined' }).eq('id', myInvite.id)
+    setBusy(false)
+    if (error) return setError(error.message)
+    setMyInvite(null)
   }
 
   const withdraw = async () => {
@@ -548,7 +586,25 @@ export default function SessionDetail() {
       {/* ---------------- Guest actions (only before the session starts) ---------------- */}
       {!isHost && !started && (
         <div className="card">
-          {!myRequest && !started && (
+          {!myRequest && myInvite && (
+            <div className="invite-banner stack">
+              <div>
+                💌 <Link to={userPath(myInvite.inviter?.nickname || '')} className="user-link">
+                  <strong>{myInvite.inviter?.nickname || myInvite.inviter?.display_name || t('A member')}</strong>
+                </Link>{' '}
+                {t('invited you to this session.')}
+                {isFull && <span className="muted"> {t('(It’s full — you’ll join the waitlist.)')}</span>}
+              </div>
+              <div className="form-row">
+                <button className="btn btn-primary" onClick={acceptInvite} disabled={busy}>
+                  {isFull ? t('Accept & join waitlist') : t('Accept & join')}
+                </button>
+                <button className="btn btn-secondary" onClick={declineInvite} disabled={busy}>{t('Decline')}</button>
+              </div>
+            </div>
+          )}
+
+          {!myRequest && !myInvite && !started && (
             <>
               <h2 style={{ marginTop: 0, fontSize: 18 }}>
                 {isFull ? t('Session full — join the waitlist?') : t('Want to join?')}
@@ -684,6 +740,10 @@ export default function SessionDetail() {
       )}
 
       {isParticipant && <SessionParticipants sessionId={id} hostId={session.host_id} seriesId={session.series_id} />}
+
+      {/* Confirmed participants can invite a specific member while the session
+          is still upcoming. */}
+      {isParticipant && !started && <InviteMemberBox sessionId={id} />}
 
       {/* Bringing a game only makes sense before the session starts — once it's
           under way the line-up is set, so the add-a-game form drops away. */}

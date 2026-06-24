@@ -24,6 +24,7 @@ const SessionScore = lazy(() => import('./pages/SessionScore'))
 const MySessions = lazy(() => import('./pages/MySessions'))
 const Profile = lazy(() => import('./pages/Profile'))
 const EditProfile = lazy(() => import('./pages/EditProfile'))
+const NotificationSettings = lazy(() => import('./pages/NotificationSettings'))
 const UserProfile = lazy(() => import('./pages/UserProfile'))
 const GameDetail = lazy(() => import('./pages/GameDetail'))
 const Messages = lazy(() => import('./pages/Messages'))
@@ -54,6 +55,7 @@ export default function App() {
               <Route path="/my-sessions" element={<MySessions />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/profile/edit" element={<EditProfile />} />
+              <Route path="/settings/notifications" element={<NotificationSettings />} />
               <Route path="/users/:id" element={<UserProfile />} />
               <Route path="/games/:name" element={<GameDetail />} />
               <Route path="/messages" element={<Messages />} />

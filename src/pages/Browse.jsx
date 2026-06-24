@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
@@ -9,8 +9,13 @@ import SessionCard from '../components/SessionCard'
 import StarRating from '../components/StarRating'
 import { SessionListSkeleton } from '../components/Skeleton'
 
-// Parse a session's comma-separated board_games text into a clean list.
-const parseGames = (text) => (text || '').split(',').map((g) => g.trim()).filter(Boolean)
+// Columns the browse cards need (no full address — that's a separate table).
+const CARD_COLS =
+  'id, title, starts_at, region, area, max_players, board_games, session_type, recurrence, occurrence_number, confirmed_count, host:profiles(display_name, avatar_url)'
+const PAGE_SIZE = 12
+
+// Escape the LIKE wildcards so a game name with % or _ matches literally.
+const likeEscape = (s) => s.replace(/[\\%_]/g, '\\$&')
 
 export default function Browse() {
   const { user } = useAuth()
@@ -21,7 +26,11 @@ export default function Browse() {
   const [region, setRegion] = useState('')
   const [area, setArea] = useState('')
   const [game, setGame] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [gameOptions, setGameOptions] = useState([])
+  const [page, setPage] = useState(0)
+  const [hasMore, setHasMore] = useState(false)
+  const [loading, setLoading] = useState(true)     // first page / refetch on filter change
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState('')
   const [toRate, setToRate] = useState([])
   const [rateValues, setRateValues] = useState({}) // session_id -> chosen star value
@@ -73,52 +82,69 @@ export default function Browse() {
     }
   }, [user.id])
 
-  // Fetch all upcoming sessions once; the three filters below are applied
-  // client-side so we can also derive the board-game options from what's
-  // actually on offer.
+  // Fetch one page of upcoming sessions, filtered server-side. `replace` starts
+  // a fresh list (page 0 / filter change); otherwise we append (Load more). A
+  // request token guards against an older fetch resolving after a newer one.
+  const reqRef = useRef(0)
+  const fetchPage = useCallback(
+    async (pageNum, replace) => {
+      const myReq = ++reqRef.current
+      replace ? setLoading(true) : setLoadingMore(true)
+      const from = pageNum * PAGE_SIZE
+
+      let q = supabase
+        .from('sessions')
+        .select(CARD_COLS)
+        .gte('starts_at', new Date().toISOString())
+        .order('starts_at', { ascending: true })
+        .range(from, from + PAGE_SIZE - 1)
+      if (region) q = q.eq('region', region)
+      if (area) q = q.eq('area', area)
+      if (game) q = q.ilike('board_games', `%${likeEscape(game)}%`)
+
+      const { data, error: qErr } = await q
+      if (myReq !== reqRef.current) return // superseded by a newer fetch
+      if (qErr) {
+        setError(qErr.message)
+      } else {
+        setError('')
+        const rows = data ?? []
+        setSessions((prev) => (replace ? rows : [...prev, ...rows]))
+        setHasMore(rows.length === PAGE_SIZE)
+      }
+      setLoading(false)
+      setLoadingMore(false)
+    },
+    [region, area, game],
+  )
+
+  // Refetch from page 0 whenever the filters change (and on mount).
+  useEffect(() => {
+    setPage(0)
+    fetchPage(0, true)
+  }, [fetchPage])
+
+  const loadMore = () => {
+    const next = page + 1
+    setPage(next)
+    fetchPage(next, false)
+  }
+
+  // Game dropdown options come from the server so they stay complete across
+  // pages. Re-fetched when the region/area scope changes.
   useEffect(() => {
     let active = true
-    setLoading(true)
-
     supabase
-      .from('sessions')
-      .select('id, title, starts_at, region, area, max_players, board_games, session_type, recurrence, occurrence_number, confirmed_count, host:profiles(display_name, avatar_url)')
-      .gte('starts_at', new Date().toISOString())
-      .order('starts_at', { ascending: true })
-      .then(({ data, error }) => {
-        if (!active) return
-        if (error) setError(error.message)
-        else setSessions(data ?? [])
-        setLoading(false)
-      })
-
+      .rpc('upcoming_game_options', { p_region: region || null, p_area: area || null })
+      .then(({ data }) => {
+        if (active) setGameOptions((data ?? []).map((r) => r.game))
+      }, () => {})
     return () => {
       active = false
     }
-  }, [])
+  }, [region, area])
 
-  // Area options follow the chosen region; board-game options are the distinct
-  // games in upcoming sessions that match the current region + area filter.
   const areaOptions = region ? areasByRegion[region] || [] : []
-  const gameOptions = useMemo(() => {
-    const byKey = new Map() // lowercased name -> first-seen display name
-    for (const s of sessions) {
-      if (region && s.region !== region) continue
-      if (area && s.area !== area) continue
-      for (const g of parseGames(s.board_games)) {
-        const key = g.toLowerCase()
-        if (!byKey.has(key)) byKey.set(key, g)
-      }
-    }
-    return [...byKey.values()].sort((a, b) => a.localeCompare(b))
-  }, [sessions, region, area])
-
-  const visible = sessions.filter((s) => {
-    if (region && s.region !== region) return false
-    if (area && s.area !== area) return false
-    if (game && !parseGames(s.board_games).some((g) => g.toLowerCase() === game.toLowerCase())) return false
-    return true
-  })
 
   // Changing a parent filter invalidates its narrower children.
   const onRegionChange = (e) => { setRegion(e.target.value); setArea(''); setGame('') }
@@ -130,11 +156,11 @@ export default function Browse() {
     const value = rateValues[sid] || 0
     if (value < 1 || ratingId) return
     setRatingId(sid)
-    const { error } = await supabase
+    const { error: rErr } = await supabase
       .from('session_ratings')
       .insert({ session_id: sid, user_id: user.id, rating: value })
     setRatingId(null)
-    if (error) return setError(error.message)
+    if (rErr) return setError(rErr.message)
     navigate(`/sessions/${sid}#review`)
   }
 
@@ -208,17 +234,26 @@ export default function Browse() {
 
       {loading ? (
         <SessionListSkeleton />
-      ) : visible.length === 0 ? (
+      ) : sessions.length === 0 ? (
         <div className="empty-state">
           <p>{t('No upcoming sessions yet.')}</p>
           <Link to="/create" className="btn btn-primary">{t('Be the first to host')}</Link>
         </div>
       ) : (
-        <div className="session-list">
-          {visible.map((s) => (
-            <SessionCard key={s.id} session={s} />
-          ))}
-        </div>
+        <>
+          <div className="session-list">
+            {sessions.map((s) => (
+              <SessionCard key={s.id} session={s} />
+            ))}
+          </div>
+          {hasMore && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
+              <button className="btn btn-secondary" onClick={loadMore} disabled={loadingMore}>
+                {loadingMore ? t('Loading…') : t('Load more')}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

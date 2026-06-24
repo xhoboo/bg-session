@@ -87,6 +87,8 @@ const ID = {
   'Rate your finished sessions': 'Beri rating sesi-sesimu yang sudah selesai',
   Rate: 'Beri rating',
   '+{n} more awaiting your rating': '+{n} lagi menunggu ratingmu',
+  'Load more': 'Muat lebih banyak',
+  'Loading…': 'Memuat…',
 
   // ---- Session card / shared badges ----
   Weekly: 'Mingguan',
@@ -181,6 +183,41 @@ const ID = {
   'Quick add from your collection': 'Tambah cepat dari koleksimu',
   "Add a game you'll bring…": 'Tambah game yang akan kamu bawa…',
   '+ Add': '+ Tambah',
+
+  // ---- Invite a member ----
+  'Invite a member': 'Undang anggota',
+  'Invite someone to this session. They still join through the normal flow, so the host stays in control.':
+    'Undang seseorang ke sesi ini. Mereka tetap bergabung lewat alur biasa, jadi tuan rumah tetap memegang kendali.',
+  'Search a member by name…': 'Cari anggota berdasarkan nama…',
+  'Searching…': 'Mencari…',
+  'No members match “{term}”.': 'Tidak ada anggota yang cocok dengan “{term}”.',
+  Invite: 'Undang',
+  Invited: 'Diundang',
+  Joined: 'Bergabung',
+  'this member': 'anggota ini',
+  '{name} has already been invited.': '{name} sudah diundang.',
+  'Invited {name}.': '{name} diundang.',
+  'Rescind invite': 'Tarik undangan',
+  'A member': 'Seorang anggota',
+  'invited you to this session.': 'mengundangmu ke sesi ini.',
+  '(It’s full — you’ll join the waitlist.)': '(Penuh — kamu akan masuk daftar tunggu.)',
+  'Accept & join': 'Terima & gabung',
+  'Accept & join waitlist': 'Terima & gabung daftar tunggu',
+
+  // ---- Notification preferences ----
+  '← Back to profile': '← Kembali ke profil',
+  'Email notifications': 'Notifikasi email',
+  'Choose which emails we send you. You’ll always see everything in the in-app bell.':
+    'Pilih email mana yang kami kirim. Kamu tetap melihat semuanya di lonceng notifikasi aplikasi.',
+  'Join updates': 'Update gabung',
+  'When a host approves, confirms, or declines your request to join.':
+    'Saat tuan rumah menyetujui, mengonfirmasi, atau menolak permintaan gabungmu.',
+  'Session reminders': 'Pengingat sesi',
+  'A reminder before a session you’re in, and the after-session follow-up.':
+    'Pengingat sebelum sesi yang kamu ikuti, dan tindak lanjut setelah sesi.',
+  'Session changes': 'Perubahan sesi',
+  'When a session you joined is cancelled by the host.':
+    'Saat sesi yang kamu ikuti dibatalkan oleh tuan rumah.',
 
   // ---- Waitlist (session detail) ----
   'Session full — join the waitlist?': 'Sesi penuh — gabung daftar tunggu?',

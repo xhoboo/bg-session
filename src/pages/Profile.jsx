@@ -65,6 +65,8 @@ export default function Profile() {
       <div className="spacer" />
       <Link to="/profile/edit" className="btn btn-primary btn-block">Edit profile</Link>
       <div className="spacer" />
+      <Link to="/settings/notifications" className="btn btn-secondary btn-block">Email notifications</Link>
+      <div className="spacer" />
       <button className="btn btn-secondary btn-block" onClick={handleSignOut}>Sign out</button>
     </div>
   )

@@ -7,4 +7,10 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  // Vitest. Pure-logic tests (format.js, nickname.js) run in a plain Node
+  // environment; the DB integration test self-skips unless SUPABASE_DB_URL is set.
+  test: {
+    environment: 'node',
+    include: ['tests/**/*.test.js'],
+  },
 })
