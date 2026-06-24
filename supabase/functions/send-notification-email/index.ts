@@ -45,6 +45,18 @@ const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 
+// Only these notification types are worth an email. Everything else (rating
+// nudges, "someone requested to join", forfeited requests, …) stays in-app only
+// so inboxes don't fill with noise. Keep this in sync with the pg_net trigger in
+// migration 0047_email_only_important_notifications.sql.
+const EMAIL_TYPES = new Set([
+  'join_approved',    // your join request was approved
+  'join_confirmed',   // you're confirmed in a session (auto-join / promotion / new host)
+  'join_rejected',    // your join request was declined
+  'session_reminder', // upcoming session reminder
+  'session_canceled', // a session you're in was canceled
+])
+
 Deno.serve(async (req) => {
   try {
     const payload = (await req.json()) as WebhookPayload
@@ -54,6 +66,11 @@ Deno.serve(async (req) => {
     }
 
     const note = payload.record
+
+    // Skip in-app-only notification types — no email for these.
+    if (!EMAIL_TYPES.has(note.type)) {
+      return new Response('type not emailed', { status: 200 })
+    }
 
     // Look up the recipient's email via the Auth admin API.
     const { data: userData, error: userErr } = await admin.auth.admin.getUserById(note.user_id)

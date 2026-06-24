@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
@@ -38,6 +38,19 @@ export default function SessionDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+
+  // When arriving from the home "rate" card (…/sessions/:id#review), drop the
+  // participant straight onto the optional written-review box once it mounts.
+  const reviewRef = useRef(null)
+  const reviewFocused = useRef(false)
+  useEffect(() => {
+    if (reviewFocused.current || window.location.hash !== '#review') return
+    const el = reviewRef.current
+    if (!el) return
+    reviewFocused.current = true
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el.focus({ preventScroll: true })
+  }, [ratings])
 
   const isHost = session && user && session.host_id === user.id
 
@@ -496,6 +509,7 @@ export default function SessionDetail() {
               ) : myRating ? (
                 <div className="review-input-wrap">
                   <textarea
+                    ref={reviewRef}
                     placeholder={t('Add a review (optional)…')}
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}

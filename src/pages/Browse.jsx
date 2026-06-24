@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import { isSessionFinished } from '../lib/format'
 import { useRegions } from '../lib/useRegions'
 import SessionCard from '../components/SessionCard'
+import StarRating from '../components/StarRating'
 import { SessionListSkeleton } from '../components/Skeleton'
 
 // Parse a session's comma-separated board_games text into a clean list.
@@ -14,6 +15,7 @@ const parseGames = (text) => (text || '').split(',').map((g) => g.trim()).filter
 export default function Browse() {
   const { user } = useAuth()
   const { t } = useLang()
+  const navigate = useNavigate()
   const { regions, areasByRegion } = useRegions()
   const [sessions, setSessions] = useState([])
   const [region, setRegion] = useState('')
@@ -22,6 +24,8 @@ export default function Browse() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [toRate, setToRate] = useState([])
+  const [rateValues, setRateValues] = useState({}) // session_id -> chosen star value
+  const [ratingId, setRatingId] = useState(null)   // session currently being submitted
 
   // Finished sessions this user took part in but hasn't rated yet. We also ask
   // the backend to enqueue "rate this session" notifications for them.
@@ -120,6 +124,20 @@ export default function Browse() {
   const onRegionChange = (e) => { setRegion(e.target.value); setArea(''); setGame('') }
   const onAreaChange = (e) => { setArea(e.target.value); setGame('') }
 
+  // Submit a star rating straight from the home card, then hand the participant
+  // off to the session's optional written review (#review focuses the box there).
+  const submitRate = async (sid) => {
+    const value = rateValues[sid] || 0
+    if (value < 1 || ratingId) return
+    setRatingId(sid)
+    const { error } = await supabase
+      .from('session_ratings')
+      .insert({ session_id: sid, user_id: user.id, rating: value })
+    setRatingId(null)
+    if (error) return setError(error.message)
+    navigate(`/sessions/${sid}#review`)
+  }
+
   return (
     <div className="container">
       {toRate.length > 0 && (
@@ -130,10 +148,25 @@ export default function Browse() {
           </div>
           <div className="stack" style={{ marginTop: 8 }}>
             {toRate.slice(0, 3).map((s) => (
-              <Link key={s.id} to={`/sessions/${s.id}`} className="rate-reminder-item">
-                <span className="rate-reminder-title">{s.title}</span>
-                <span className="btn btn-primary btn-sm">{t('Rate')}</span>
-              </Link>
+              <div key={s.id} className="rate-reminder-item rate-reminder-item-inline">
+                <Link to={`/sessions/${s.id}`} className="rate-reminder-title">{s.title}</Link>
+                <div className="rating-row">
+                  <StarRating
+                    value={rateValues[s.id] || 0}
+                    onChange={(v) => setRateValues((m) => ({ ...m, [s.id]: v }))}
+                    size={20}
+                    showValue={false}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => submitRate(s.id)}
+                    disabled={ratingId === s.id || (rateValues[s.id] || 0) < 1}
+                  >
+                    {t('Submit rating')}
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
           {toRate.length > 3 && (
