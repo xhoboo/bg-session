@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
-import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration, hasSessionStarted, isSessionFinished, isScoringOpen, gameAnchor, FALLBACK_DURATION_MIN } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration, hasSessionStarted, isSessionFinished, gameAnchor, FALLBACK_DURATION_MIN } from '../lib/format'
 import Avatar from '../components/Avatar'
 import GameChip from '../components/GameChip'
 import RecurrenceBadge from '../components/RecurrenceBadge'
@@ -278,7 +278,6 @@ export default function SessionDetail() {
 
   const started = hasSessionStarted(session)
   const finished = isSessionFinished(session)
-  const scoringOpen = isScoringOpen(session)
   // Games that have at least one recorded result, with replay counts, keeping
   // the first spelling seen. Chips link to the score page.
   const scoreGames = (() => {
@@ -425,44 +424,24 @@ export default function SessionDetail() {
         </div>
       </div>
 
-      {/* ---------------- Game results / scores (once the session has started) ---------------- */}
-      {started && (scoreGames.length > 0 || (isParticipant && scoringOpen)) && (
+      {/* ---------------- Game results / scores (once the session has started) ----------------
+          Just the chips of games that already have a recorded result; each one
+          deep-links to its card on the score page. Recording lives on the FAB. */}
+      {started && scoreGames.length > 0 && (
         <>
           <h2 className="section-title">{t('Game results')}</h2>
           <div className="card">
-            {scoreGames.length > 0 ? (
-              <div className="chips">
-                {scoreGames.map((g) => {
-                  const canonical = catalog.get(g.name.trim().toLowerCase())
-                  return (
-                    <Link key={g.name} to={`/sessions/${id}/score#${gameAnchor(g.name)}`} className="chip chip-score">
-                      <span>{canonical || g.name}</span>
-                      {g.n > 1 && <span className="chip-count">×{g.n}</span>}
-                    </Link>
-                  )
-                })}
-              </div>
-            ) : (
-              <p className="muted" style={{ margin: 0 }}>{t('No games have been scored yet.')}</p>
-            )}
-            {isParticipant && scoringOpen && (
-              <button
-                className="btn btn-secondary btn-block"
-                style={{ marginTop: 12 }}
-                onClick={() => navigate(`/sessions/${id}/score`)}
-              >
-                {t('Record scores')}
-              </button>
-            )}
-            {scoreGames.length > 0 && !(isParticipant && scoringOpen) && (
-              <button
-                className="btn btn-secondary btn-block"
-                style={{ marginTop: 12 }}
-                onClick={() => navigate(`/sessions/${id}/score`)}
-              >
-                {t('Game results')}
-              </button>
-            )}
+            <div className="chips">
+              {scoreGames.map((g) => {
+                const canonical = catalog.get(g.name.trim().toLowerCase())
+                return (
+                  <Link key={g.name} to={`/sessions/${id}/score#${gameAnchor(g.name)}`} className="chip chip-score">
+                    <span>{canonical || g.name}</span>
+                    {g.n > 1 && <span className="chip-count">×{g.n}</span>}
+                  </Link>
+                )
+              })}
+            </div>
           </div>
         </>
       )}
