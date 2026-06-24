@@ -22,7 +22,13 @@ describe.skipIf(!DB_URL)('critical maintenance RPCs (DB integration)', () => {
 
   beforeAll(async () => {
     const { default: pg } = await import('pg')
-    client = new pg.Client({ connectionString: DB_URL })
+    // Supabase requires SSL; a local Postgres doesn't. Enable it for anything
+    // that isn't localhost (cert verification off — fine for a test).
+    const useSsl = !/localhost|127\.0\.0\.1/.test(DB_URL)
+    client = new pg.Client({
+      connectionString: DB_URL,
+      ssl: useSsl ? { rejectUnauthorized: false } : false,
+    })
     await client.connect()
     await client.query('begin')
   })
