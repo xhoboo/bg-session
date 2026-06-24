@@ -82,6 +82,31 @@ function teamLetter(n) {
   return String.fromCharCode(64 + Number(n))
 }
 
+// Initials avatar, mirroring src/components/Avatar.jsx's fallback. The card NEVER
+// uses a real/uploaded/Google photo (the RPC doesn't even return avatar_url) — a
+// public preview only ever shows this generated, name-derived circle.
+function colorFromString(str) {
+  let n = 0
+  for (let i = 0; i < str.length; i++) n = str.charCodeAt(i) + ((n << 5) - n)
+  return `hsl(${Math.abs(n) % 360} 50% 45%)`
+}
+function avatarCircle(name, size) {
+  const s = String(name || '').trim()
+  const initial = s ? s[0].toUpperCase() : '?'
+  return h(
+    'div',
+    {
+      style: {
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        width: size, height: size, borderRadius: 999, marginRight: 14,
+        backgroundColor: colorFromString(s), color: WHITE,
+        fontSize: Math.round(size * 0.44), fontWeight: 700,
+      },
+    },
+    initial
+  )
+}
+
 // A "● label" detail row.
 function detailRow(text) {
   return h('div', { style: { display: 'flex', alignItems: 'center', marginTop: 20 } }, [
@@ -191,6 +216,7 @@ function scoreRow(name, score, winner, indent = false) {
     },
     [
       h('div', { style: { display: 'flex', alignItems: 'center' } }, [
+        avatarCircle(nm, indent ? 26 : 32),
         winner
           ? h('div', { style: { display: 'flex', backgroundColor: TERRA, color: WHITE, fontSize: 15, fontWeight: 700, letterSpacing: 1, padding: '3px 11px', borderRadius: 999, marginRight: 12 } }, 'WIN')
           : null,
