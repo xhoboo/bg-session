@@ -132,6 +132,19 @@ export function AuthProvider({ children }) {
     })
   }, [])
 
+  // Email a password-reset link. The link lands on /reset-password, where the
+  // recovery session Supabase establishes lets the user set a new password.
+  const resetPasswordForEmail = useCallback(async (email) => {
+    return supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+  }, [])
+
+  // Set a new password for the currently authenticated (incl. recovery) session.
+  const updatePassword = useCallback(async (password) => {
+    return supabase.auth.updateUser({ password })
+  }, [])
+
   const signOut = useCallback(async () => {
     return supabase.auth.signOut()
   }, [])
@@ -146,6 +159,8 @@ export function AuthProvider({ children }) {
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
+    resetPasswordForEmail,
+    updatePassword,
     signOut,
   }
 

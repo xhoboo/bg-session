@@ -6,7 +6,7 @@ import GoogleButton from '../components/GoogleButton'
 import SettingsMenu from '../components/SettingsMenu'
 
 export default function Login() {
-  const { signInWithEmail } = useAuth()
+  const { signInWithEmail, resetPasswordForEmail } = useAuth()
   const { t } = useLang()
   const navigate = useNavigate()
   const location = useLocation()
@@ -16,6 +16,11 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  // Offer a password reset only once the user has fumbled the password twice —
+  // keeps the happy path uncluttered for people who simply mistyped once.
+  const [failedAttempts, setFailedAttempts] = useState(0)
+  const [resetBusy, setResetBusy] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -25,10 +30,29 @@ export default function Login() {
     setBusy(false)
     if (error) {
       setError(error.message)
+      setFailedAttempts((n) => n + 1)
       return
     }
     navigate(from, { replace: true })
   }
+
+  const handleReset = async () => {
+    if (!email) {
+      setError(t('Enter your email above, then request a reset link.'))
+      return
+    }
+    setError('')
+    setResetBusy(true)
+    const { error } = await resetPasswordForEmail(email)
+    setResetBusy(false)
+    if (error) {
+      setError(error.message)
+      return
+    }
+    setResetSent(true)
+  }
+
+  const showForgot = failedAttempts >= 2
 
   return (
     <div className="container container-narrow">
@@ -76,6 +100,30 @@ export default function Login() {
             {busy ? t('Signing in…') : t('Sign in')}
           </button>
         </form>
+
+        {showForgot && (
+          <div className="forgot-box">
+            {resetSent ? (
+              <div className="alert alert-success" style={{ margin: 0 }}>
+                {t('If an account exists for {email}, a reset link is on its way. Check your inbox.', { email })}
+              </div>
+            ) : (
+              <>
+                <p className="muted" style={{ margin: '0 0 10px', fontSize: 13 }}>
+                  {t('Forgot your password? We can email you a link to set a new one.')}
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-block btn-sm"
+                  onClick={handleReset}
+                  disabled={resetBusy}
+                >
+                  {resetBusy ? t('Sending…') : t('Email me a reset link')}
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <p className="center muted" style={{ marginTop: 16 }}>

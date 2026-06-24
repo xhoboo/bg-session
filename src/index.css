@@ -368,6 +368,9 @@ textarea { resize: vertical; min-height: 80px; }
 .btn-block { width: 100%; }
 .btn-sm { padding: 8px 13px; font-size: 13px; border-radius: 10px; }
 
+/* Forgot-password block on the sign-in card (revealed after repeated failures) */
+.forgot-box { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--slate-200); }
+
 /* ---------- Misc ---------- */
 .divider { display: flex; align-items: center; gap: 12px; color: var(--slate-400); font-size: 12px; margin: 16px 0; }
 .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--slate-200); }
@@ -820,7 +823,7 @@ html[data-theme="dark"] .skeleton::after {
 }
 .score-game-btn:hover:not(:disabled) { box-shadow: var(--shadow); transform: translateY(-1px); }
 .score-game-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.score-game-name { font-family: var(--font-head); font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+.score-game-name { font-family: var(--font-head); font-weight: 700; font-size: 15px; letter-spacing: -0.01em; color: var(--ink); }
 .score-game-add { font-size: 12px; font-weight: 600; color: var(--accent-ink); }
 .score-game-lock { font-size: 12px; color: var(--slate-600); }
 

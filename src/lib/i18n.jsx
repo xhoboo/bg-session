@@ -45,6 +45,30 @@ const ID = {
   'Password must be at least 6 characters.': 'Kata sandi minimal 6 karakter.',
   '(min 6 characters)': '(min 6 karakter)',
   'e.g. Andi': 'mis. Andi',
+  // Forgot / reset password
+  'Forgot your password? We can email you a link to set a new one.':
+    'Lupa kata sandi? Kami bisa mengirim tautan ke email untuk membuat yang baru.',
+  'Email me a reset link': 'Kirimi saya tautan reset',
+  'Sending…': 'Mengirim…',
+  'Enter your email above, then request a reset link.':
+    'Masukkan email kamu di atas, lalu minta tautan reset.',
+  'If an account exists for {email}, a reset link is on its way. Check your inbox.':
+    'Jika ada akun untuk {email}, tautan reset sedang dikirim. Cek inbox-mu.',
+  'Reset your password': 'Atur ulang kata sandi',
+  'Choose a new password for your account.': 'Pilih kata sandi baru untuk akunmu.',
+  'New password': 'Kata sandi baru',
+  'Confirm password': 'Konfirmasi kata sandi',
+  'Update password': 'Perbarui kata sandi',
+  'Updating…': 'Memperbarui…',
+  'Passwords don’t match.': 'Kata sandi tidak cocok.',
+  'Your password has been updated. You’re all set.':
+    'Kata sandimu sudah diperbarui. Semua beres.',
+  Continue: 'Lanjut',
+  'This reset link is invalid or has expired.':
+    'Tautan reset ini tidak valid atau sudah kedaluwarsa.',
+  'Request a new link from the sign-in page.':
+    'Minta tautan baru dari halaman masuk.',
+  '← Back to sign in': '← Kembali ke halaman masuk',
 
   // ---- Browse ----
   'Upcoming sessions': 'Sesi mendatang',

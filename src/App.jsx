@@ -7,6 +7,7 @@ import OnboardingGate from './components/OnboardingGate'
 import SetupNotice from './components/SetupNotice'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import ResetPassword from './pages/ResetPassword'
 import AuthCallback from './pages/AuthCallback'
 import Onboarding from './pages/Onboarding'
 import Browse from './pages/Browse'
@@ -34,6 +35,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
 
       <Route element={<ProtectedRoute />}>
