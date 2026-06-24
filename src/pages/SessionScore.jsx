@@ -133,16 +133,31 @@ export default function SessionScore() {
     return m
   }, [plays])
 
-  // The first (top) card for each game gets a deep-link anchor id (play.id →
-  // anchor), so a game chip on the session page can jump straight to it.
-  const anchorFor = useMemo(() => {
-    const seen = new Set()
-    const m = new Map()
+  // Results are grouped by game so a game's plays sit together: oldest-first
+  // within each game (so repeats read #1, #2, #3…), and the groups themselves
+  // ordered by their most recent play so the freshest game stays on top. The
+  // group's first (oldest) card carries the deep-link anchor a game chip targets.
+  const orderedPlays = useMemo(() => {
+    const ts = (p) => (p.submitted_at ? new Date(p.submitted_at).getTime() : 0)
+    const groups = new Map() // lower(game) -> { name, plays: [] }
     plays.forEach((p) => {
       const low = p.game_name.toLowerCase()
-      if (!seen.has(low)) { seen.add(low); m.set(p.id, gameAnchor(p.game_name)) }
+      if (!groups.has(low)) groups.set(low, { name: p.game_name, plays: [] })
+      groups.get(low).plays.push(p)
     })
-    return m
+    const ordered = [...groups.values()].map((g) => ({
+      name: g.name,
+      plays: g.plays.slice().sort((a, b) => ts(a) - ts(b)),
+    }))
+    ordered.sort((a, b) => Math.max(...b.plays.map(ts)) - Math.max(...a.plays.map(ts)))
+    return ordered.flatMap((g) =>
+      g.plays.map((p, i) => ({
+        play: p,
+        anchorId: i === 0 ? gameAnchor(g.name) : undefined,
+        index: i + 1,
+        total: g.plays.length,
+      }))
+    )
   }, [plays])
 
   // Arriving from a game chip (…/score#game-x): once the results are rendered,
@@ -291,7 +306,7 @@ export default function SessionScore() {
         <p className="muted">{t('No games have been scored yet.')}</p>
       ) : (
         <div className="stack">
-          {plays.map((p) => {
+          {orderedPlays.map(({ play: p, anchorId, index, total }) => {
             // The recorder can cancel within 30 minutes of submitting.
             const cancellable =
               p.recorded_by === user.id &&
@@ -300,9 +315,11 @@ export default function SessionScore() {
             return (
               <GameScoreCard
                 key={p.id}
-                id={anchorFor.get(p.id)}
+                id={anchorId}
                 play={p}
                 catalog={catalog}
+                replayIndex={total > 1 ? index : undefined}
+                replayTotal={total > 1 ? total : undefined}
                 onCancel={cancellable && scoringOpen ? cancelResult : undefined}
               />
             )

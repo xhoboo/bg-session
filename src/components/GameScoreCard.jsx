@@ -10,7 +10,7 @@ import { userPath } from '../lib/nickname'
 // profile) and `teams` (session_play_teams). Scores are public, so this renders
 // for anyone — only the recorder, inside the cancel window, gets the × button
 // (passed in as `onCancel`).
-export default function GameScoreCard({ play, catalog, onCancel, id }) {
+export default function GameScoreCard({ play, catalog, onCancel, id, replayIndex, replayTotal }) {
   const { t } = useLang()
   const mode = scoreMode(play.mode)
   if (!mode) return null
@@ -114,6 +114,11 @@ export default function GameScoreCard({ play, catalog, onCancel, id }) {
               <Link to={`/games/${encodeURIComponent(canonical)}`} className="chip-bring-name">{canonical}</Link>
             ) : (
               play.game_name
+            )}
+            {replayTotal > 1 && (
+              <span className="score-card-replay" title={t('Play {n} of {total}', { n: replayIndex, total: replayTotal })}>
+                #{replayIndex}
+              </span>
             )}
           </div>
           <div className="score-card-mode">

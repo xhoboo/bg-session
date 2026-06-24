@@ -258,6 +258,7 @@ const ID = {
   'No results recorded yet.': 'Belum ada hasil yang dicatat.',
   'No games have been scored yet.': 'Belum ada permainan yang diberi skor.',
   'Played {n}×': 'Dimainkan {n}×',
+  'Play {n} of {total}': 'Main ke-{n} dari {total}',
   'Scoring is open': 'Pencatatan skor dibuka',
   'Scoring closes {time}': 'Pencatatan ditutup {time}',
   'Scoring opens once the session starts.': 'Pencatatan skor dibuka setelah sesi dimulai.',
