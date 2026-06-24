@@ -93,8 +93,6 @@ export default function UserProfile() {
     )
   }
 
-  const name = profile?.nickname || profile?.display_name || 'player'
-
   return (
     <div className="container container-narrow">
       <Link to="/" className="muted" style={{ fontSize: 14 }}>← Back to browse</Link>
@@ -104,7 +102,7 @@ export default function UserProfile() {
           profile={profile}
           history={history}
           headerAction={
-            <Link to={`/messages/${profile.id}`} className="btn btn-secondary btn-sm">💬 Message {name}</Link>
+            <Link to={`/messages/${profile.id}`} className="btn btn-secondary btn-sm">💬 Message</Link>
           }
         />
       ) : (
