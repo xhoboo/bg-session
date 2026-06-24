@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
@@ -25,7 +25,7 @@ export default function SessionScore() {
   const { user } = useAuth()
   const { t } = useLang()
   const navigate = useNavigate()
-  const location = useLocation()
+  const [searchParams] = useSearchParams()
   const { catalog } = useGameCatalog()
 
   const [session, setSession] = useState(null)
@@ -135,8 +135,7 @@ export default function SessionScore() {
 
   // Results are grouped by game so a game's plays sit together: oldest-first
   // within each game (so repeats read #1, #2, #3…), and the groups themselves
-  // ordered by their most recent play so the freshest game stays on top. The
-  // group's first (oldest) card carries the deep-link anchor a game chip targets.
+  // ordered by their most recent play so the freshest game stays on top.
   const orderedPlays = useMemo(() => {
     const ts = (p) => (p.submitted_at ? new Date(p.submitted_at).getTime() : 0)
     const groups = new Map() // lower(game) -> { name, plays: [] }
@@ -151,22 +150,25 @@ export default function SessionScore() {
     }))
     ordered.sort((a, b) => Math.max(...b.plays.map(ts)) - Math.max(...a.plays.map(ts)))
     return ordered.flatMap((g) =>
-      g.plays.map((p, i) => ({
-        play: p,
-        anchorId: i === 0 ? gameAnchor(g.name) : undefined,
-        index: i + 1,
-        total: g.plays.length,
-      }))
+      g.plays.map((p, i) => ({ play: p, index: i + 1, total: g.plays.length }))
     )
   }, [plays])
 
-  // Arriving from a game chip (…/score#game-x): once the results are rendered,
-  // scroll that game's card into view. The :target CSS then highlights it.
-  useEffect(() => {
-    if (loading || !location.hash) return
-    const el = document.getElementById(location.hash.slice(1))
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [loading, location.hash])
+  // Focused view: a game chip on the session page links here with ?game=<slug>
+  // to show just that one game's results (oldest-first), with no recording UI —
+  // scores are only ever entered from the FAB. Matched by the chip's anchor slug.
+  const focusSlug = searchParams.get('game')
+  const focus = useMemo(() => {
+    if (!focusSlug) return null
+    const match = plays.find((p) => gameAnchor(p.game_name) === focusSlug)
+    if (!match) return { name: null, plays: [] }
+    const low = match.game_name.toLowerCase()
+    const ts = (p) => (p.submitted_at ? new Date(p.submitted_at).getTime() : 0)
+    return {
+      name: match.game_name,
+      plays: plays.filter((p) => p.game_name.toLowerCase() === low).sort((a, b) => ts(a) - ts(b)),
+    }
+  }, [focusSlug, plays])
 
   const startRecording = async (gameName) => {
     setBusy(true)
@@ -204,6 +206,26 @@ export default function SessionScore() {
     await load()
   }
 
+  // One result card. The recorder gets a Discard button within 30 min of
+  // submitting (only on the full page — the focused chip view is read-only).
+  const renderCard = (p, index, total, allowCancel = true) => {
+    const cancellable =
+      allowCancel &&
+      p.recorded_by === user.id &&
+      p.submitted_at &&
+      Date.now() < new Date(p.submitted_at).getTime() + 30 * 60_000
+    return (
+      <GameScoreCard
+        key={p.id}
+        play={p}
+        catalog={catalog}
+        replayIndex={total > 1 ? index : undefined}
+        replayTotal={total > 1 ? total : undefined}
+        onCancel={cancellable && scoringOpen ? cancelResult : undefined}
+      />
+    )
+  }
+
   if (loading) {
     return <div className="container container-narrow"><div className="spinner" aria-label="Loading" /></div>
   }
@@ -215,6 +237,26 @@ export default function SessionScore() {
       </div>
     )
   }
+  // Focused, read-only view of a single game's results (reached from a chip on
+  // the session page). Public — no participant gate — and no recording UI.
+  if (focusSlug) {
+    const canonical = focus.name ? (catalog.get(focus.name.trim().toLowerCase()) || focus.name) : null
+    return (
+      <div className="container container-narrow">
+        <Link to={`/sessions/${id}`} className="muted" style={{ fontSize: 14 }}>{t('← Back to session')}</Link>
+        <h1 style={{ marginTop: 12, marginBottom: 4 }}>{t('Game results')}</h1>
+        <p className="subtitle" style={{ marginTop: 0 }}>{canonical || session.title}</p>
+        {focus.plays.length === 0 ? (
+          <p className="muted" style={{ marginTop: 16 }}>{t('No games have been scored yet.')}</p>
+        ) : (
+          <div className="stack" style={{ marginTop: 16 }}>
+            {focus.plays.map((p, i) => renderCard(p, i + 1, focus.plays.length, false))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   if (!isParticipant) {
     // Results are public, but recording is participant-only — send onlookers to
     // the detail page where the read-only results live.
@@ -306,24 +348,7 @@ export default function SessionScore() {
         <p className="muted">{t('No games have been scored yet.')}</p>
       ) : (
         <div className="stack">
-          {orderedPlays.map(({ play: p, anchorId, index, total }) => {
-            // The recorder can cancel within 30 minutes of submitting.
-            const cancellable =
-              p.recorded_by === user.id &&
-              p.submitted_at &&
-              Date.now() < new Date(p.submitted_at).getTime() + 30 * 60_000
-            return (
-              <GameScoreCard
-                key={p.id}
-                id={anchorId}
-                play={p}
-                catalog={catalog}
-                replayIndex={total > 1 ? index : undefined}
-                replayTotal={total > 1 ? total : undefined}
-                onCancel={cancellable && scoringOpen ? cancelResult : undefined}
-              />
-            )
-          })}
+          {orderedPlays.map(({ play: p, index, total }) => renderCard(p, index, total))}
         </div>
       )}
     </div>

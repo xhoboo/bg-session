@@ -435,7 +435,7 @@ export default function SessionDetail() {
               {scoreGames.map((g) => {
                 const canonical = catalog.get(g.name.trim().toLowerCase())
                 return (
-                  <Link key={g.name} to={`/sessions/${id}/score#${gameAnchor(g.name)}`} className="chip chip-score">
+                  <Link key={g.name} to={`/sessions/${id}/score?game=${gameAnchor(g.name)}`} className="chip chip-score">
                     <span>{canonical || g.name}</span>
                     {g.n > 1 && <span className="chip-count">×{g.n}</span>}
                   </Link>
@@ -671,7 +671,9 @@ export default function SessionDetail() {
 
       {isParticipant && <SessionParticipants sessionId={id} hostId={session.host_id} seriesId={session.series_id} />}
 
-      {isParticipant && !finished && (
+      {/* Bringing a game only makes sense before the session starts — once it's
+          under way the line-up is set, so the add-a-game form drops away. */}
+      {isParticipant && !started && (
         <SessionBringList sessionId={id} brought={brought} setBrought={setBrought} sessionGames={listedGames} />
       )}
 

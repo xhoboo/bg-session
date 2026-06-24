@@ -884,13 +884,6 @@ html[data-theme="dark"] .skeleton::after {
 .team-row .score-num { margin-left: auto; }
 
 /* ---- Result cards ---- */
-/* Deep-linked from a game chip on the session page: clear the (mobile) bottom
-   nav offset and flash the card so it's obvious which one you landed on. */
-.score-card:target { scroll-margin-top: 76px; animation: score-card-flash 1.8s ease-out; }
-@keyframes score-card-flash {
-  0%, 25% { box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
-  100% { box-shadow: 0 0 0 0 transparent, var(--shadow); }
-}
 .score-card-game { font-family: var(--font-head); font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
 .score-card-replay {
   font-family: var(--font-body); font-weight: 700; font-size: 12px;
