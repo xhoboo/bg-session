@@ -120,23 +120,28 @@ export function AuthProvider({ children }) {
     })
   }, [])
 
-  const signInWithEmail = useCallback(async (email, password) => {
-    return supabase.auth.signInWithPassword({ email, password })
+  const signInWithEmail = useCallback(async (email, password, captchaToken) => {
+    return supabase.auth.signInWithPassword({
+      email,
+      password,
+      options: { captchaToken },
+    })
   }, [])
 
-  const signUpWithEmail = useCallback(async (email, password, displayName) => {
+  const signUpWithEmail = useCallback(async (email, password, displayName, captchaToken) => {
     return supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: displayName } },
+      options: { data: { full_name: displayName }, captchaToken },
     })
   }, [])
 
   // Email a password-reset link. The link lands on /reset-password, where the
   // recovery session Supabase establishes lets the user set a new password.
-  const resetPasswordForEmail = useCallback(async (email) => {
+  const resetPasswordForEmail = useCallback(async (email, captchaToken) => {
     return supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
+      captchaToken,
     })
   }, [])
 

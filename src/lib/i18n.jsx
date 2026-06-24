@@ -44,6 +44,7 @@ const ID = {
     'Cek inbox-mu untuk konfirmasi email, lalu masuk.',
   'Password must be at least 6 characters.': 'Kata sandi minimal 6 karakter.',
   '(min 6 characters)': '(min 6 karakter)',
+  'Please complete the verification below.': 'Selesaikan verifikasi di bawah dulu.',
   'e.g. Andi': 'mis. Andi',
   // Forgot / reset password
   'Forgot your password? We can email you a link to set a new one.':

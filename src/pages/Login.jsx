@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import GoogleButton from '../components/GoogleButton'
 import SettingsMenu from '../components/SettingsMenu'
+import Turnstile, { captchaEnabled } from '../components/Turnstile'
 
 export default function Login() {
   const { signInWithEmail, resetPasswordForEmail } = useAuth()
@@ -21,16 +22,31 @@ export default function Login() {
   const [failedAttempts, setFailedAttempts] = useState(0)
   const [resetBusy, setResetBusy] = useState(false)
   const [resetSent, setResetSent] = useState(false)
+  // Turnstile token (single-use). One widget on this page backs both the
+  // sign-in and the reset-link request, so we reset it after each submit.
+  const [captchaToken, setCaptchaToken] = useState('')
+  const turnstileRef = useRef(null)
+
+  // Drop the spent token and re-run the challenge for the next attempt.
+  const refreshCaptcha = () => {
+    setCaptchaToken('')
+    turnstileRef.current?.reset()
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    if (captchaEnabled && !captchaToken) {
+      setError(t('Please complete the verification below.'))
+      return
+    }
     setBusy(true)
-    const { error } = await signInWithEmail(email, password)
+    const { error } = await signInWithEmail(email, password, captchaToken)
     setBusy(false)
     if (error) {
       setError(error.message)
       setFailedAttempts((n) => n + 1)
+      refreshCaptcha()
       return
     }
     navigate(from, { replace: true })
@@ -41,10 +57,15 @@ export default function Login() {
       setError(t('Enter your email above, then request a reset link.'))
       return
     }
+    if (captchaEnabled && !captchaToken) {
+      setError(t('Please complete the verification below.'))
+      return
+    }
     setError('')
     setResetBusy(true)
-    const { error } = await resetPasswordForEmail(email)
+    const { error } = await resetPasswordForEmail(email, captchaToken)
     setResetBusy(false)
+    refreshCaptcha()
     if (error) {
       setError(error.message)
       return
@@ -96,6 +117,12 @@ export default function Login() {
               required
             />
           </div>
+          <Turnstile
+            ref={turnstileRef}
+            onVerify={setCaptchaToken}
+            onExpire={() => setCaptchaToken('')}
+            onError={() => setCaptchaToken('')}
+          />
           <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
             {busy ? t('Signing in…') : t('Sign in')}
           </button>

@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import GoogleButton from '../components/GoogleButton'
 import SettingsMenu from '../components/SettingsMenu'
+import Turnstile, { captchaEnabled } from '../components/Turnstile'
 
 export default function Signup() {
   const { signUpWithEmail } = useAuth()
@@ -16,6 +17,8 @@ export default function Signup() {
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   const [busy, setBusy] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState('')
+  const turnstileRef = useRef(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -25,11 +28,18 @@ export default function Signup() {
       setError(t('Password must be at least 6 characters.'))
       return
     }
+    if (captchaEnabled && !captchaToken) {
+      setError(t('Please complete the verification below.'))
+      return
+    }
     setBusy(true)
-    const { data, error } = await signUpWithEmail(email, password, name)
+    const { data, error } = await signUpWithEmail(email, password, name, captchaToken)
     setBusy(false)
     if (error) {
       setError(error.message)
+      // Token is single-use; re-run the challenge so the user can retry.
+      setCaptchaToken('')
+      turnstileRef.current?.reset()
       return
     }
     // If email confirmation is enabled, there's no active session yet.
@@ -97,6 +107,12 @@ export default function Signup() {
               required
             />
           </div>
+          <Turnstile
+            ref={turnstileRef}
+            onVerify={setCaptchaToken}
+            onExpire={() => setCaptchaToken('')}
+            onError={() => setCaptchaToken('')}
+          />
           <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
             {busy ? t('Creating account…') : t('Sign up')}
           </button>
