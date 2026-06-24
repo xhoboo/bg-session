@@ -24,7 +24,8 @@ const FIELDS = [
   },
 ]
 
-const DEFAULTS = { email_join_updates: true, email_session_reminders: true, email_session_changes: true }
+// Opt-in model: email is off by default. A user has to turn each one on.
+const DEFAULTS = { email_join_updates: false, email_session_reminders: false, email_session_changes: false }
 
 export default function NotificationSettings() {
   const { user } = useAuth()
@@ -51,7 +52,7 @@ export default function NotificationSettings() {
     }
   }, [user.id])
 
-  // Auto-save on toggle (opt-out model). Revert the switch if the upsert fails.
+  // Auto-save on toggle (opt-in model). Revert the switch if the upsert fails.
   const toggle = async (key) => {
     const prev = prefs
     const next = { ...prefs, [key]: !prefs[key] }
