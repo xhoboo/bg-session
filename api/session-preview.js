@@ -69,6 +69,68 @@ async function getSession(id) {
   }
 }
 
+// One game's public result, matched by its anchor slug (migration 0054).
+async function getGameScore(id, anchor) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !id || !anchor) return null
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/rpc/get_game_score_preview?p_session_id=${encodeURIComponent(id)}&p_anchor=${encodeURIComponent(anchor)}`
+    const r = await fetch(url, {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+    })
+    if (!r.ok) return null
+    const data = await r.json()
+    return data && Array.isArray(data.plays) && data.plays.length ? data : null
+  } catch {
+    return null
+  }
+}
+
+function teamLetter(n) {
+  return String.fromCharCode(64 + Number(n))
+}
+
+// A one-line outcome for the latest play, used in the share description.
+function winnerSummary(score) {
+  const plays = score.plays || []
+  const play = plays[plays.length - 1]
+  if (!play) return 'Game result'
+  if (play.mode === 'cooperative') return play.coop_won ? 'The table won' : 'The table lost'
+  if (play.mode === 'team_score' || play.mode === 'team_winloss') {
+    const wt = (play.teams || []).find((t) => t.is_winner)
+    return wt ? `Team ${teamLetter(wt.team)} won${wt.score != null ? ` with ${wt.score}` : ''}` : 'Team game result'
+  }
+  const winners = (play.players || []).filter((p) => p.is_winner)
+  if (winners.length) {
+    const names = winners.map((w) => w.name).join(', ')
+    const s = winners[0].score
+    return `${names} won${s != null ? ` with ${s}` : ''}`
+  }
+  return 'Game result'
+}
+
+function buildScoreTags({ origin, id, anchor, score }) {
+  const url = `${origin}/sessions/${encodeURIComponent(id)}/score?game=${encodeURIComponent(anchor)}`
+  const game = score.game_name || 'Game result'
+  const title = `🎲 ${game}${score.session_title ? ` · ${score.session_title}` : ''}`
+  const desc = `${winnerSummary(score)} — see the full result on ${SITE_NAME}!`
+  const image = `${origin}/api/session-image?id=${encodeURIComponent(id)}&game=${encodeURIComponent(anchor)}`
+
+  return [
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:site_name" content="${esc(SITE_NAME)}" />`,
+    `<meta property="og:title" content="${esc(title)}" />`,
+    `<meta property="og:description" content="${esc(desc)}" />`,
+    `<meta property="og:url" content="${esc(url)}" />`,
+    `<meta property="og:image" content="${esc(image)}" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    `<meta name="twitter:title" content="${esc(title)}" />`,
+    `<meta name="twitter:description" content="${esc(desc)}" />`,
+    `<meta name="twitter:image" content="${esc(image)}" />`,
+  ].join('\n    ')
+}
+
 function buildTags({ origin, id, session }) {
   const url = `${origin}/sessions/${encodeURIComponent(id)}`
   let title = SITE_NAME
@@ -110,6 +172,7 @@ function buildTags({ origin, id, session }) {
 
 export default async function handler(req, res) {
   const id = String(req.query?.id || '')
+  const game = req.query?.game ? String(req.query.game) : ''
   const host = req.headers['x-forwarded-host'] || req.headers.host
   const origin = `https://${host}`
 
@@ -124,16 +187,27 @@ export default async function handler(req, res) {
     return
   }
 
-  const session = await getSession(id)
-  const tags = buildTags({ origin, id, session })
+  // Share-a-score link (/sessions/:id/score?game=…): if we can read the game's
+  // result, build score-specific tags; otherwise fall back to the session card.
+  let tags = null
+  let titleTag = `<title>${SITE_NAME}</title>`
+  if (game) {
+    const score = await getGameScore(id, game)
+    if (score) {
+      tags = buildScoreTags({ origin, id, anchor: game, score })
+      titleTag = `<title>${esc(`🎲 ${score.game_name} · ${SITE_NAME}`)}</title>`
+    }
+  }
+  if (!tags) {
+    const session = await getSession(id)
+    tags = buildTags({ origin, id, session })
+    titleTag = session ? `<title>${esc(`🎲 ${session.title} · ${SITE_NAME}`)}</title>` : `<title>${SITE_NAME}</title>`
+  }
 
   // Drop the static OG/Twitter tags (we replace them) and set a fresh <title>.
   let out = html
     .replace(/<meta\s+(?:property|name)="(?:og:[^"]*|twitter:[^"]*)"[^>]*>\s*/g, '')
-    .replace(
-      /<title>[\s\S]*?<\/title>/,
-      session ? `<title>${esc(`🎲 ${session.title} · ${SITE_NAME}`)}</title>` : `<title>${SITE_NAME}</title>`
-    )
+    .replace(/<title>[\s\S]*?<\/title>/, titleTag)
     .replace('</head>', `    ${tags}\n  </head>`)
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8')

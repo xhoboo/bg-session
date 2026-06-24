@@ -60,6 +60,28 @@ async function getSession(id) {
   }
 }
 
+// One game's public result, matched by its anchor slug (migration 0054). Returns
+// the jsonb object directly, or null when nothing matches.
+async function getGameScore(id, anchor) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !id || !anchor) return null
+  try {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/rpc/get_game_score_preview?p_session_id=${encodeURIComponent(id)}&p_anchor=${encodeURIComponent(anchor)}`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+    )
+    if (!r.ok) return null
+    const data = await r.json()
+    return data && Array.isArray(data.plays) && data.plays.length ? data : null
+  } catch {
+    return null
+  }
+}
+
+// Team index → "A", "B", "C"… (matches teamLetter() in src/lib/format.js).
+function teamLetter(n) {
+  return String.fromCharCode(64 + Number(n))
+}
+
 // A "● label" detail row.
 function detailRow(text) {
   return h('div', { style: { display: 'flex', alignItems: 'center', marginTop: 20 } }, [
@@ -148,9 +170,171 @@ function card(session) {
   )
 }
 
+// ---------------------------------------------------------------------------
+// Score card — renders one game's result (the share-a-score preview).
+// ---------------------------------------------------------------------------
+
+// A standings line: name (left) + score (right). Winners get the terracotta tint
+// and a "WIN" tag; team members render smaller and indented.
+function scoreRow(name, score, winner, indent = false) {
+  const nm = String(name || 'Player')
+  const shortName = nm.length > 22 ? nm.slice(0, 21) + '…' : nm
+  return h(
+    'div',
+    {
+      style: {
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: indent ? '6px 18px 6px 34px' : '7px 20px', marginTop: 6, borderRadius: 14,
+        backgroundColor: winner ? TERRA_SOFT : SURFACE,
+        border: `2px solid ${winner ? TERRA : '#E7E2D8'}`,
+      },
+    },
+    [
+      h('div', { style: { display: 'flex', alignItems: 'center' } }, [
+        winner
+          ? h('div', { style: { display: 'flex', backgroundColor: TERRA, color: WHITE, fontSize: 15, fontWeight: 700, letterSpacing: 1, padding: '3px 11px', borderRadius: 999, marginRight: 12 } }, 'WIN')
+          : null,
+        h('div', { style: { display: 'flex', fontSize: indent ? 24 : 26, fontWeight: winner ? 700 : 500, color: INK } }, shortName),
+      ].filter(Boolean)),
+      score != null
+        ? h('div', { style: { display: 'flex', fontSize: indent ? 26 : 30, fontWeight: 700, color: winner ? TERRA : INK } }, String(score))
+        : h('div', { style: { display: 'flex' } }, ''),
+    ]
+  )
+}
+
+function teamHeader(tm) {
+  const winner = !!tm.is_winner
+  return h(
+    'div',
+    {
+      style: {
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '7px 20px', marginTop: 8, borderRadius: 14,
+        backgroundColor: winner ? TERRA : '#EAE4DA',
+      },
+    },
+    [
+      h('div', { style: { display: 'flex', alignItems: 'center' } }, [
+        h('div', { style: { display: 'flex', fontSize: 26, fontWeight: 700, color: winner ? WHITE : INK } }, `Team ${teamLetter(tm.team)}`),
+        winner ? h('div', { style: { display: 'flex', fontSize: 16, fontWeight: 700, color: WHITE, marginLeft: 12, opacity: 0.9 } }, 'WINNER') : null,
+      ].filter(Boolean)),
+      tm.score != null
+        ? h('div', { style: { display: 'flex', fontSize: 28, fontWeight: 700, color: winner ? WHITE : INK } }, String(tm.score))
+        : h('div', { style: { display: 'flex' } }, ''),
+    ]
+  )
+}
+
+function coopBanner(won) {
+  return h(
+    'div',
+    {
+      style: {
+        display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '12px',
+        marginTop: 8, borderRadius: 14, backgroundColor: won ? TERRA : '#7A6F62',
+        color: WHITE, fontSize: 30, fontWeight: 800, letterSpacing: 2,
+      },
+    },
+    won ? 'THE TABLE WON' : 'THE TABLE LOST'
+  )
+}
+
+function scoreCard(data) {
+  const plays = Array.isArray(data?.plays) ? data.plays : []
+  // Show the most recent play that actually has results (every real submitted play
+  // does; this just guards odd data so the card is never blank).
+  const withData = plays.filter((p) => (p.players && p.players.length) || (p.teams && p.teams.length))
+  const play = withData[withData.length - 1] || plays[plays.length - 1] || { mode: 'individual_score', players: [], teams: [] }
+  const players = Array.isArray(play.players) ? play.players : []
+  const teams = Array.isArray(play.teams) ? play.teams : []
+  const mode = play.mode
+
+  const gameRaw = data?.game_name || 'Game result'
+  const gameName = gameRaw.length > 38 ? gameRaw.slice(0, 37) + '…' : gameRaw
+  const sessRaw = data?.session_title || ''
+  const sessName = sessRaw.length > 52 ? sessRaw.slice(0, 51) + '…' : sessRaw
+
+  // Build every result line, then cap to LIMIT so the card never overflows 630px:
+  // up to LIMIT lines fit alongside the header/title/footer; past that, the last
+  // slot becomes a "+N more" summary.
+  const all = []
+  if (mode === 'team_score' || mode === 'team_winloss') {
+    const sortedTeams = teams.slice().sort((a, b) => (b.is_winner ? 1 : 0) - (a.is_winner ? 1 : 0) || a.team - b.team)
+    for (const tm of sortedTeams) {
+      all.push(teamHeader(tm))
+      for (const mbr of players.filter((p) => p.team === tm.team)) all.push(scoreRow(mbr.name, mbr.score, false, true))
+    }
+  } else if (mode === 'cooperative') {
+    all.push(coopBanner(!!play.coop_won))
+    for (const p of players) all.push(scoreRow(p.name, p.score, false))
+  } else {
+    const ranked = players.slice().sort((a, b) => {
+      if (!!a.is_winner !== !!b.is_winner) return a.is_winner ? -1 : 1
+      if (a.score == null && b.score == null) return 0
+      if (a.score == null) return 1
+      if (b.score == null) return -1
+      return play.lowest_wins ? a.score - b.score : b.score - a.score
+    })
+    for (const p of ranked) all.push(scoreRow(p.name, p.score, !!p.is_winner))
+  }
+
+  const LIMIT = 5
+  let rows
+  if (all.length <= LIMIT) {
+    rows = all
+  } else {
+    rows = all.slice(0, LIMIT - 1)
+    rows.push(h('div', { style: { display: 'flex', marginTop: 10, fontSize: 24, color: MUTED } }, `+${all.length - (LIMIT - 1)} more`))
+  }
+
+  const subtitle = [sessName, plays.length > 1 ? `Latest of ${plays.length} plays` : null].filter(Boolean).join('  ·  ')
+
+  return h(
+    'div',
+    {
+      style: {
+        width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
+        justifyContent: 'space-between', backgroundColor: CREAM,
+        borderTop: `18px solid ${TERRA}`, padding: '40px 64px', fontFamily: 'sans-serif',
+      },
+    },
+    [
+      h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, [
+        h('div', { style: { display: 'flex', fontSize: 28, fontWeight: 700, color: TERRA, letterSpacing: 5 } }, 'BG SESSION'),
+        pill('GAME RESULT', { bg: TERRA_SOFT, color: TERRA, size: 22 }),
+      ]),
+      h('div', { style: { display: 'flex', flexDirection: 'column' } }, [
+        h('div', { style: { display: 'flex', fontSize: 46, fontWeight: 700, color: INK, lineHeight: 1.05 } }, gameName),
+        subtitle ? h('div', { style: { display: 'flex', fontSize: 24, color: MUTED, marginTop: 6 } }, subtitle) : null,
+      ].filter(Boolean)),
+      h('div', { style: { display: 'flex', flexDirection: 'column' } }, rows),
+      h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, [
+        h('div', { style: { display: 'flex', fontSize: 24, color: MUTED } }, 'Recorded on BG Session'),
+        pill('See full results  →', { bg: TERRA, color: WHITE, size: 24 }),
+      ]),
+    ]
+  )
+}
+
 export default async function handler(req) {
   const { searchParams } = new URL(req.url)
   const id = searchParams.get('id')
+  const game = searchParams.get('game')
+
+  // Share-a-score link: render the game's result if we can read it; otherwise fall
+  // through to the normal session card.
+  if (id && game) {
+    const score = await getGameScore(id, game)
+    if (score) {
+      return new ImageResponse(scoreCard(score), {
+        width: 1200,
+        height: 630,
+        headers: { 'Cache-Control': 'public, max-age=0, s-maxage=300, stale-while-revalidate=600' },
+      })
+    }
+  }
+
   const session = id ? await getSession(id) : null
 
   return new ImageResponse(card(session), {

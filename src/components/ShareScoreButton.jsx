@@ -8,7 +8,7 @@ import { scoreMode, teamLetter, gameAnchor } from '../lib/format'
 // no participant gate — anyone viewing a finished session can share its results.
 const PLAY_SELECT = `
   id, game_name, mode, lowest_wins, coop_won, submitted_at,
-  scores:session_play_scores(user_id, score, is_winner, team, player:profiles(nickname, display_name)),
+  scores:session_play_scores(user_id, score, is_winner, team, player:profiles(nickname)),
   teams:session_play_teams(team, score, is_winner)
 `
 
@@ -47,7 +47,9 @@ export default function ShareScoreButton({ session, label = 'Share score', class
     setLoading(false)
   }
 
-  const nameOf = (s) => s.player?.nickname || s.player?.display_name || t('Player')
+  // Shared content reaches people outside the app, so use the public nickname
+  // only — never display_name (it can hold a real name from a Google sign-in).
+  const nameOf = (s) => s.player?.nickname?.trim() || t('Player')
 
   // Lines describing one play's outcome (no header — the caller adds that).
   const playLines = (p) => {
