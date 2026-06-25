@@ -17,6 +17,8 @@ export default function EditProfile() {
     const nickErr = nicknameFormatError(vals.nickname)
     if (nickErr) return setError(nickErr)
     if (vals.favoriteGames.length < 1) return setError('Add at least one favorite board game.')
+    if (vals.domicile.trim().length > 20) return setError('Domicile must be 20 characters or fewer.')
+    if (vals.realName.length > 30) return setError('Real name must be 30 characters or fewer.')
 
     setBusy(true)
     const takenErr = await nicknameTakenError(vals.nickname, user.id)
@@ -64,7 +66,6 @@ export default function EditProfile() {
     <div className="container container-narrow">
       <Link to="/profile" className="muted" style={{ fontSize: 14 }}>← Back to profile</Link>
       <h1 style={{ marginTop: 12 }}>Edit profile</h1>
-      <p className="subtitle">Update your details and photo.</p>
 
       {error && <div className="alert alert-error">{error}</div>}
 

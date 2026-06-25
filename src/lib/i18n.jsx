@@ -15,6 +15,7 @@ const ID = {
   Browse: 'Jelajah',
   Sessions: 'Sesi',
   Messages: 'Pesan',
+  'Private Messages': 'Pesan Pribadi',
   Profile: 'Profil',
   'Host a session': 'Buat sesi',
   Settings: 'Pengaturan',
@@ -124,7 +125,6 @@ const ID = {
   'Browse sessions': 'Jelajahi sesi',
 
   // ---- Messages / conversation ----
-  'Your private chats with other players.': 'Obrolan pribadimu dengan pemain lain.',
   'No conversations yet.': 'Belum ada percakapan.',
   'Open someone’s profile and tap “Message” to start chatting.':
     'Buka profil seseorang lalu ketuk “Kirim pesan” untuk mulai mengobrol.',
@@ -186,6 +186,8 @@ const ID = {
   'Add what you can bring and it shows in the board games list above, so nobody doubles up.':
     'Tambahkan yang bisa kamu bawa dan akan muncul di daftar board game di atas, supaya tidak dobel.',
   'That game is already on the session list.': 'Game itu sudah ada di daftar sesi.',
+  'This session already has the maximum of 50 board games.':
+    'Sesi ini sudah mencapai maksimal 50 board game.',
   'Quick add from your collection': 'Tambah cepat dari koleksimu',
   "Add a game you'll bring…": 'Tambah game yang akan kamu bawa…',
   '+ Add': '+ Tambah',
@@ -328,7 +330,6 @@ const ID = {
   'Played {n}×': 'Dimainkan {n}×',
   'Play {n} of {total}': 'Main ke-{n} dari {total}',
   'Game {n}': 'Permainan ke-{n}',
-  'Just scored — try again in a bit': 'Baru saja dicatat — coba lagi sebentar',
   'Scoring is open': 'Pencatatan skor dibuka',
   'Scoring closes {time}': 'Pencatatan ditutup {time}',
   'Scoring opens once the session starts.': 'Pencatatan skor dibuka setelah sesi dimulai.',

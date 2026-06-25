@@ -38,6 +38,12 @@ export default function SessionScore() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  // Ticks every 30s so the per-game cooldown countdown stays current.
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000)
+    return () => clearInterval(id)
+  }, [])
 
   const load = useCallback(async () => {
     setError('')
@@ -329,7 +335,9 @@ export default function SessionScore() {
                 {available.map((g) => {
                   const locker = lockedBy.get(g.toLowerCase())
                   const n = playCount.get(g.toLowerCase()) || 0
-                  const onCooldown = !locker && (cooldownUntil.get(g.toLowerCase()) || 0) > Date.now()
+                  const cdUntil = cooldownUntil.get(g.toLowerCase()) || 0
+                  const onCooldown = !locker && cdUntil > now
+                  const cdMins = onCooldown ? Math.max(1, Math.ceil((cdUntil - now) / 60_000)) : 0
                   return (
                     <button
                       key={g}
@@ -345,7 +353,7 @@ export default function SessionScore() {
                         </span>
                       ) : onCooldown ? (
                         <span className="score-game-lock">
-                          {n > 0 ? t('Played {n}×', { n }) + ' · ' : ''}{t('Just scored — try again in a bit')}
+                          {n > 0 ? t('Played {n}×', { n }) + ' · ' : ''}{cdMins}m
                         </span>
                       ) : (
                         <span className="score-game-add">

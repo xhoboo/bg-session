@@ -139,7 +139,9 @@ export default function EditSession() {
   const handleSubmitOneTime = async (form) => {
     setError('')
     if (!form.region) return setError('Please choose a region.')
+    if (form.title.trim().length > 30) return setError('Session title must be 30 characters or fewer.')
     if (!form.fullAddress.trim()) return setError('Please enter the full address.')
+    if (form.fullAddress.trim().length > 75) return setError('The full address must be 75 characters or fewer.')
     if (parseGames(form.boardGames).length < 1) return setError('Please add at least one board game.')
     if (Number(form.minPlayers) < 3) return setError('Min players must be at least 3.')
     if (Number(form.minPlayers) > Number(form.maxPlayers)) return setError('Min players cannot be greater than max players.')
@@ -183,7 +185,9 @@ export default function EditSession() {
     if (form.weeklyDay === '' || form.weeklyDay == null) return setError('Please choose which day of the week.')
     if (!form.startTime) return setError('Please choose a start time.')
     if (!form.region) return setError('Please choose a region.')
+    if (form.title.trim().length > 30) return setError('Session title must be 30 characters or fewer.')
     if (!form.fullAddress.trim()) return setError('Please enter the full address.')
+    if (form.fullAddress.trim().length > 75) return setError('The full address must be 75 characters or fewer.')
     if (Number(form.minPlayers) < 3) return setError('Min players must be at least 3.')
     if (Number(form.minPlayers) > Number(form.maxPlayers)) return setError('Min players cannot be greater than max players.')
 

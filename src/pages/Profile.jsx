@@ -1,19 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { isSessionFinished } from '../lib/format'
 import ProfileView from '../components/ProfileView'
 
 export default function Profile() {
-  const { user, profile, signOut } = useAuth()
-  const navigate = useNavigate()
+  const { user, profile } = useAuth()
   const [history, setHistory] = useState([])
-
-  const handleSignOut = async () => {
-    await signOut()
-    navigate('/login', { replace: true })
-  }
 
   // Finished sessions (hosted + joined) for this user's history, with avg
   // ratings. "Finished" is start + duration, so in-progress sessions don't show.
@@ -66,8 +60,6 @@ export default function Profile() {
       <Link to="/profile/edit" className="btn btn-primary btn-block">Edit profile</Link>
       <div className="spacer" />
       <Link to="/settings/notifications" className="btn btn-secondary btn-block">Email notifications</Link>
-      <div className="spacer" />
-      <button className="btn btn-secondary btn-block" onClick={handleSignOut}>Sign out</button>
     </div>
   )
 }

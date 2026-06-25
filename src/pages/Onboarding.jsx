@@ -22,6 +22,8 @@ export default function Onboarding() {
     const nickErr = nicknameFormatError(vals.nickname)
     if (nickErr) return setError(nickErr)
     if (vals.favoriteGames.length < 1) return setError('Add at least one favorite board game.')
+    if (vals.domicile.trim().length > 20) return setError('Domicile must be 20 characters or fewer.')
+    if (vals.realName.length > 30) return setError('Real name must be 30 characters or fewer.')
 
     setBusy(true)
     const takenErr = await nicknameTakenError(vals.nickname, user.id)

@@ -29,6 +29,8 @@ export default function SessionBringList({ sessionId, brought, setBrought, sessi
     const low = n.toLowerCase()
     if (mineLower.has(low)) return
     if (listedLower.has(low)) return setError(t('That game is already on the session list.'))
+    if (sessionGames.length + brought.length >= 50)
+      return setError(t('This session already has the maximum of 50 board games.'))
     setBusy(true)
     setError('')
     const { data, error } = await supabase

@@ -76,7 +76,7 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
 
         <GameTagInput
           label="Favorite board games"
-          hint="at least 1, up to 10 — type to search the catalog"
+          hint="at least 1, up to 10"
           items={form.favoriteGames}
           onChange={setField('favoriteGames')}
           max={10}

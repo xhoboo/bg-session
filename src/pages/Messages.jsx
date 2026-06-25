@@ -56,8 +56,7 @@ export default function Messages() {
   if (loading) {
     return (
       <div className="container container-narrow">
-        <h1>{t('Messages')}</h1>
-        <p className="subtitle">{t('Your private chats with other players.')}</p>
+        <h1>{t('Private Messages')}</h1>
         <ConversationListSkeleton />
       </div>
     )
@@ -65,8 +64,7 @@ export default function Messages() {
 
   return (
     <div className="container container-narrow">
-      <h1>{t('Messages')}</h1>
-      <p className="subtitle">{t('Your private chats with other players.')}</p>
+      <h1>{t('Private Messages')}</h1>
 
       {convos.length === 0 ? (
         <div className="empty-state">
