@@ -265,6 +265,7 @@ const ID = {
   '— required for participants, and can’t be changed once sent':
     '— wajib bagi peserta, dan tidak bisa diubah setelah dikirim',
   'Submit Rating': 'Kirim rating',
+  'Submit': 'Kirim',
   'Pick a star rating first': 'Pilih rating bintang dulu',
   'Add a review (optional)…': 'Tambahkan ulasan (opsional)…',
   'Send Review': 'Kirim ulasan',

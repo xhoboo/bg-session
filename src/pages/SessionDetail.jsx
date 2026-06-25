@@ -542,7 +542,7 @@ export default function SessionDetail() {
                       disabled={busy || ratingValue < 1}
                       title={ratingValue < 1 ? t('Pick a star rating first') : t('Submit Rating')}
                     >
-                      {t('Submit Rating')}
+                      {t('Submit')}
                     </button>
                   </>
                 )}

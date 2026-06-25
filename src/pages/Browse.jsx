@@ -189,7 +189,7 @@ export default function Browse() {
                     onClick={() => submitRate(s.id)}
                     disabled={ratingId === s.id || (rateValues[s.id] || 0) < 1}
                   >
-                    {t('Submit Rating')}
+                    {t('Submit')}
                   </button>
                 </div>
               </div>
