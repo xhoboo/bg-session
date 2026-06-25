@@ -163,10 +163,9 @@ export default function CreateWeeklySession() {
   return (
     <div className="container container-narrow">
       <Link to="/create" className="muted" style={{ fontSize: 14 }}>← Back</Link>
-      <h1 style={{ marginTop: 12 }}>Host a weekly session</h1>
+      <h1 style={{ marginTop: 12 }}>Host a Weekly Session</h1>
       <p className="subtitle">
-        Repeats every week. After each week ends, players and board games reset (your co-hosts stay),
-        and the date rolls forward automatically.
+        Repeats every week on the day you pick. Everything resets except your co-hosts.
       </p>
 
       {error && <div className="alert alert-error">{error}</div>}

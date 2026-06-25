@@ -109,11 +109,11 @@ const ID = {
 
   // ---- Create chooser ----
   'Choose how you want to host.': 'Pilih cara kamu jadi tuan rumah.',
-  'One-time session': 'Sesi sekali jalan',
+  'One-Time Session': 'Sesi sekali jalan',
   'A single meetup on a specific date and time.': 'Satu meetup pada tanggal dan jam tertentu.',
-  'Weekly session': 'Sesi mingguan',
-  'Repeats every week on the day you pick. You keep your co-hosts; players and board games reset each week and roll forward to the next date automatically.':
-    'Berulang tiap minggu di hari yang kamu pilih. Co-host tetap; pemain dan board game di-reset tiap minggu dan otomatis maju ke tanggal berikutnya.',
+  'Weekly Session': 'Sesi mingguan',
+  'Repeats every week on the day you pick. Everything resets except your co-hosts.':
+    'Berulang tiap minggu di hari yang kamu pilih. Semua di-reset kecuali co-host.',
 
   // ---- My sessions ----
   'My sessions': 'Sesi saya',

@@ -65,7 +65,7 @@ export default function EditProfile() {
   return (
     <div className="container container-narrow">
       <Link to="/profile" className="muted" style={{ fontSize: 14 }}>← Back to profile</Link>
-      <h1 style={{ marginTop: 12 }}>Edit profile</h1>
+      <h1 style={{ marginTop: 12, marginBottom: 20 }}>Edit Profile</h1>
 
       {error && <div className="alert alert-error">{error}</div>}
 

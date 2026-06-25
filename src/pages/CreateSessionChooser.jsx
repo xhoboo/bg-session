@@ -18,7 +18,7 @@ export default function CreateSessionChooser() {
             <circle cx="12" cy="16" r="2" fill="currentColor" stroke="none" />
           </svg>
           <div>
-            <div className="choice-title">{t('One-time session')}</div>
+            <div className="choice-title">{t('One-Time Session')}</div>
             <div className="choice-desc">{t('A single meetup on a specific date and time.')}</div>
           </div>
         </Link>
@@ -29,9 +29,9 @@ export default function CreateSessionChooser() {
             <path d="M20.49 15a9 9 0 1 1-.18-5" />
           </svg>
           <div>
-            <div className="choice-title">{t('Weekly session')}</div>
+            <div className="choice-title">{t('Weekly Session')}</div>
             <div className="choice-desc">
-              {t('Repeats every week on the day you pick. You keep your co-hosts; players and board games reset each week and roll forward to the next date automatically.')}
+              {t('Repeats every week on the day you pick. Everything resets except your co-hosts.')}
             </div>
           </div>
         </Link>

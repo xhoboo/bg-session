@@ -38,7 +38,7 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
   return (
     <form onSubmit={handleSubmit}>
       {/* Public profile — visible to everyone */}
-      <h2 className="section-title" style={{ marginTop: 0, marginBottom: 4 }}>Public profile</h2>
+      <h2 className="section-title" style={{ marginTop: 0, marginBottom: 4 }}>Public Profile</h2>
       <p className="subtitle" style={{ marginBottom: 12 }}>Shown to everyone — on your profile and in sessions.</p>
       <div className="card">
         <AvatarUpload
@@ -75,7 +75,7 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
         </div>
 
         <GameTagInput
-          label="Favorite board games"
+          label="Favorite Board Games"
           hint="at least 1, up to 10"
           items={form.favoriteGames}
           onChange={setField('favoriteGames')}
@@ -83,7 +83,7 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
         />
 
         <GameTagInput
-          label="Board games you own"
+          label="Board Games You Own"
           hint="optional — it's fine to own none"
           items={form.ownedGames}
           onChange={setField('ownedGames')}
@@ -93,12 +93,12 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
 
       {/* Confirmed participants only — shared once a session is confirmed */}
       <h2 className="section-title" style={{ marginBottom: 4 }}>
-        Confirmed participants only <span className="field-hint">— optional</span>
+        Confirmed Participants Only <span className="field-hint">— optional</span>
       </h2>
       <p className="subtitle" style={{ marginBottom: 12 }}>Only shared with players once a session is confirmed, so they can recognize you.</p>
       <div className="card">
         <AvatarUpload
-          label="In-person photo"
+          label="In-Person Photo"
           hint="recommended — so participants recognize you"
           value={form.photoUrl}
           name={form.nickname}
@@ -107,7 +107,7 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
         />
 
         <div className="form-group">
-          <label className="field-label" htmlFor="realName">Real name</label>
+          <label className="field-label" htmlFor="realName">Real Name</label>
           <input id="realName" type="text" value={form.realName} onChange={set('realName')} placeholder="e.g. Andi Wijaya" />
         </div>
       </div>
