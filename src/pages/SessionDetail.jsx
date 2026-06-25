@@ -315,7 +315,7 @@ export default function SessionDetail() {
     return (
       <div className="container container-narrow">
         <div className="alert alert-error">{error}</div>
-        <Link to="/" className="btn btn-secondary">{t('← Back to browse')}</Link>
+        <Link to="/" className="btn btn-secondary">{t('← Back to Browse')}</Link>
       </div>
     )
   }
@@ -356,7 +356,7 @@ export default function SessionDetail() {
 
   return (
     <div className="container container-narrow">
-      <Link to="/" className="muted" style={{ fontSize: 14 }}>{t('← Back to browse')}</Link>
+      <Link to="/" className="muted" style={{ fontSize: 14 }}>{t('← Back to Browse')}</Link>
 
       <div className="row-between" style={{ marginTop: 12 }}>
         <h1 style={{ marginBottom: 0 }}>{session.title}</h1>
@@ -391,10 +391,10 @@ export default function SessionDetail() {
         {isHost && !started && (
           <div className="detail-actions-right">
             <button className="btn btn-secondary btn-sm" onClick={() => navigate(`/sessions/${id}/edit`)} disabled={busy}>
-              {t('Edit details')}
+              {t('Edit Details')}
             </button>
             <button className="btn btn-danger btn-sm" onClick={cancelSession} disabled={busy}>
-              {session.series_id ? t('End weekly session') : t('Cancel session')}
+              {session.series_id ? t('End Weekly Session') : t('Cancel Session')}
             </button>
           </div>
         )}
@@ -416,7 +416,7 @@ export default function SessionDetail() {
           )}
           <div className="row-between"><span className="muted">{t('Players')}</span><strong>{playerCount(session)}{isFull ? ` ${t('· full')}` : ''}{session.min_players > 1 ? ` ${t('· min {n}', { n: session.min_players })}` : ''}</strong></div>
           <div>
-            <div className="muted" style={{ marginBottom: 4 }}>{t('Board games')}</div>
+            <div className="muted" style={{ marginBottom: 4 }}>{t('Board Games')}</div>
             {listedGames.length > 0 || brought.length > 0 ? (
               <div className="chips">
                 {listedGames.map((g) => (
@@ -471,7 +471,7 @@ export default function SessionDetail() {
                       session={session}
                       address={address}
                       hostName={session.host?.display_name}
-                      label="Share with a friend"
+                      label="Share with a Friend"
                     />
                   </div>
                 </div>
@@ -488,7 +488,7 @@ export default function SessionDetail() {
           deep-links to its card on the score page. Recording lives on the FAB. */}
       {started && scoreGames.length > 0 && (
         <>
-          <h2 className="section-title">{t('Game results')}</h2>
+          <h2 className="section-title">{t('Game Results')}</h2>
           <div className="card">
             <div className="chips">
               {scoreGames.map((g) => {
@@ -508,7 +508,7 @@ export default function SessionDetail() {
       {/* ---------------- Ratings & reviews (finished sessions) ---------------- */}
       {finished && isParticipant && (
         <>
-          <h2 className="section-title">{t('Ratings & reviews')}</h2>
+          <h2 className="section-title">{t('Ratings & Reviews')}</h2>
           <div className="card stack">
             {ratings.length >= 1 ? (
               <div className="rating-row">
@@ -526,7 +526,7 @@ export default function SessionDetail() {
               {/* Rating: editable until submitted, then permanent. Your score is
                   shown only to you; to everyone else your rating is anonymous. */}
               <div className="field-label" style={{ marginBottom: 8 }}>
-                {myRating ? t('Your rating') : t('Rate this session')}
+                {myRating ? t('Your Rating') : t('Rate This Session')}
                 {!myRating && <span className="field-hint"> {t('— required for participants, and can’t be changed once sent')}</span>}
               </div>
               <div className="rating-row" style={{ marginBottom: 12 }}>
@@ -540,9 +540,9 @@ export default function SessionDetail() {
                       className="btn btn-primary btn-sm"
                       onClick={submitRating}
                       disabled={busy || ratingValue < 1}
-                      title={ratingValue < 1 ? t('Pick a star rating first') : t('Submit rating')}
+                      title={ratingValue < 1 ? t('Pick a star rating first') : t('Submit Rating')}
                     >
-                      {t('Submit rating')}
+                      {t('Submit Rating')}
                     </button>
                   </>
                 )}
@@ -565,7 +565,7 @@ export default function SessionDetail() {
                     onClick={submitReview}
                     disabled={busy || !reviewText.trim()}
                   >
-                    {t('Send review')}
+                    {t('Send Review')}
                   </button>
                 </div>
               ) : (
@@ -605,7 +605,7 @@ export default function SessionDetail() {
               </div>
               <div className="form-row">
                 <button className="btn btn-primary" onClick={acceptInvite} disabled={busy}>
-                  {isFull ? t('Accept & join waitlist') : t('Accept & join')}
+                  {isFull ? t('Accept & Join Waitlist') : t('Accept & Join')}
                 </button>
                 <button className="btn btn-secondary" onClick={declineInvite} disabled={busy}>{t('Decline')}</button>
               </div>
@@ -626,7 +626,7 @@ export default function SessionDetail() {
               )}
               <div className="form-group">
                 <label className="field-label" htmlFor="msg">
-                  {t('Message to host')} <span className="field-hint">{t('(optional)')}</span>
+                  {t('Message to Host')} <span className="field-hint">{t('(optional)')}</span>
                 </label>
                 <textarea
                   id="msg"
@@ -636,7 +636,7 @@ export default function SessionDetail() {
                 />
               </div>
               <button className="btn btn-primary btn-block" onClick={requestToJoin} disabled={busy}>
-                {isFull ? t('Join waitlist') : session.session_type === 'open' ? t('Join session') : t('Request to join')}
+                {isFull ? t('Join Waitlist') : session.session_type === 'open' ? t('Join Session') : t('Request to Join')}
               </button>
             </>
           )}
@@ -654,7 +654,7 @@ export default function SessionDetail() {
           {myRequest && myRequest.status === 'approved' && (
             <div className="row-between">
               <span>{t("You're confirmed")} <span className="badge badge-approved">{t('Approved')}</span></span>
-              <button className="btn btn-danger btn-sm" onClick={withdraw} disabled={busy}>{t('Cancel my spot')}</button>
+              <button className="btn btn-danger btn-sm" onClick={withdraw} disabled={busy}>{t('Cancel My Spot')}</button>
             </div>
           )}
 
@@ -666,7 +666,7 @@ export default function SessionDetail() {
             <>
               <div className="row-between">
                 <span>{t("You're on the")} <span className="badge badge-pending">{t('Waitlist')}</span></span>
-                <button className="btn btn-danger btn-sm" onClick={withdraw} disabled={busy}>{t('Leave waitlist')}</button>
+                <button className="btn btn-danger btn-sm" onClick={withdraw} disabled={busy}>{t('Leave Waitlist')}</button>
               </div>
               <p className="muted" style={{ marginBottom: 0 }}>
                 {session.session_type === 'open'
@@ -683,8 +683,8 @@ export default function SessionDetail() {
         <>
           <h2 className="section-title">
             {waitlisted.length > 0
-              ? t('Requests to join · {n} on waitlist', { n: waitlisted.length })
-              : t('Requests to join')}
+              ? t('Requests to Join · {n} on Waitlist', { n: waitlisted.length })
+              : t('Requests to Join')}
           </h2>
 
           {actionable.length === 0 && <p className="muted">{t('No pending requests right now.')}</p>}
@@ -736,11 +736,11 @@ export default function SessionDetail() {
             <div className="form-row">
               {seriesEditable.length > 0 && (
                 <button className="btn btn-secondary" onClick={() => navigate(`/sessions/${id}/edit`)} disabled={busy}>
-                  {t('Edit details')}
+                  {t('Edit Details')}
                 </button>
               )}
               <button className="btn btn-danger" onClick={stepDown} disabled={busy}>
-                {t('Step down')}
+                {t('Step Down')}
               </button>
             </div>
           </div>

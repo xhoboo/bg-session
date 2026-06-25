@@ -45,7 +45,7 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
         <div className="form-section-title">Session details</div>
 
         <div className="form-group">
-          <label className="field-label" htmlFor="title">Session title</label>
+          <label className="field-label" htmlFor="title">Session Title</label>
           <input
             id="title"
             type="text"
@@ -60,7 +60,7 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
         <div className="form-row">
           <div className="form-group">
             <label className="field-label" htmlFor="minPlayers">
-              Min players <span className="field-hint">— or it's canceled</span>
+              Min Players <span className="field-hint">— or it's canceled</span>
             </label>
             <input
               id="minPlayers"
@@ -74,7 +74,7 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
           </div>
 
           <div className="form-group">
-            <label className="field-label" htmlFor="maxPlayers">Max players <span className="field-hint">(incl. host)</span></label>
+            <label className="field-label" htmlFor="maxPlayers">Max Players <span className="field-hint">(incl. host)</span></label>
             <input
               id="maxPlayers"
               type="number"
@@ -120,7 +120,7 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
         </div>
 
         <div className="form-group">
-          <label className="field-label" htmlFor="duration">Estimated duration</label>
+          <label className="field-label" htmlFor="duration">Estimated Duration</label>
           <select id="duration" value={form.durationMinutes} onChange={update('durationMinutes')}>
             <option value="">Not sure</option>
             <option value="60">~1 hour</option>
@@ -162,7 +162,7 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
 
         <div className="form-group">
           <label className="field-label" htmlFor="address">
-            Full address <span className="field-hint">— private, shown only to confirmed guests</span>
+            Full Address <span className="field-hint">— private, shown only to confirmed guests</span>
           </label>
           <textarea
             id="address"
@@ -175,7 +175,7 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
 
         <div className="form-group">
           <label className="field-label" htmlFor="mapsUrl">
-            Google Maps link <span className="field-hint">— optional, pin the exact spot so guests can navigate</span>
+            Google Maps Link <span className="field-hint">— optional, pin the exact spot so guests can navigate</span>
           </label>
           <input
             id="mapsUrl"
@@ -191,7 +191,7 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
         <div className="form-section-title">Board games</div>
 
         <GameTagInput
-          label="Board games"
+          label="Board Games"
           hint="what you plan to bring/play — add at least one"
           items={(form.boardGames || '').split(',').map((s) => s.trim()).filter(Boolean)}
           onChange={(games) => setForm((f) => ({ ...f, boardGames: games.join(', ') }))}
@@ -203,7 +203,7 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
         <div className="form-section-title">Joining</div>
 
         <div className="form-group">
-          <label className="field-label" htmlFor="type">Join type</label>
+          <label className="field-label" htmlFor="type">Join Type</label>
           <select id="type" value={form.sessionType} onChange={update('sessionType')}>
             <option value="approval">Approval required — you review each request</option>
             <option value="open">Open — guests are confirmed instantly</option>

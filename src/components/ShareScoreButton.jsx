@@ -16,7 +16,7 @@ const PLAY_SELECT = `
 // past, address-hidden) listing, the player picks one of the games that were
 // scored and shares that game's result — as a plain-text recap plus a deep link
 // to its card. Uses the native share sheet, falling back to clipboard.
-export default function ShareScoreButton({ session, label = 'Share score', className = 'btn btn-secondary btn-sm' }) {
+export default function ShareScoreButton({ session, label = 'Share Score', className = 'btn btn-secondary btn-sm' }) {
   const { t } = useLang()
   const { catalog } = useGameCatalog()
   const [open, setOpen] = useState(false)
@@ -141,8 +141,8 @@ export default function ShareScoreButton({ session, label = 'Share score', class
 
       {open && (
         <div className="modal-overlay" onClick={() => setOpen(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={t('Share a game result')}>
-            <h2 style={{ marginTop: 0 }}>{t('Share a game result')}</h2>
+          <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={t('Share a Game Result')}>
+            <h2 style={{ marginTop: 0 }}>{t('Share a Game Result')}</h2>
             <p className="muted" style={{ marginTop: 0 }}>{t('Pick a game to share its scores.')}</p>
             {copied && <div className="alert alert-success">{t('✓ Copied')}</div>}
             {loading ? (

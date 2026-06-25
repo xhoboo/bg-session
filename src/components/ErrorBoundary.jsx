@@ -32,7 +32,7 @@ export default class ErrorBoundary extends Component {
             <p className="muted">
               An unexpected error stopped this page from loading. Reloading usually fixes it.
             </p>
-            <button className="btn btn-primary" onClick={this.handleReload}>Reload app</button>
+            <button className="btn btn-primary" onClick={this.handleReload}>Reload App</button>
           </div>
         </div>
       )

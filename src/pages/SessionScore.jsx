@@ -253,7 +253,7 @@ export default function SessionScore() {
     return (
       <div className="container container-narrow">
         <div className="alert alert-error">{error}</div>
-        <Link to="/" className="btn btn-secondary">{t('← Back to browse')}</Link>
+        <Link to="/" className="btn btn-secondary">{t('← Back to Browse')}</Link>
       </div>
     )
   }
@@ -263,8 +263,8 @@ export default function SessionScore() {
     const canonical = focus.name ? (catalog.get(focus.name.trim().toLowerCase()) || focus.name) : null
     return (
       <div className="container container-narrow">
-        <Link to={`/sessions/${id}`} className="muted" style={{ fontSize: 14 }}>{t('← Back to session')}</Link>
-        <h1 style={{ marginTop: 12, marginBottom: 4 }}>{t('Game results')}</h1>
+        <Link to={`/sessions/${id}`} className="muted" style={{ fontSize: 14 }}>{t('← Back to Session')}</Link>
+        <h1 style={{ marginTop: 12, marginBottom: 4 }}>{t('Game Results')}</h1>
         <p className="subtitle" style={{ marginTop: 0 }}>{canonical || session.title}</p>
         {focus.plays.length === 0 ? (
           <p className="muted" style={{ marginTop: 16 }}>{t('No games have been scored yet.')}</p>
@@ -283,7 +283,7 @@ export default function SessionScore() {
     return (
       <div className="container container-narrow">
         <div className="alert alert-error">{t('Only participants can record scores')}</div>
-        <Link to={`/sessions/${id}`} className="btn btn-secondary">{t('← Back to session')}</Link>
+        <Link to={`/sessions/${id}`} className="btn btn-secondary">{t('← Back to Session')}</Link>
       </div>
     )
   }
@@ -293,8 +293,8 @@ export default function SessionScore() {
 
   return (
     <div className="container container-narrow">
-      <Link to={`/sessions/${id}`} className="muted" style={{ fontSize: 14 }}>{t('← Back to session')}</Link>
-      <h1 style={{ marginTop: 12, marginBottom: 4 }}>{t('Game results')}</h1>
+      <Link to={`/sessions/${id}`} className="muted" style={{ fontSize: 14 }}>{t('← Back to Session')}</Link>
+      <h1 style={{ marginTop: 12, marginBottom: 4 }}>{t('Game Results')}</h1>
       <p className="subtitle" style={{ marginTop: 0 }}>{session.title}</p>
 
       {/* Scoring-window banner */}
@@ -324,7 +324,7 @@ export default function SessionScore() {
           />
         ) : (
           <>
-            <h2 className="section-title">{t('Score a game')}</h2>
+            <h2 className="section-title">{t('Score a Game')}</h2>
             <p className="muted" style={{ marginTop: -4 }}>
               {t('Add the result of a game played from this session’s line-up. Anyone here can record a game.')}
             </p>
@@ -357,7 +357,7 @@ export default function SessionScore() {
                         </span>
                       ) : (
                         <span className="score-game-add">
-                          {n > 0 ? t('Played {n}×', { n }) + ' · ' : ''}{t('Record scores')}
+                          {n > 0 ? t('Played {n}×', { n }) + ' · ' : ''}{t('Record Scores')}
                         </span>
                       )}
                     </button>
@@ -370,7 +370,7 @@ export default function SessionScore() {
       )}
 
       {/* ---- Results ---- */}
-      <h2 className="section-title">{t('Game results')}</h2>
+      <h2 className="section-title">{t('Game Results')}</h2>
       {plays.length === 0 ? (
         <p className="muted">{t('No games have been scored yet.')}</p>
       ) : (
@@ -653,7 +653,7 @@ function RecordForm({ playId, gameName, participants, busy, setBusy, onSubmitted
                 className="score-num"
                 type="text"
                 inputMode="numeric"
-                placeholder={t('Team score (optional)')}
+                placeholder={t('Team Score (optional)')}
                 value={teamScores[tm] ?? ''}
                 onChange={(e) => setTeamScore(tm, e.target.value)}
               />
@@ -671,7 +671,7 @@ function RecordForm({ playId, gameName, participants, busy, setBusy, onSubmitted
 
       <div className="form-row" style={{ marginTop: 14 }}>
         <button className="btn btn-primary btn-block" onClick={submit} disabled={busy}>
-          {busy ? t('Saving…') : t('Save result')}
+          {busy ? t('Saving…') : t('Save Result')}
         </button>
       </div>
     </div>

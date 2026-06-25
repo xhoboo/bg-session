@@ -88,7 +88,7 @@ export default function NotificationBell() {
             <span>Notifications</span>
             {unread > 0 && (
               <button className="btn btn-secondary btn-sm" onClick={markAllRead}>
-                Mark all read
+                Mark All Read
               </button>
             )}
           </div>

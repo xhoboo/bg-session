@@ -46,7 +46,7 @@ export default function MySessions() {
   if (loading) {
     return (
       <div className="container">
-        <h1>{t('My sessions')}</h1>
+        <h1>{t('My Sessions')}</h1>
         <SessionListSkeleton count={3} />
       </div>
     )
@@ -54,13 +54,13 @@ export default function MySessions() {
 
   return (
     <div className="container">
-      <h1>{t('My sessions')}</h1>
+      <h1>{t('My Sessions')}</h1>
 
       <h2 className="section-title">{t('Hosting ({n})', { n: hosting.length })}</h2>
       {hosting.length === 0 ? (
         <div className="empty-state" style={{ padding: 24 }}>
           <p>{t("You're not hosting anything yet.")}</p>
-          <Link to="/create" className="btn btn-primary">{t('Host a session')}</Link>
+          <Link to="/create" className="btn btn-primary">{t('Host a Session')}</Link>
         </div>
       ) : (
         <div className="session-list">
@@ -70,11 +70,11 @@ export default function MySessions() {
         </div>
       )}
 
-      <h2 className="section-title">{t('Joined / requested ({n})', { n: joined.length })}</h2>
+      <h2 className="section-title">{t('Joined / Requested ({n})', { n: joined.length })}</h2>
       {joined.length === 0 ? (
         <div className="empty-state" style={{ padding: 24 }}>
           <p>{t("You haven't requested to join any sessions yet.")}</p>
-          <Link to="/" className="btn btn-secondary">{t('Browse sessions')}</Link>
+          <Link to="/" className="btn btn-secondary">{t('Browse Sessions')}</Link>
         </div>
       ) : (
         <div className="session-list">

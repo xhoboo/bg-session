@@ -52,7 +52,7 @@ export default function ReportDialog({ targetId, targetName, sessionId = null, o
       >
         {done ? (
           <>
-            <h2 style={{ marginTop: 0 }}>{t('Report sent')}</h2>
+            <h2 style={{ marginTop: 0 }}>{t('Report Sent')}</h2>
             <p className="muted">
               {t('Thanks — our team will review your report about {name}. Reports are kept confidential.', { name: targetName })}
             </p>
@@ -94,7 +94,7 @@ export default function ReportDialog({ targetId, targetName, sessionId = null, o
             </div>
             <div className="form-row">
               <button className="btn btn-secondary" onClick={onClose} disabled={busy}>{t('Cancel')}</button>
-              <button className="btn btn-danger" onClick={submit} disabled={busy || !reason}>{t('Send report')}</button>
+              <button className="btn btn-danger" onClick={submit} disabled={busy || !reason}>{t('Send Report')}</button>
             </div>
           </>
         )}

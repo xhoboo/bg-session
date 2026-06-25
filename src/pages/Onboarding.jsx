@@ -100,7 +100,7 @@ export default function Onboarding() {
       <ProfileForm
         key={profile?.id || 'loading'}
         initial={profileToForm(profile)}
-        submitLabel="Get started"
+        submitLabel="Get Started"
         busy={busy}
         onSubmit={handleSubmit}
       />

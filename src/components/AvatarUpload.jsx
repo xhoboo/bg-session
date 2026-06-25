@@ -76,7 +76,7 @@ export default function AvatarUpload({ value, name, onChange, label = 'Photo', h
         <Avatar name={name} src={value} size={64} />
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => inputRef.current?.click()} disabled={busy}>
-            {busy ? 'Uploading…' : value ? 'Change photo' : 'Upload photo'}
+            {busy ? 'Uploading…' : value ? 'Change Photo' : 'Upload Photo'}
           </button>
           {value && (
             <button type="button" className="btn btn-secondary btn-sm" onClick={onRemove} disabled={busy}>

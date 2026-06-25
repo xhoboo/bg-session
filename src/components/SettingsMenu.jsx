@@ -77,7 +77,7 @@ export default function SettingsMenu() {
           </div>
           {user && (
             <div className="settings-group">
-              <button className="settings-signout" onClick={handleSignOut}>{t('Sign out')}</button>
+              <button className="settings-signout" onClick={handleSignOut}>{t('Sign Out')}</button>
             </div>
           )}
         </div>

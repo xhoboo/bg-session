@@ -172,7 +172,7 @@ export default function CreateWeeklySession() {
 
       <WeeklySessionForm
         initial={initialForm}
-        submitLabel="Create weekly session"
+        submitLabel="Create Weekly Session"
         busy={busy}
         onSubmit={handleSubmit}
         selfId={user.id}

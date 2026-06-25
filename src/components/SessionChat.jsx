@@ -105,7 +105,7 @@ export default function SessionChat({ sessionId, readOnly = false }) {
 
   return (
     <>
-      <h2 className="section-title">Session chat</h2>
+      <h2 className="section-title">Session Chat</h2>
       <div className="card">
         <div className="chat-thread">
           {messages.length === 0 ? (

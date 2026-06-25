@@ -61,7 +61,7 @@ export default function WeeklySessionForm({
         <div className="form-section-title">Session details</div>
 
         <div className="form-group">
-          <label className="field-label" htmlFor="title">Session title</label>
+          <label className="field-label" htmlFor="title">Session Title</label>
           <input
             id="title"
             type="text"
@@ -76,11 +76,11 @@ export default function WeeklySessionForm({
 
         <div className="form-row">
           <div className="form-group">
-            <label className="field-label" htmlFor="minPlayers">Min players <span className="field-hint">— or it's canceled</span></label>
+            <label className="field-label" htmlFor="minPlayers">Min Players <span className="field-hint">— or it's canceled</span></label>
             <input id="minPlayers" type="number" min={3} max={50} value={form.minPlayers} onChange={update('minPlayers')} disabled={!can('players')} required />
           </div>
           <div className="form-group">
-            <label className="field-label" htmlFor="maxPlayers">Max players <span className="field-hint">(incl. host)</span></label>
+            <label className="field-label" htmlFor="maxPlayers">Max Players <span className="field-hint">(incl. host)</span></label>
             <input id="maxPlayers" type="number" min={1} max={50} value={form.maxPlayers} onChange={update('maxPlayers')} disabled={!can('players')} required />
           </div>
         </div>
@@ -103,7 +103,7 @@ export default function WeeklySessionForm({
             </select>
           </div>
           <div className="form-group">
-            <label className="field-label" htmlFor="startTime">Start time</label>
+            <label className="field-label" htmlFor="startTime">Start Time</label>
             <input id="startTime" type="time" value={form.startTime} onChange={update('startTime')} disabled={!can('schedule')} required />
           </div>
         </div>
@@ -115,7 +115,7 @@ export default function WeeklySessionForm({
         )}
 
         <div className="form-group" style={{ marginTop: 16 }}>
-          <label className="field-label" htmlFor="duration">Estimated duration</label>
+          <label className="field-label" htmlFor="duration">Estimated Duration</label>
           <select id="duration" value={form.durationMinutes} onChange={update('durationMinutes')} disabled={!can('duration')}>
             <option value="">Not sure</option>
             <option value="60">~1 hour</option>
@@ -163,7 +163,7 @@ export default function WeeklySessionForm({
 
         <div className="form-group">
           <label className="field-label" htmlFor="address">
-            Full address <span className="field-hint">— private, shown only to confirmed guests</span>
+            Full Address <span className="field-hint">— private, shown only to confirmed guests</span>
           </label>
           <textarea
             id="address"
@@ -177,7 +177,7 @@ export default function WeeklySessionForm({
 
         <div className="form-group">
           <label className="field-label" htmlFor="mapsUrl">
-            Google Maps link <span className="field-hint">— optional</span>
+            Google Maps Link <span className="field-hint">— optional</span>
           </label>
           <input id="mapsUrl" type="url" placeholder="https://maps.app.goo.gl/…" value={form.mapsUrl} onChange={update('mapsUrl')} disabled={!can('location')} />
         </div>
@@ -188,7 +188,7 @@ export default function WeeklySessionForm({
 
         {can('board_games') ? (
           <GameTagInput
-            label="Board games"
+            label="Board Games"
             hint="this week's games — add at least one; they reset every week"
             items={games}
             onChange={(g) => setForm((f) => ({ ...f, boardGames: g.join(', ') }))}
@@ -196,7 +196,7 @@ export default function WeeklySessionForm({
           />
         ) : (
           <div className="form-group">
-            <label className="field-label">Board games <span className="field-hint">— reset weekly</span></label>
+            <label className="field-label">Board Games <span className="field-hint">— reset weekly</span></label>
             {games.length ? (
               <div className="chips">{games.map((g) => <span className="chip" key={g}>{g}</span>)}</div>
             ) : (
@@ -210,7 +210,7 @@ export default function WeeklySessionForm({
         <div className="form-section-title">Joining</div>
 
         <div className="form-group">
-          <label className="field-label" htmlFor="type">Join type</label>
+          <label className="field-label" htmlFor="type">Join Type</label>
           <select id="type" value={form.sessionType} onChange={update('sessionType')} disabled={!can('session_type')}>
             <option value="approval">Approval required — you review each request</option>
             <option value="open">Open — guests are confirmed instantly</option>

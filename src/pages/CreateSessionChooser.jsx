@@ -7,7 +7,7 @@ export default function CreateSessionChooser() {
   const { t } = useLang()
   return (
     <div className="container container-narrow">
-      <h1>{t('Host a session')}</h1>
+      <h1>{t('Host a Session')}</h1>
       <p className="subtitle">{t('Choose how you want to host.')}</p>
 
       <div className="choice-grid">

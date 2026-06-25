@@ -107,7 +107,7 @@ export default function InviteMemberBox({ sessionId }) {
 
   return (
     <>
-      <h2 className="section-title">{t('Invite a member')}</h2>
+      <h2 className="section-title">{t('Invite a Member')}</h2>
       <div className="card stack">
         <p className="muted" style={{ margin: 0, fontSize: 13 }}>
           {t('Invite someone to this session. They still join through the normal flow, so the host stays in control.')}
@@ -161,7 +161,7 @@ export default function InviteMemberBox({ sessionId }) {
                   </Link>
                   <span className="muted" style={{ fontSize: 13 }}>{statusLabel(iv.status)}</span>
                   {canRescind && (
-                    <button type="button" className="chip-x" onClick={() => rescind(iv.id)} disabled={busy} aria-label={t('Rescind invite')}>×</button>
+                    <button type="button" className="chip-x" onClick={() => rescind(iv.id)} disabled={busy} aria-label={t('Rescind Invite')}>×</button>
                   )}
                 </div>
               )

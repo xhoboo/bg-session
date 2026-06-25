@@ -70,7 +70,7 @@ export default function ProfileView({ profile, history = [], headerAction }) {
         </div>
       </div>
 
-      <h2 className="section-title">Session history</h2>
+      <h2 className="section-title">Session History</h2>
       {history.length === 0 ? (
         <p className="muted">No past sessions yet.</p>
       ) : (

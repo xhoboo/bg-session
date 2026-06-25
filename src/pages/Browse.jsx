@@ -170,7 +170,7 @@ export default function Browse() {
         <div className="card rate-reminder">
           <div className="rate-reminder-head">
             <span aria-hidden="true">⭐</span>
-            <strong>{t(toRate.length === 1 ? 'Rate your finished session' : 'Rate your finished sessions')}</strong>
+            <strong>{t(toRate.length === 1 ? 'Rate Your Finished Session' : 'Rate Your Finished Sessions')}</strong>
           </div>
           <div className="stack" style={{ marginTop: 8 }}>
             {toRate.slice(0, 3).map((s) => (
@@ -189,7 +189,7 @@ export default function Browse() {
                     onClick={() => submitRate(s.id)}
                     disabled={ratingId === s.id || (rateValues[s.id] || 0) < 1}
                   >
-                    {t('Submit rating')}
+                    {t('Submit Rating')}
                   </button>
                 </div>
               </div>
@@ -202,8 +202,8 @@ export default function Browse() {
       )}
 
       <div className="row-between" style={{ marginBottom: 4 }}>
-        <h1>{t('Upcoming sessions')}</h1>
-        <Link to="/create" className="btn btn-primary btn-sm">{t('+ Host a session')}</Link>
+        <h1>{t('Upcoming Sessions')}</h1>
+        <Link to="/create" className="btn btn-primary btn-sm">{t('+ Host a Session')}</Link>
       </div>
       <p className="subtitle">{t('Find a board game meetup near you.')}</p>
 
@@ -237,7 +237,7 @@ export default function Browse() {
       ) : sessions.length === 0 ? (
         <div className="empty-state">
           <p>{t('No upcoming sessions yet.')}</p>
-          <Link to="/create" className="btn btn-primary">{t('Be the first to host')}</Link>
+          <Link to="/create" className="btn btn-primary">{t('Be the First to Host')}</Link>
         </div>
       ) : (
         <>
@@ -249,7 +249,7 @@ export default function Browse() {
           {hasMore && (
             <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
               <button className="btn btn-secondary" onClick={loadMore} disabled={loadingMore}>
-                {loadingMore ? t('Loading…') : t('Load more')}
+                {loadingMore ? t('Loading…') : t('Load More')}
               </button>
             </div>
           )}

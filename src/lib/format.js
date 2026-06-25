@@ -112,25 +112,25 @@ export function isScoringOpen(s) {
 export const SCORE_MODES = [
   {
     key: 'individual_score',
-    label: 'Individual scores',
+    label: 'Individual Scores',
     hint: 'Everyone keeps their own score; the highest wins.',
     team: false, scores: 'required', winner: 'derived', lowestOption: true,
   },
   {
     key: 'team_score',
-    label: 'Team scores',
+    label: 'Team Scores',
     hint: 'Split players into teams. Enter individual scores (a team’s total is the sum) or score each team directly.',
     team: true, scores: 'team', winner: 'derived', lowestOption: true,
   },
   {
     key: 'individual_winloss',
-    label: 'Win / loss',
+    label: 'Win / Loss',
     hint: 'Pick the one winner. Scores are optional.',
     team: false, scores: 'optional', winner: 'pick-player', lowestOption: false,
   },
   {
     key: 'team_winloss',
-    label: 'Team win / loss',
+    label: 'Team Win / Loss',
     hint: 'Pick the winning team. Team scores are optional.',
     team: true, scores: 'team-optional', winner: 'pick-team', lowestOption: false,
   },
@@ -212,11 +212,11 @@ export function recurrenceLabel(s) {
 // server-side checks in migration 0028 (enforce_cohost_edit_*).
 export const COHOST_FIELDS = [
   { key: 'title', label: 'Title' },
-  { key: 'schedule', label: 'Day & time' },
-  { key: 'location', label: 'Location & address' },
-  { key: 'players', label: 'Player limits' },
-  { key: 'board_games', label: 'Board games' },
-  { key: 'session_type', label: 'Join type' },
+  { key: 'schedule', label: 'Day & Time' },
+  { key: 'location', label: 'Location & Address' },
+  { key: 'players', label: 'Player Limits' },
+  { key: 'board_games', label: 'Board Games' },
+  { key: 'session_type', label: 'Join Type' },
   { key: 'duration', label: 'Duration' },
 ]
 

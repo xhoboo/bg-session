@@ -57,9 +57,9 @@ export default function Profile() {
     <div className="container container-narrow">
       <ProfileView profile={profile} history={history} />
       <div className="spacer" />
-      <Link to="/profile/edit" className="btn btn-primary btn-block">Edit profile</Link>
+      <Link to="/profile/edit" className="btn btn-primary btn-block">Edit Profile</Link>
       <div className="spacer" />
-      <Link to="/settings/notifications" className="btn btn-secondary btn-block">Email notifications</Link>
+      <Link to="/settings/notifications" className="btn btn-secondary btn-block">Email Notifications</Link>
     </div>
   )
 }

@@ -124,12 +124,12 @@ export default function CreateSession() {
 
   return (
     <div className="container container-narrow">
-      <h1>Host a session</h1>
+      <h1>Host a Session</h1>
       <p className="subtitle">Set up your board game meetup. Your exact address stays hidden until you confirm a guest.</p>
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      <SessionForm initial={initialForm} submitLabel="Create session" busy={busy} onSubmit={handleSubmit} />
+      <SessionForm initial={initialForm} submitLabel="Create Session" busy={busy} onSubmit={handleSubmit} />
     </div>
   )
 }

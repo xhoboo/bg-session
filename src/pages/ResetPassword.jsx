@@ -71,21 +71,21 @@ export default function ResetPassword() {
   if (!user) {
     return shell(
       <div className="card">
-        <h2 style={{ marginTop: 0, fontSize: 18 }}>{t('Reset your password')}</h2>
+        <h2 style={{ marginTop: 0, fontSize: 18 }}>{t('Reset Your Password')}</h2>
         <div className="alert alert-error" style={{ marginBottom: 12 }}>
           {t('This reset link is invalid or has expired.')}
         </div>
         <p className="muted" style={{ marginTop: 0 }}>
           {t('Request a new link from the sign-in page.')}
         </p>
-        <Link to="/login" className="btn btn-secondary btn-block">{t('← Back to sign in')}</Link>
+        <Link to="/login" className="btn btn-secondary btn-block">{t('← Back to Sign In')}</Link>
       </div>,
     )
   }
 
   return shell(
     <div className="card">
-      <h2 style={{ marginTop: 0, fontSize: 18 }}>{t('Reset your password')}</h2>
+      <h2 style={{ marginTop: 0, fontSize: 18 }}>{t('Reset Your Password')}</h2>
 
       {done ? (
         <>
@@ -103,7 +103,7 @@ export default function ResetPassword() {
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label className="field-label" htmlFor="password">
-                {t('New password')} <span className="field-hint">{t('(min 6 characters)')}</span>
+                {t('New Password')} <span className="field-hint">{t('(min 6 characters)')}</span>
               </label>
               <input
                 id="password"
@@ -115,7 +115,7 @@ export default function ResetPassword() {
               />
             </div>
             <div className="form-group">
-              <label className="field-label" htmlFor="confirm">{t('Confirm password')}</label>
+              <label className="field-label" htmlFor="confirm">{t('Confirm Password')}</label>
               <input
                 id="confirm"
                 type="password"
@@ -126,7 +126,7 @@ export default function ResetPassword() {
               />
             </div>
             <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
-              {busy ? t('Updating…') : t('Update password')}
+              {busy ? t('Updating…') : t('Update Password')}
             </button>
           </form>
         </>

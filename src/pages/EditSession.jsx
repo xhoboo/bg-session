@@ -309,7 +309,7 @@ export default function EditSession() {
     return (
       <div className="container container-narrow">
         <div className="alert alert-error">{error || 'Unable to load session.'}</div>
-        <Link to="/my-sessions" className="btn btn-secondary">← My sessions</Link>
+        <Link to="/my-sessions" className="btn btn-secondary">← My Sessions</Link>
       </div>
     )
   }
@@ -317,7 +317,7 @@ export default function EditSession() {
   return (
     <div className="container container-narrow">
       <Link to={`/sessions/${id}`} className="muted" style={{ fontSize: 14 }}>← Back to session</Link>
-      <h1 style={{ marginTop: 12 }}>Edit {mode === 'weekly' ? 'weekly session' : 'session'}</h1>
+      <h1 style={{ marginTop: 12 }}>Edit {mode === 'weekly' ? 'Weekly Session' : 'Session'}</h1>
       <p className="subtitle">
         {mode === 'weekly'
           ? 'Changes apply to this week and every week going forward. Board games are just for this week.'
@@ -329,7 +329,7 @@ export default function EditSession() {
       {mode === 'weekly' ? (
         <WeeklySessionForm
           initial={initial}
-          submitLabel="Save changes"
+          submitLabel="Save Changes"
           busy={busy}
           onSubmit={handleSubmitWeekly}
           showCohostAdmin={isHost}
@@ -339,7 +339,7 @@ export default function EditSession() {
           onTransfer={isHost ? handleTransfer : null}
         />
       ) : (
-        <SessionForm initial={initial} submitLabel="Save changes" busy={busy} onSubmit={handleSubmitOneTime} />
+        <SessionForm initial={initial} submitLabel="Save Changes" busy={busy} onSubmit={handleSubmitOneTime} />
       )}
     </div>
   )

@@ -72,7 +72,7 @@ export default function SessionParticipants({ sessionId, hostId, seriesId }) {
 
   return (
     <>
-      <h2 className="section-title">Who's coming ({people.length})</h2>
+      <h2 className="section-title">Who's Coming ({people.length})</h2>
       <p className="muted" style={{ marginTop: -4, fontSize: 13 }}>
         Extra details below are shared only between confirmed participants so you can recognize each other.
       </p>

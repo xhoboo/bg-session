@@ -72,7 +72,7 @@ export default function EditProfile() {
       <ProfileForm
         key={profile?.id || 'loading'}
         initial={profileToForm(profile)}
-        submitLabel="Save changes"
+        submitLabel="Save Changes"
         busy={busy}
         onSubmit={handleSubmit}
       />

@@ -130,7 +130,7 @@ export default function Conversation() {
       <div className="card">
         <div className="chat-thread">
           {messages.length === 0 ? (
-            <p className="muted center" style={{ margin: 'auto' }}>{t('Say hello 👋')}</p>
+            <p className="muted center" style={{ margin: 'auto' }}>{t('Say Hello 👋')}</p>
           ) : (
             messages.map((m) => (
               <div key={m.id} className={'bubble ' + (m.sender_id === user.id ? 'me' : 'them')}>
@@ -146,7 +146,7 @@ export default function Conversation() {
           <div className="address-locked center" style={{ marginTop: 12 }}>
             {t('You blocked {name}.', { name })}{' '}
             <button className="btn btn-secondary btn-sm" style={{ marginTop: 8 }} onClick={unblock} disabled={blockBusy}>
-              {t('Unblock to message')}
+              {t('Unblock to Message')}
             </button>
           </div>
         ) : (

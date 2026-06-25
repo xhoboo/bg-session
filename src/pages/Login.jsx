@@ -87,7 +87,7 @@ export default function Login() {
       </div>
 
       <div className="card">
-        <h2 style={{ marginTop: 0, fontSize: 18 }}>{t('Welcome back')}</h2>
+        <h2 style={{ marginTop: 0, fontSize: 18 }}>{t('Welcome Back')}</h2>
 
         {error && <div className="alert alert-error">{error}</div>}
 
@@ -124,7 +124,7 @@ export default function Login() {
             onError={() => setCaptchaToken('')}
           />
           <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
-            {busy ? t('Signing in…') : t('Sign in')}
+            {busy ? t('Signing in…') : t('Sign In')}
           </button>
         </form>
 
@@ -145,7 +145,7 @@ export default function Login() {
                   onClick={handleReset}
                   disabled={resetBusy}
                 >
-                  {resetBusy ? t('Sending…') : t('Email me a reset link')}
+                  {resetBusy ? t('Sending…') : t('Email Me a Reset Link')}
                 </button>
               </>
             )}
@@ -154,7 +154,7 @@ export default function Login() {
       </div>
 
       <p className="center muted" style={{ marginTop: 16 }}>
-        {t('New here?')} <Link to="/signup">{t('Create an account')}</Link>
+        {t('New here?')} <Link to="/signup">{t('Create an Account')}</Link>
       </p>
     </div>
   )

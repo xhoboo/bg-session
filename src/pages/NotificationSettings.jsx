@@ -9,17 +9,17 @@ import { useLang } from '../lib/i18n'
 const FIELDS = [
   {
     key: 'email_join_updates',
-    label: 'Join updates',
+    label: 'Join Updates',
     hint: 'When a host approves, confirms, or declines your request to join.',
   },
   {
     key: 'email_session_reminders',
-    label: 'Session reminders',
+    label: 'Session Reminders',
     hint: 'A reminder before a session you’re in, and the after-session follow-up.',
   },
   {
     key: 'email_session_changes',
-    label: 'Session changes',
+    label: 'Session Changes',
     hint: 'When a session you joined is cancelled by the host.',
   },
 ]
@@ -71,8 +71,8 @@ export default function NotificationSettings() {
 
   return (
     <div className="container container-narrow">
-      <Link to="/profile" className="muted" style={{ fontSize: 14 }}>{t('← Back to profile')}</Link>
-      <h1 style={{ marginTop: 12 }}>{t('Email notifications')}</h1>
+      <Link to="/profile" className="muted" style={{ fontSize: 14 }}>{t('← Back to Profile')}</Link>
+      <h1 style={{ marginTop: 12 }}>{t('Email Notifications')}</h1>
       <p className="subtitle">{t('Choose which emails we send you. You’ll always see everything in the in-app bell.')}</p>
 
       {error && <div className="alert alert-error">{error}</div>}

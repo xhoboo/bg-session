@@ -62,7 +62,7 @@ export default function Signup() {
       </div>
 
       <div className="card">
-        <h2 style={{ marginTop: 0, fontSize: 18 }}>{t('Create your account')}</h2>
+        <h2 style={{ marginTop: 0, fontSize: 18 }}>{t('Create Your Account')}</h2>
 
         {error && <div className="alert alert-error">{error}</div>}
         {info && <div className="alert alert-success">{info}</div>}
@@ -72,7 +72,7 @@ export default function Signup() {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="field-label" htmlFor="name">{t('Display name')}</label>
+            <label className="field-label" htmlFor="name">{t('Display Name')}</label>
             <input
               id="name"
               type="text"
@@ -114,13 +114,13 @@ export default function Signup() {
             onError={() => setCaptchaToken('')}
           />
           <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
-            {busy ? t('Creating account…') : t('Sign up')}
+            {busy ? t('Creating account…') : t('Sign Up')}
           </button>
         </form>
       </div>
 
       <p className="center muted" style={{ marginTop: 16 }}>
-        {t('Already have an account?')} <Link to="/login">{t('Sign in')}</Link>
+        {t('Already have an account?')} <Link to="/login">{t('Sign In')}</Link>
       </p>
     </div>
   )
