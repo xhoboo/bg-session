@@ -74,7 +74,7 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
           </div>
 
           <div className="form-group">
-            <label className="field-label" htmlFor="maxPlayers">Max Players <span className="field-hint">(incl. host)</span></label>
+            <label className="field-label" htmlFor="maxPlayers">Max Players <span className="field-hint">— incl. host</span></label>
             <input
               id="maxPlayers"
               type="number"
@@ -172,7 +172,7 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
 
         <div className="form-group">
           <label className="field-label" htmlFor="mapsUrl">
-            Google Maps Link <span className="field-hint">— optional - private</span>
+            Google Maps Link <span className="field-hint">— optional</span>
           </label>
           <input
             id="mapsUrl"

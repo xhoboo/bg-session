@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import { isScoringOpen } from '../lib/format'
 import { promptAuth } from '../lib/authPrompt'
+import { promptCreate } from '../lib/createPrompt'
 
 // Primary mobile navigation: four tabs with a center FAB. The FAB hosts a new
 // session normally, but turns into a "score a game" shortcut while the user has
@@ -99,7 +100,7 @@ export default function BottomNav() {
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4h12v3a6 6 0 0 1-12 0V4z" /><path d="M6 6H3v1a3 3 0 0 0 3 3M18 6h3v1a3 3 0 0 1-3 3M9 17h6M10 17v3M14 17v3M8 20h8" /></svg>
         </button>
       ) : (
-        <button className="fab" onClick={() => (user ? navigate('/create') : promptAuth())} aria-label={t('Host a Session')}>
+        <button className="fab" onClick={() => (user ? promptCreate() : promptAuth())} aria-label={t('Host a Session')}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
         </button>
       )}

@@ -34,7 +34,7 @@ export default function CohostPicker({ value = [], onChange, candidates = [], ex
         </div>
       )}
 
-      {addable.length > 0 ? (
+      {addable.length > 0 && (
         <div className="cohost-results">
           {addable.map((m) => {
             const nm = nameOf(m)
@@ -52,11 +52,7 @@ export default function CohostPicker({ value = [], onChange, candidates = [], ex
             )
           })}
         </div>
-      ) : value.length === 0 ? (
-        <p className="search-hint" style={{ marginTop: 0 }}>
-          Co-hosts are chosen from confirmed participants — once players join, you can appoint them here.
-        </p>
-      ) : null}
+      )}
     </>
   )
 }

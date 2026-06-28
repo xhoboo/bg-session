@@ -6,6 +6,7 @@ import { useLang } from '../lib/i18n'
 import { isSessionFinished } from '../lib/format'
 import { useRegions } from '../lib/useRegions'
 import { promptAuth } from '../lib/authPrompt'
+import { promptCreate } from '../lib/createPrompt'
 import SessionCard from '../components/SessionCard'
 import StarRating from '../components/StarRating'
 import { SessionListSkeleton } from '../components/Skeleton'
@@ -223,7 +224,7 @@ export default function Browse() {
       <div className="row-between" style={{ marginBottom: 4 }}>
         <h1>{t('Upcoming Sessions')}</h1>
         {user ? (
-          <Link to="/create" className="btn btn-primary btn-sm">{t('+ Host a Session')}</Link>
+          <button type="button" className="btn btn-primary btn-sm" onClick={promptCreate}>{t('+ Host a Session')}</button>
         ) : (
           <button type="button" className="btn btn-primary btn-sm" onClick={promptAuth}>{t('+ Host a Session')}</button>
         )}
@@ -261,7 +262,7 @@ export default function Browse() {
         <div className="empty-state">
           <p>{t('No upcoming sessions yet.')}</p>
           {user ? (
-            <Link to="/create" className="btn btn-primary">{t('Be the First to Host')}</Link>
+            <button type="button" className="btn btn-primary" onClick={promptCreate}>{t('Be the First to Host')}</button>
           ) : (
             <button type="button" className="btn btn-primary" onClick={promptAuth}>{t('Be the First to Host')}</button>
           )}

@@ -80,7 +80,7 @@ export default function WeeklySessionForm({
             <input id="minPlayers" type="number" min={3} max={50} value={form.minPlayers} onChange={update('minPlayers')} disabled={!can('players')} required />
           </div>
           <div className="form-group">
-            <label className="field-label" htmlFor="maxPlayers">Max Players <span className="field-hint">(incl. host)</span></label>
+            <label className="field-label" htmlFor="maxPlayers">Max Players <span className="field-hint">— incl. host</span></label>
             <input id="maxPlayers" type="number" min={1} max={50} value={form.maxPlayers} onChange={update('maxPlayers')} disabled={!can('players')} required />
           </div>
         </div>
@@ -174,7 +174,7 @@ export default function WeeklySessionForm({
 
         <div className="form-group">
           <label className="field-label" htmlFor="mapsUrl">
-            Google Maps Link <span className="field-hint">— optional - private</span>
+            Google Maps Link <span className="field-hint">— optional</span>
           </label>
           <input id="mapsUrl" type="url" placeholder="https://maps.app.goo.gl/…" value={form.mapsUrl} onChange={update('mapsUrl')} disabled={!can('location')} />
         </div>

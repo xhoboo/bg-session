@@ -35,6 +35,7 @@ export default function SessionScore() {
   const [drafts, setDrafts] = useState([])        // live "being recorded" locks
   const [draftId, setDraftId] = useState(null)    // my open draft (form target)
   const [draftGame, setDraftGame] = useState('')
+  const [gamePickerOpen, setGamePickerOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -195,6 +196,7 @@ export default function SessionScore() {
     setError('')
     const { data, error: e } = await supabase.rpc('start_game_play', { p_session_id: id, p_game_name: gameName })
     setBusy(false)
+    setGamePickerOpen(false)
     if (e) return setError(e.message)
     setDraftId(data)
     setDraftGame(gameName)
@@ -330,39 +332,14 @@ export default function SessionScore() {
             {available.length === 0 ? (
               <p className="muted">{t('No games on this session’s list yet.')}</p>
             ) : (
-              <div className="score-game-grid">
-                {available.map((g) => {
-                  const locker = lockedBy.get(g.toLowerCase())
-                  const n = playCount.get(g.toLowerCase()) || 0
-                  const cdUntil = cooldownUntil.get(g.toLowerCase()) || 0
-                  const onCooldown = !locker && cdUntil > now
-                  const cdMins = onCooldown ? Math.max(1, Math.ceil((cdUntil - now) / 60_000)) : 0
-                  return (
-                    <button
-                      key={g}
-                      type="button"
-                      className="score-game-btn"
-                      disabled={busy || !!locker || onCooldown}
-                      onClick={() => startRecording(g)}
-                    >
-                      <span className="score-game-name">{g}</span>
-                      {locker ? (
-                        <span className="score-game-lock">
-                          {t('Being recorded by {name}', { name: locker.nickname || locker.display_name || t('Player') })}
-                        </span>
-                      ) : onCooldown ? (
-                        <span className="score-game-lock">
-                          {n > 0 ? t('Played {n}×', { n }) + ' · ' : ''}{cdMins}m
-                        </span>
-                      ) : (
-                        <span className="score-game-add">
-                          {n > 0 ? t('Played {n}×', { n }) + ' · ' : ''}{t('Record Scores')}
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
+              <button
+                type="button"
+                className="btn btn-primary btn-block"
+                onClick={() => setGamePickerOpen(true)}
+                disabled={busy}
+              >
+                {t('Choose a Game to Score')}
+              </button>
             )}
           </>
         )
@@ -379,6 +356,55 @@ export default function SessionScore() {
       )}
 
       <Link to={`/sessions/${id}`} className="btn btn-secondary btn-block" style={{ marginTop: 20 }}>{t('← Back to Session')}</Link>
+
+      {/* Game picker popup — opened from "Choose a Game to Score". Shows about
+          five games before scrolling. */}
+      {gamePickerOpen && scoringOpen && !myDraft && (
+        <div className="modal-overlay" onClick={() => setGamePickerOpen(false)}>
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('Score a Game')}
+          >
+            <h2 style={{ margin: '0 0 12px', fontSize: 18 }}>{t('Score a Game')}</h2>
+            <div className="score-game-picker">
+              {available.map((g) => {
+                const locker = lockedBy.get(g.toLowerCase())
+                const n = playCount.get(g.toLowerCase()) || 0
+                const cdUntil = cooldownUntil.get(g.toLowerCase()) || 0
+                const onCooldown = !locker && cdUntil > now
+                const cdMins = onCooldown ? Math.max(1, Math.ceil((cdUntil - now) / 60_000)) : 0
+                return (
+                  <button
+                    key={g}
+                    type="button"
+                    className="score-game-btn"
+                    disabled={busy || !!locker || onCooldown}
+                    onClick={() => startRecording(g)}
+                  >
+                    <span className="score-game-name">{g}</span>
+                    {locker ? (
+                      <span className="score-game-lock">
+                        {t('Being recorded by {name}', { name: locker.nickname || locker.display_name || t('Player') })}
+                      </span>
+                    ) : onCooldown ? (
+                      <span className="score-game-lock">
+                        {n > 0 ? t('Played {n}×', { n }) + ' · ' : ''}{cdMins}m
+                      </span>
+                    ) : (
+                      <span className="score-game-add">
+                        {n > 0 ? t('Played {n}×', { n }) + ' · ' : ''}{t('Record Scores')}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

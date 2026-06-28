@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import { isSessionFinished } from '../lib/format'
+import { promptCreate } from '../lib/createPrompt'
 import { SessionListSkeleton } from '../components/Skeleton'
 import SessionCard from '../components/SessionCard'
 
@@ -59,7 +60,7 @@ export default function MySessions() {
       <h2 className="section-title">{t('Hosting ({n})', { n: hosting.length })}</h2>
       {hosting.length === 0 ? (
         <div className="empty-state" style={{ padding: 24 }}>
-          <Link to="/create" className="btn btn-primary">{t('Host a Session')}</Link>
+          <button type="button" className="btn btn-primary" onClick={promptCreate}>{t('Host a Session')}</button>
         </div>
       ) : (
         <div className="session-list">
