@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
@@ -191,6 +191,19 @@ export default function SessionScore() {
     }
   }, [focusSlug, plays])
 
+  // The FAB jumps straight here with ?pick=1 so the game picker pops open on
+  // arrival instead of making the user tap "Choose a Game to Score" first. Only
+  // auto-open once, and only when there's actually something to record.
+  const autoOpened = useRef(false)
+  const wantsPicker = searchParams.get('pick')
+  useEffect(() => {
+    if (loading || autoOpened.current) return
+    if (wantsPicker && scoringOpen && !draftId && available.length > 0) {
+      autoOpened.current = true
+      setGamePickerOpen(true)
+    }
+  }, [loading, wantsPicker, scoringOpen, draftId, available.length])
+
   const startRecording = async (gameName) => {
     setBusy(true)
     setError('')
@@ -326,9 +339,6 @@ export default function SessionScore() {
         ) : (
           <>
             <h2 className="section-title">{t('Score a Game')}</h2>
-            <p className="muted" style={{ marginTop: -4 }}>
-              {t('Add the result of a game played from this session’s line-up. Anyone here can record a game.')}
-            </p>
             {available.length === 0 ? (
               <p className="muted">{t('No games on this session’s list yet.')}</p>
             ) : (
@@ -370,6 +380,16 @@ export default function SessionScore() {
           >
             <h2 style={{ margin: '0 0 12px', fontSize: 18 }}>{t('Score a Game')}</h2>
             <div className="score-game-picker">
+              {plays.length > 0 && (
+                <button
+                  type="button"
+                  className="score-game-btn"
+                  onClick={() => setGamePickerOpen(false)}
+                >
+                  <span className="score-game-name">🏆 {t('Game Results')}</span>
+                  <span className="score-game-add">{t('See scores you can still edit')}</span>
+                </button>
+              )}
               {available.map((g) => {
                 const locker = lockedBy.get(g.toLowerCase())
                 const n = playCount.get(g.toLowerCase()) || 0

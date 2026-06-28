@@ -317,11 +317,11 @@ export default function EditSession() {
   return (
     <div className="container container-narrow">
       <h1 style={{ marginTop: 12 }}>Edit {mode === 'weekly' ? 'Weekly Session' : 'Session'}</h1>
-      <p className="subtitle">
-        {mode === 'weekly'
-          ? 'Changes apply to this week and every week going forward. Board games are just for this week.'
-          : 'Update the details. Confirmed guests will see the new address.'}
-      </p>
+      {mode === 'weekly' && (
+        <p className="subtitle">
+          Changes apply to this week and every week going forward. Board games are just for this week.
+        </p>
+      )}
 
       {error && <div className="alert alert-error">{error}</div>}
 

@@ -143,12 +143,11 @@ export default function ShareScoreButton({ session, label = 'Share Score', class
         <div className="modal-overlay" onClick={() => setOpen(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={t('Share a Game Result')}>
             <h2 style={{ marginTop: 0 }}>{t('Share a Game Result')}</h2>
-            <p className="muted" style={{ marginTop: 0 }}>{t('Pick a game to share its scores.')}</p>
             {copied && <div className="alert alert-success">{t('✓ Copied')}</div>}
             {loading ? (
               <div className="spinner" aria-label={t('Loading…')} />
             ) : games && games.length > 0 ? (
-              <div className="stack" style={{ gap: 8 }}>
+              <div className="stack" style={{ gap: 8, maxHeight: 312, overflowY: 'auto' }}>
                 {games.map((g) => {
                   const canonical = catalog.get(g.name.trim().toLowerCase()) || g.name
                   return (

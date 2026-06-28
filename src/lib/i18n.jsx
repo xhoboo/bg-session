@@ -344,6 +344,7 @@ const ID = {
   'Record a Result': 'Catat Hasil',
   'No results recorded yet.': 'Belum ada hasil yang dicatat.',
   'No games have been scored yet.': 'Belum ada permainan yang diberi skor.',
+  'See scores you can still edit': 'Lihat skor yang masih bisa diedit',
   'Played {n}×': 'Dimainkan {n}×',
   'Play {n} of {total}': 'Main ke-{n} dari {total}',
   'Game {n}': 'Permainan ke-{n}',

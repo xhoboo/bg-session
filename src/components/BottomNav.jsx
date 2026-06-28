@@ -95,7 +95,7 @@ export default function BottomNav() {
       <NavLink to="/profile" className={cls} onClick={guestGuard}><Icon name="profile" /><span>{t('Profile')}</span></NavLink>
 
       {activeSession ? (
-        <button className="fab fab-score" onClick={() => navigate(`/sessions/${activeSession.id}/score`)} aria-label={t('Score a Game')}>
+        <button className="fab fab-score" onClick={() => navigate(`/sessions/${activeSession.id}/score?pick=1`)} aria-label={t('Score a Game')}>
           {/* Trophy — "record a result for your live session" */}
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4h12v3a6 6 0 0 1-12 0V4z" /><path d="M6 6H3v1a3 3 0 0 0 3 3M18 6h3v1a3 3 0 0 1-3 3M9 17h6M10 17v3M14 17v3M8 20h8" /></svg>
         </button>

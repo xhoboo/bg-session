@@ -8,7 +8,6 @@ export default function CreateSessionChooser() {
   return (
     <div className="container container-narrow">
       <h1>{t('Host a Session')}</h1>
-      <p className="subtitle">{t('Choose how you want to host.')}</p>
 
       <div className="choice-grid">
         <Link to="/create/one-time" className="card choice-card">

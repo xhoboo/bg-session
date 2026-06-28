@@ -34,8 +34,7 @@ export default function CreateSessionModal() {
         aria-modal="true"
         aria-label={t('Host a Session')}
       >
-        <h2 style={{ margin: '0 0 4px', fontSize: 20 }}>{t('Host a Session')}</h2>
-        <p className="subtitle" style={{ marginTop: 0 }}>{t('Choose how you want to host.')}</p>
+        <h2 style={{ margin: '0 0 12px', fontSize: 20 }}>{t('Host a Session')}</h2>
 
         <div className="choice-grid">
           <button type="button" className="card choice-card" onClick={() => go('/create/one-time')}>
