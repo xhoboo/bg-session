@@ -8,9 +8,9 @@ import { userPath } from '../lib/nickname'
 // finished session's "Game results" on SessionDetail. `play` is a row from
 // session_game_plays with embedded `scores` (session_play_scores + player
 // profile) and `teams` (session_play_teams). Scores are public, so this renders
-// for anyone — only the recorder, inside the cancel window, gets the × button
-// (passed in as `onCancel`).
-export default function GameScoreCard({ play, catalog, onCancel, replayIndex, replayTotal }) {
+// for anyone — only the recorder, inside the 30-minute window, gets the Edit and
+// Discard buttons (passed in as `onEdit` / `onCancel`).
+export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayIndex, replayTotal }) {
   const { t } = useLang()
   const mode = scoreMode(play.mode)
   if (!mode) return null
@@ -126,10 +126,19 @@ export default function GameScoreCard({ play, catalog, onCancel, replayIndex, re
             {mode.lowestOption && play.lowest_wins && <span className="muted"> · {t('Lowest score wins')}</span>}
           </div>
         </div>
-        {onCancel && (
-          <button type="button" className="btn btn-danger btn-sm" onClick={() => onCancel(play)}>
-            {t('Discard')}
-          </button>
+        {(onEdit || onCancel) && (
+          <div className="score-card-actions">
+            {onEdit && (
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => onEdit(play)}>
+                {t('Edit')}
+              </button>
+            )}
+            {onCancel && (
+              <button type="button" className="btn btn-danger btn-sm" onClick={() => onCancel(play)}>
+                {t('Discard')}
+              </button>
+            )}
+          </div>
         )}
       </div>
 

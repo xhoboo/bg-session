@@ -371,7 +371,9 @@ const ID = {
   Team: 'Tim',
   'Add Team': '+ Tambah Tim',
   'Save Result': 'Simpan Hasil',
+  'Save Changes': 'Simpan Perubahan',
   'Saving…': 'Menyimpan…',
+  Edit: 'Ubah',
   Discard: 'Buang',
   'Cancel This Result': 'Batalkan Hasil Ini',
   'Remove this game from the session record? This can’t be undone.':

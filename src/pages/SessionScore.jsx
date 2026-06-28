@@ -38,6 +38,7 @@ export default function SessionScore() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [confirmCancel, setConfirmCancel] = useState(null)  // play pending discard
+  const [editPlay, setEditPlay] = useState(null)            // submitted play being edited
 
   const load = useCallback(async () => {
     setError('')
@@ -97,11 +98,11 @@ export default function SessionScore() {
     const channel = supabase
       .channel('plays-' + id)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'session_game_plays', filter: `session_id=eq.${id}` }, () => {
-        if (!draftId) load()
+        if (!draftId && !editPlay) load()
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [id, draftId, load])
+  }, [id, draftId, editPlay, load])
 
   const isParticipant = session && (session.host_id === user.id || participants.some((p) => p.id === user.id))
   const scoringOpen = session && isScoringOpen(session)
@@ -169,14 +170,17 @@ export default function SessionScore() {
   const onSubmitted = async () => {
     setDraftId(null)
     setDraftGame('')
+    setEditPlay(null)
     await load()
   }
 
-  // One result card. The recorder gets a Discard button within 30 min of
-  // submitting (only on the full page — the focused chip view is read-only).
-  const renderCard = (p, index, total, allowCancel = true) => {
-    const cancellable =
-      allowCancel &&
+  // One result card. Within 30 min of recording, the recorder gets Edit + Discard
+  // buttons (only on the full page — the focused chip view is read-only). Editing
+  // bumps submitted_at server-side, so the 30-min window resets after each save.
+  const renderCard = (p, index, total, allowEdit = true) => {
+    const owned =
+      allowEdit &&
+      scoringOpen &&
       p.recorded_by === user.id &&
       p.submitted_at &&
       Date.now() < new Date(p.submitted_at).getTime() + 30 * 60_000
@@ -187,7 +191,8 @@ export default function SessionScore() {
         catalog={catalog}
         replayIndex={total > 1 ? index : undefined}
         replayTotal={total > 1 ? total : undefined}
-        onCancel={cancellable && scoringOpen ? cancelResult : undefined}
+        onEdit={owned ? setEditPlay : undefined}
+        onCancel={owned ? cancelResult : undefined}
       />
     )
   }
@@ -270,6 +275,23 @@ export default function SessionScore() {
         />
       )}
 
+      {/* Edit form — the recorder re-opening a submitted result within its 30-min
+          window. Same form, pre-filled, submitting back through submit_game_play. */}
+      {scoringOpen && editPlay && (
+        <RecordForm
+          key={editPlay.id}
+          editMode
+          playId={editPlay.id}
+          gameName={editPlay.game_name}
+          initial={playToInitial(editPlay)}
+          participants={participants}
+          busy={busy}
+          setBusy={setBusy}
+          onSubmitted={onSubmitted}
+          onDiscard={() => setEditPlay(null)}
+        />
+      )}
+
       {/* ---- Results ---- */}
       {plays.length === 0 ? (
         <p className="muted" style={{ marginTop: 16 }}>{t('No games have been scored yet.')}</p>
@@ -295,19 +317,52 @@ export default function SessionScore() {
   )
 }
 
+// Turn a submitted play (with embedded scores/teams) back into RecordForm's
+// initial state, so the edit form opens showing exactly what was recorded.
+function playToInitial(play) {
+  const isTeam = play.mode === 'team_score' || play.mode === 'team_winloss'
+  const scores = play.scores || []
+  const teams = play.teams || []
+  const selected = {}
+  scores.forEach((s) => {
+    selected[s.user_id] = {
+      score: s.score == null ? '' : String(s.score),
+      team: isTeam ? (s.team ?? 1) : null,
+    }
+  })
+  // Per-team score boxes are only the manual entry path: for team_score with
+  // individual scores the stored team rows are derived sums, so leave them blank.
+  const teamScores = {}
+  const playersScored = scores.some((s) => s.score != null)
+  if (!(play.mode === 'team_score' && playersScored)) {
+    teams.forEach((tm) => { teamScores[tm.team] = tm.score == null ? '' : String(tm.score) })
+  }
+  return {
+    modeKey: play.mode,
+    lowestWins: !!play.lowest_wins,
+    coopWon: play.mode === 'cooperative' ? play.coop_won : null,
+    selected,
+    winnerId: play.mode === 'individual_winloss' ? (scores.find((s) => s.is_winner)?.user_id ?? null) : null,
+    winnerTeam: play.mode === 'team_winloss' ? (teams.find((tm) => tm.is_winner)?.team ?? null) : null,
+    teamScores,
+  }
+}
+
 // ---------------------------------------------------------------------------
 // RecordForm — fills in a draft and submits it. Lives here because it's tightly
-// bound to the page's participant list and draft lifecycle.
+// bound to the page's participant list and draft lifecycle. In `editMode` it's
+// pre-filled from `initial` and re-submits an existing result instead of a draft
+// (submit_game_play accepts both — see migration 0060).
 // ---------------------------------------------------------------------------
-function RecordForm({ playId, gameName, participants, busy, setBusy, onSubmitted, onDiscard }) {
+function RecordForm({ playId, gameName, participants, busy, setBusy, onSubmitted, onDiscard, editMode, initial }) {
   const { t } = useLang()
-  const [modeKey, setModeKey] = useState('individual_score')
-  const [selected, setSelected] = useState({})   // userId -> { score, team }
-  const [winnerId, setWinnerId] = useState(null) // individual_winloss
-  const [winnerTeam, setWinnerTeam] = useState(null) // team_winloss
-  const [teamScores, setTeamScores] = useState({}) // team(int) -> score string
-  const [lowestWins, setLowestWins] = useState(false)
-  const [coopWon, setCoopWon] = useState(null)
+  const [modeKey, setModeKey] = useState(initial?.modeKey ?? 'individual_score')
+  const [selected, setSelected] = useState(initial?.selected ?? {})   // userId -> { score, team }
+  const [winnerId, setWinnerId] = useState(initial?.winnerId ?? null) // individual_winloss
+  const [winnerTeam, setWinnerTeam] = useState(initial?.winnerTeam ?? null) // team_winloss
+  const [teamScores, setTeamScores] = useState(initial?.teamScores ?? {}) // team(int) -> score string
+  const [lowestWins, setLowestWins] = useState(initial?.lowestWins ?? false)
+  const [coopWon, setCoopWon] = useState(initial?.coopWon ?? null)
   const [formError, setFormError] = useState('')
 
   const mode = scoreMode(modeKey)
@@ -439,7 +494,7 @@ function RecordForm({ playId, gameName, participants, busy, setBusy, onSubmitted
       <div className="row-between">
         <h2 style={{ margin: 0, fontSize: 18 }}>{gameName}</h2>
         <button type="button" className="btn btn-secondary btn-sm" onClick={onDiscard} disabled={busy}>
-          {t('Discard')}
+          {editMode ? t('Cancel') : t('Discard')}
         </button>
       </div>
 
@@ -583,7 +638,7 @@ function RecordForm({ playId, gameName, participants, busy, setBusy, onSubmitted
 
       <div className="form-row" style={{ marginTop: 14 }}>
         <button className="btn btn-primary btn-block" onClick={submit} disabled={busy}>
-          {busy ? t('Saving…') : t('Save Result')}
+          {busy ? t('Saving…') : editMode ? t('Save Changes') : t('Save Result')}
         </button>
       </div>
     </div>
