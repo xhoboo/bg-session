@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import { useAuth } from '../context/AuthContext'
 import { useDebouncedCallback } from '../lib/useDebouncedCallback'
 import { userPath } from '../lib/nickname'
 import Avatar from './Avatar'
@@ -19,6 +20,7 @@ const SearchIcon = ({ size = 22, className }) => (
 // bar to the left of the notification bell.
 export default function GlobalSearch() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [members, setMembers] = useState([])
@@ -35,7 +37,9 @@ export default function GlobalSearch() {
     // comma or paren in the term would break its parsing — strip those out.
     const safe = q.replace(/[,()]/g, ' ').trim()
     const [memRes, gameRes] = await Promise.all([
-      safe
+      // Members are searchable only for signed-in users; guests get games only
+      // (profiles stay closed to anon).
+      user && safe
         ? supabase
             .from('profiles')
             .select('id, nickname, display_name, avatar_url')
@@ -124,7 +128,7 @@ export default function GlobalSearch() {
               ref={inputRef}
               type="text"
               className="search-input"
-              placeholder="Search members or games…"
+              placeholder={user ? 'Search members or games…' : 'Search board games…'}
               value={query}
               autoComplete="off"
               onChange={(e) => onChange(e.target.value)}
@@ -134,11 +138,11 @@ export default function GlobalSearch() {
 
           <div className="search-results">
             {!term ? (
-              <p className="search-hint">Type a name to find members or board games.</p>
+              <p className="search-hint">{user ? 'Type a name to find members or board games.' : 'Type to find board games.'}</p>
             ) : loading ? (
               <p className="search-hint">Searching…</p>
             ) : !hasResults ? (
-              <p className="search-hint">No members or games match “{term}”.</p>
+              <p className="search-hint">No {user ? 'members or ' : ''}games match “{term}”.</p>
             ) : (
               <>
                 {members.length > 0 && (

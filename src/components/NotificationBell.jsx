@@ -68,6 +68,9 @@ export default function NotificationBell() {
     if (note.session_id) navigate(`/sessions/${note.session_id}`)
   }
 
+  // Guests have no notifications — hide the bell entirely.
+  if (!user) return null
+
   return (
     <div ref={panelRef} style={{ display: 'inline-flex' }}>
       <button

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import { isSessionFinished } from '../lib/format'
 import { useRegions } from '../lib/useRegions'
+import { promptAuth } from '../lib/authPrompt'
 import SessionCard from '../components/SessionCard'
 import StarRating from '../components/StarRating'
 import { SessionListSkeleton } from '../components/Skeleton'
@@ -13,6 +14,14 @@ import { SessionListSkeleton } from '../components/Skeleton'
 const CARD_COLS =
   'id, title, starts_at, region, area, max_players, board_games, session_type, recurrence, occurrence_number, confirmed_count, host:profiles(display_name, avatar_url)'
 const PAGE_SIZE = 12
+
+// The guest feed (list_public_sessions) flattens the host into host_* columns;
+// fold them back into the nested `host` shape SessionCard expects. Signed-in
+// rows already carry `host`, so they pass through unchanged.
+const normalizeRow = (row) =>
+  'host_display_name' in row
+    ? { ...row, host: { nickname: row.host_nickname, display_name: row.host_display_name, avatar_url: row.host_avatar_url } }
+    : row
 
 // Escape the LIKE wildcards so a game name with % or _ matches literally.
 const likeEscape = (s) => s.replace(/[\\%_]/g, '\\$&')
@@ -37,8 +46,11 @@ export default function Browse() {
   const [ratingId, setRatingId] = useState(null)   // session currently being submitted
 
   // Finished sessions this user took part in but hasn't rated yet. We also ask
-  // the backend to enqueue "rate this session" notifications for them.
+  // the backend to enqueue "rate this session" notifications for them. Guests
+  // have no account, so this (and the authenticated-only maintenance RPCs) is
+  // skipped entirely for them.
   useEffect(() => {
+    if (!user) return
     let active = true
     // Best-effort on-load maintenance. A PostgREST builder is a lazy thenable —
     // it only sends when .then()/await is called — so each call needs .then() to
@@ -80,7 +92,7 @@ export default function Browse() {
     return () => {
       active = false
     }
-  }, [user.id])
+  }, [user])
 
   // Fetch one page of upcoming sessions, filtered server-side. `replace` starts
   // a fresh list (page 0 / filter change); otherwise we append (Load more). A
@@ -92,9 +104,16 @@ export default function Browse() {
       replace ? setLoading(true) : setLoadingMore(true)
       const from = pageNum * PAGE_SIZE
 
-      let q = supabase
-        .from('sessions')
-        .select(CARD_COLS)
+      // Signed-in users read `sessions` directly (RLS-gated, with the host's
+      // public profile joined). Guests can't read `sessions`, so they go through
+      // the `list_public_sessions` SECURITY DEFINER function — same listing
+      // columns plus the host's public display fields (flattened). The
+      // upcoming/region/area/game filters and pagination apply identically on
+      // top of either source.
+      let q = user
+        ? supabase.from('sessions').select(CARD_COLS)
+        : supabase.rpc('list_public_sessions')
+      q = q
         .gte('starts_at', new Date().toISOString())
         .order('starts_at', { ascending: true })
         .range(from, from + PAGE_SIZE - 1)
@@ -108,14 +127,14 @@ export default function Browse() {
         setError(qErr.message)
       } else {
         setError('')
-        const rows = data ?? []
+        const rows = (data ?? []).map(normalizeRow)
         setSessions((prev) => (replace ? rows : [...prev, ...rows]))
         setHasMore(rows.length === PAGE_SIZE)
       }
       setLoading(false)
       setLoadingMore(false)
     },
-    [region, area, game],
+    [region, area, game, user],
   )
 
   // Refetch from page 0 whenever the filters change (and on mount).
@@ -203,7 +222,11 @@ export default function Browse() {
 
       <div className="row-between" style={{ marginBottom: 4 }}>
         <h1>{t('Upcoming Sessions')}</h1>
-        <Link to="/create" className="btn btn-primary btn-sm">{t('+ Host a Session')}</Link>
+        {user ? (
+          <Link to="/create" className="btn btn-primary btn-sm">{t('+ Host a Session')}</Link>
+        ) : (
+          <button type="button" className="btn btn-primary btn-sm" onClick={promptAuth}>{t('+ Host a Session')}</button>
+        )}
       </div>
       <p className="subtitle">{t('Find a board game meetup near you.')}</p>
 
@@ -237,7 +260,11 @@ export default function Browse() {
       ) : sessions.length === 0 ? (
         <div className="empty-state">
           <p>{t('No upcoming sessions yet.')}</p>
-          <Link to="/create" className="btn btn-primary">{t('Be the First to Host')}</Link>
+          {user ? (
+            <Link to="/create" className="btn btn-primary">{t('Be the First to Host')}</Link>
+          ) : (
+            <button type="button" className="btn btn-primary" onClick={promptAuth}>{t('Be the First to Host')}</button>
+          )}
         </div>
       ) : (
         <>

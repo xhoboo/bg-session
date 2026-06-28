@@ -4,6 +4,7 @@ import { isSupabaseConfigured } from './lib/supabaseClient'
 import { useAuth } from './context/AuthContext'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
+import PublicGate from './components/PublicGate'
 import OnboardingGate from './components/OnboardingGate'
 import SetupNotice from './components/SetupNotice'
 
@@ -20,6 +21,7 @@ const CreateSession = lazy(() => import('./pages/CreateSession'))
 const CreateWeeklySession = lazy(() => import('./pages/CreateWeeklySession'))
 const EditSession = lazy(() => import('./pages/EditSession'))
 const SessionDetail = lazy(() => import('./pages/SessionDetail'))
+const GuestSessionDetail = lazy(() => import('./pages/GuestSessionDetail'))
 const SessionScore = lazy(() => import('./pages/SessionScore'))
 const MySessions = lazy(() => import('./pages/MySessions'))
 const Profile = lazy(() => import('./pages/Profile'))
@@ -29,6 +31,14 @@ const UserProfile = lazy(() => import('./pages/UserProfile'))
 const GameDetail = lazy(() => import('./pages/GameDetail'))
 const Messages = lazy(() => import('./pages/Messages'))
 const Conversation = lazy(() => import('./pages/Conversation'))
+
+// Session detail is public: guests get a read-only view, signed-in users the
+// full interactive page. (Onboarding is still enforced for signed-in users by
+// the surrounding PublicGate.)
+function SessionDetailRoute() {
+  const { user } = useAuth()
+  return user ? <SessionDetail /> : <GuestSessionDetail />
+}
 
 export default function App() {
   const { loading } = useAuth()
@@ -44,23 +54,34 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route element={<OnboardingGate />}>
-            <Route element={<Layout />}>
-              <Route path="/" element={<Browse />} />
+        <Route path="/onboarding" element={<ProtectedRoute />}>
+          <Route index element={<Onboarding />} />
+        </Route>
+
+        <Route element={<Layout />}>
+          {/* Public — open to guests; a signed-in-but-not-onboarded user is
+              still pushed to /onboarding by PublicGate. */}
+          <Route element={<PublicGate />}>
+            <Route path="/" element={<Browse />} />
+            <Route path="/games/:name" element={<GameDetail />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/sessions/:id" element={<SessionDetailRoute />} />
+          </Route>
+
+          {/* Everything else requires a signed-in, onboarded user. Guests who
+              reach these (FAB, Sessions/Messages tabs, a session card) are sent
+              to /login by ProtectedRoute. */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<OnboardingGate />}>
               <Route path="/create" element={<CreateSessionChooser />} />
               <Route path="/create/one-time" element={<CreateSession />} />
               <Route path="/create/weekly" element={<CreateWeeklySession />} />
               <Route path="/my-sessions" element={<MySessions />} />
-              <Route path="/profile" element={<Profile />} />
               <Route path="/profile/edit" element={<EditProfile />} />
               <Route path="/settings/notifications" element={<NotificationSettings />} />
               <Route path="/users/:id" element={<UserProfile />} />
-              <Route path="/games/:name" element={<GameDetail />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/messages/:userId" element={<Conversation />} />
-              <Route path="/sessions/:id" element={<SessionDetail />} />
               <Route path="/sessions/:id/score" element={<SessionScore />} />
               <Route path="/sessions/:id/edit" element={<EditSession />} />
             </Route>

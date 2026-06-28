@@ -40,6 +40,21 @@ const ID = {
   'New here?': 'Baru di sini?',
   'Create an Account': 'Buat Akun',
   'Already have an account?': 'Sudah punya akun?',
+
+  // ---- Guest / visitor mode ----
+  'Welcome to BG Session': 'Selamat Datang di BG Session',
+  'Sign up to host and join board game meetups — or keep looking around as a guest.':
+    'Daftar untuk membuat & ikut meetup board game — atau lihat-lihat dulu sebagai tamu.',
+  'Continue as Guest': 'Lanjutkan sebagai Tamu',
+  'Your Profile': 'Profil Kamu',
+  'Sign up or sign in to host sessions, join games, and message other players.':
+    'Daftar atau masuk untuk membuat sesi, ikut bermain, dan mengirim pesan ke pemain lain.',
+  'Sign In to Join': 'Masuk untuk Gabung',
+  'Sign in or create an account to join this session and message the host.':
+    'Masuk atau buat akun untuk gabung ke sesi ini dan mengirim pesan ke host.',
+  "Who's Coming": 'Yang Akan Datang',
+  'Session not found.': 'Sesi tidak ditemukan.',
+  Player: 'Pemain',
   'Display Name': 'Nama Tampilan',
   'Check your inbox to confirm your email, then sign in.':
     'Cek inbox-mu untuk konfirmasi email, lalu masuk.',

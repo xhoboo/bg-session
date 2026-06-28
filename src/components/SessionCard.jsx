@@ -11,7 +11,10 @@ import RecurrenceBadge from './RecurrenceBadge'
 export default function SessionCard({ session, statusBadge }) {
   const navigate = useNavigate()
   const { t } = useLang()
-  const hostName = session.host?.display_name || 'Host'
+  // Guests browse through a host-less public feed, so there's no host to show;
+  // signed-in cards always carry the host's public profile.
+  const host = session.host
+  const hostName = host?.display_name || 'Host'
   const spots = playerCount(session)
   const isFull = isSessionFull(session)
   const finished = isSessionFinished(session)
@@ -40,10 +43,12 @@ export default function SessionCard({ session, statusBadge }) {
         <span className="session-players">👥 {t('{n} players', { n: spots })}{isFull ? ` · ${t('full')}` : ''}</span>
       </div>
 
-      <div className="muted" style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 7 }}>
-        <Avatar name={hostName} src={session.host?.avatar_url} size={22} />
-        {t('Hosted by {name}', { name: hostName })}
-      </div>
+      {host && (
+        <div className="muted" style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 7 }}>
+          <Avatar name={hostName} src={host.avatar_url} size={22} />
+          {t('Hosted by {name}', { name: hostName })}
+        </div>
+      )}
     </div>
   )
 }

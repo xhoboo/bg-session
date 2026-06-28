@@ -2,16 +2,19 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { useLang } from '../lib/i18n'
 import { isSessionFinished } from '../lib/format'
 import ProfileView from '../components/ProfileView'
 
 export default function Profile() {
   const { user, profile } = useAuth()
+  const { t } = useLang()
   const [history, setHistory] = useState([])
 
   // Finished sessions (hosted + joined) for this user's history, with avg
   // ratings. "Finished" is start + duration, so in-progress sessions don't show.
   useEffect(() => {
+    if (!user) return
     let active = true
     const now = new Date().toISOString()
     ;(async () => {
@@ -51,7 +54,24 @@ export default function Profile() {
     return () => {
       active = false
     }
-  }, [user.id])
+  }, [user])
+
+  // Guest (not signed in): no profile to show — invite them to join or sign in.
+  if (!user) {
+    return (
+      <div className="container container-narrow">
+        <div className="center" style={{ margin: '32px 0 24px' }}>
+          <h1>{t('Your Profile')}</h1>
+          <p className="subtitle" style={{ margin: 0 }}>
+            {t('Sign up or sign in to host sessions, join games, and message other players.')}
+          </p>
+        </div>
+        <Link to="/signup" className="btn btn-primary btn-block">{t('Sign Up')}</Link>
+        <div className="spacer" />
+        <Link to="/login" className="btn btn-secondary btn-block">{t('Sign In')}</Link>
+      </div>
+    )
+  }
 
   return (
     <div className="container container-narrow">

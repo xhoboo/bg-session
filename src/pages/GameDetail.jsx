@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import { useAuth } from '../context/AuthContext'
 import Avatar from '../components/Avatar'
 import Skeleton from '../components/Skeleton'
 import { bggLink } from '../lib/format'
@@ -10,6 +11,7 @@ import { userPath } from '../lib/nickname'
 // plus the members who favorite it and who own it.
 export default function GameDetail() {
   const { name } = useParams()
+  const { user } = useAuth()
   const gameName = decodeURIComponent(name || '')
   const [game, setGame] = useState(null)
   const [favoritedBy, setFavoritedBy] = useState([])
@@ -19,21 +21,37 @@ export default function GameDetail() {
   useEffect(() => {
     let active = true
     setLoading(true)
-    Promise.all([
-      supabase.from('board_games').select('name, category, bgg_url').eq('name', gameName).maybeSingle(),
-      supabase.from('profiles').select('id, nickname, display_name, avatar_url').contains('favorite_games', [gameName]),
-      supabase.from('profiles').select('id, nickname, display_name, avatar_url').contains('owned_games', [gameName]),
-    ]).then(([g, fav, own]) => {
-      if (!active) return
-      setGame(g.data ?? null)
-      setFavoritedBy(fav.data ?? [])
-      setOwnedBy(own.data ?? [])
-      setLoading(false)
-    })
+    const gamePromise = supabase.from('board_games').select('name, category, bgg_url').eq('name', gameName).maybeSingle()
+
+    // Signed-in users read `profiles` directly (member chips link to profiles).
+    // Guests can't, so the public display fields come from the get_game_members
+    // SECURITY DEFINER RPC and the chips render non-clickable.
+    if (user) {
+      Promise.all([
+        gamePromise,
+        supabase.from('profiles').select('id, nickname, display_name, avatar_url').contains('favorite_games', [gameName]),
+        supabase.from('profiles').select('id, nickname, display_name, avatar_url').contains('owned_games', [gameName]),
+      ]).then(([g, fav, own]) => {
+        if (!active) return
+        setGame(g.data ?? null)
+        setFavoritedBy(fav.data ?? [])
+        setOwnedBy(own.data ?? [])
+        setLoading(false)
+      })
+    } else {
+      Promise.all([gamePromise, supabase.rpc('get_game_members', { p_game: gameName })]).then(([g, mem]) => {
+        if (!active) return
+        const rows = mem.data ?? []
+        setGame(g.data ?? null)
+        setFavoritedBy(rows.filter((r) => r.is_favorite))
+        setOwnedBy(rows.filter((r) => r.is_owned))
+        setLoading(false)
+      })
+    }
     return () => {
       active = false
     }
-  }, [gameName])
+  }, [gameName, user])
 
   if (loading) {
     return (
@@ -92,25 +110,32 @@ export default function GameDetail() {
       </div>
 
       <h2 className="section-title">Favorited by ({favoritedBy.length})</h2>
-      <MemberGrid members={favoritedBy} emptyText="No one has favorited this yet." />
+      <MemberGrid members={favoritedBy} emptyText="No one has favorited this yet." clickable={!!user} />
 
       <h2 className="section-title">Owned by ({ownedBy.length})</h2>
-      <MemberGrid members={ownedBy} emptyText="No one has registered owning this yet." />
+      <MemberGrid members={ownedBy} emptyText="No one has registered owning this yet." clickable={!!user} />
     </div>
   )
 }
 
-function MemberGrid({ members, emptyText }) {
+// `clickable` chips link to the member's profile (signed-in users); for guests
+// the same chips render as plain, non-clickable cards so profiles stay private.
+function MemberGrid({ members, emptyText, clickable }) {
   if (members.length === 0) return <p className="muted">{emptyText}</p>
   return (
     <div className="member-grid">
       {members.map((m) => {
         const nm = m.nickname || m.display_name || 'Player'
-        return (
-          <Link to={userPath(m.nickname || m.id)} key={m.id} className="member-card">
+        const inner = (
+          <>
             <Avatar name={nm} src={m.avatar_url} size={32} />
             <span className="member-name">{nm}</span>
-          </Link>
+          </>
+        )
+        return clickable ? (
+          <Link to={userPath(m.nickname || m.id)} key={m.id} className="member-card">{inner}</Link>
+        ) : (
+          <div key={m.id} className="member-card">{inner}</div>
         )
       })}
     </div>
