@@ -87,8 +87,6 @@ export default function Login() {
       </div>
 
       <div className="card">
-        <h2 style={{ marginTop: 0, fontSize: 18 }}>{t('Welcome Back')}</h2>
-
         {error && <div className="alert alert-error">{error}</div>}
 
         <GoogleButton onError={setError} />
@@ -135,19 +133,14 @@ export default function Login() {
                 {t('If an account exists for {email}, a reset link is on its way. Check your inbox.', { email })}
               </div>
             ) : (
-              <>
-                <p className="muted" style={{ margin: '0 0 10px', fontSize: 13 }}>
-                  {t('Forgot your password? We can email you a link to set a new one.')}
-                </p>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-block btn-sm"
-                  onClick={handleReset}
-                  disabled={resetBusy}
-                >
-                  {resetBusy ? t('Sending…') : t('Email Me a Reset Link')}
-                </button>
-              </>
+              <button
+                type="button"
+                className="btn btn-secondary btn-block btn-sm"
+                onClick={handleReset}
+                disabled={resetBusy}
+              >
+                {resetBusy ? t('Sending…') : t('Reset Password')}
+              </button>
             )}
           </div>
         )}
