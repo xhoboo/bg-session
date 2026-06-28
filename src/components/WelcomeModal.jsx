@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import { AUTH_PROMPT_EVENT } from '../lib/authPrompt'
+import GoogleButton from './GoogleButton'
 
 const DISMISS_KEY = 'bg_welcome_dismissed'
 
@@ -23,6 +24,7 @@ export default function WelcomeModal() {
   const { t } = useLang()
   const navigate = useNavigate()
   const [open, setOpen] = useState(() => !wasDismissed())
+  const [error, setError] = useState('')
 
   // Let guest CTAs (the FAB, "Host a Session" buttons) re-open this same popup
   // on demand, even after the first-visit dismissal.
@@ -58,6 +60,9 @@ export default function WelcomeModal() {
             {t('Sign up to host and join board game meetups — or keep looking around as a guest.')}
           </p>
         </div>
+        {error && <div className="alert alert-error">{error}</div>}
+        <GoogleButton onError={setError} />
+        <div className="divider">{t('or')}</div>
         <button className="btn btn-primary btn-block" onClick={() => navigate('/signup')}>{t('Sign Up')}</button>
         <div className="spacer" />
         <button className="btn btn-secondary btn-block" onClick={() => navigate('/login')}>{t('Sign In')}</button>

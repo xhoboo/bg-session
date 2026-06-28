@@ -73,16 +73,25 @@ export default function BottomNav() {
 
   const cls = ({ isActive }) => 'bottom-nav-item' + (isActive ? ' active' : '')
 
+  // Browse is public; the other tabs need an account, so for guests we open the
+  // sign-in popup right here instead of navigating (same as the FAB).
+  const guestGuard = (e) => {
+    if (!user) {
+      e.preventDefault()
+      promptAuth()
+    }
+  }
+
   return (
     <nav className="bottom-nav" aria-label="Primary">
       <NavLink to="/" end className={cls}><Icon name="browse" /><span>{t('Browse')}</span></NavLink>
-      <NavLink to="/my-sessions" className={cls}><Icon name="sessions" /><span>{t('Sessions')}</span></NavLink>
+      <NavLink to="/my-sessions" className={cls} onClick={guestGuard}><Icon name="sessions" /><span>{t('Sessions')}</span></NavLink>
       <div className="bottom-nav-spacer" aria-hidden="true" />
-      <NavLink to="/messages" className={cls}>
+      <NavLink to="/messages" className={cls} onClick={guestGuard}>
         <Icon name="messages" /><span>{t('Messages')}</span>
         {unread > 0 && <span className="bottom-nav-badge">{unread > 9 ? '9+' : unread}</span>}
       </NavLink>
-      <NavLink to="/profile" className={cls}><Icon name="profile" /><span>{t('Profile')}</span></NavLink>
+      <NavLink to="/profile" className={cls} onClick={guestGuard}><Icon name="profile" /><span>{t('Profile')}</span></NavLink>
 
       {activeSession ? (
         <button className="fab fab-score" onClick={() => navigate(`/sessions/${activeSession.id}/score`)} aria-label={t('Score a Game')}>
