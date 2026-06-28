@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import SessionForm from '../components/SessionForm'
 import WeeklySessionForm from '../components/WeeklySessionForm'
+import ConfirmModal from '../components/ConfirmModal'
 import { toDatetimeLocalValue, hasSessionStarted, nextWeeklyDate } from '../lib/format'
 
 const parseGames = (text) => (text || '').split(',').map((s) => s.trim()).filter(Boolean)
@@ -23,6 +24,7 @@ export default function EditSession() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [confirmTransfer, setConfirmTransfer] = useState(null) // { id, name } pending host transfer
 
   useEffect(() => {
     let active = true
@@ -287,11 +289,17 @@ export default function EditSession() {
   // Hand the weekly session to a confirmed participant. The RPC moves the series
   // + upcoming occurrence to them, drops their join_request, and re-adds the old
   // host (this user) as an approved participant — so we just leave to My sessions.
-  const handleTransfer = async (newHostId) => {
+  const handleTransfer = (newHostId) => {
     if (!newHostId) return
     const target = candidates.find((c) => c.id === newHostId)
     const name = target?.nickname || target?.display_name || 'this participant'
-    if (!window.confirm(`Transfer hosting to ${name}? They become the host of this weekly session and you stay on as a regular participant.`)) return
+    setConfirmTransfer({ id: newHostId, name })
+  }
+
+  const doTransfer = async () => {
+    const newHostId = confirmTransfer?.id
+    if (!newHostId) return
+    setConfirmTransfer(null)
     setBusy(true)
     setError('')
     const { error: e } = await supabase.rpc('transfer_weekly_host', {
@@ -339,6 +347,17 @@ export default function EditSession() {
         />
       ) : (
         <SessionForm initial={initial} submitLabel="Save Changes" busy={busy} onSubmit={handleSubmitOneTime} />
+      )}
+
+      {confirmTransfer && (
+        <ConfirmModal
+          message={`Transfer hosting to ${confirmTransfer.name}? They become the host of this weekly session and you stay on as a regular participant.`}
+          confirmLabel="Transfer Hosting"
+          cancelLabel="Cancel"
+          busy={busy}
+          onCancel={() => setConfirmTransfer(null)}
+          onConfirm={doTransfer}
+        />
       )}
     </div>
   )

@@ -183,6 +183,7 @@ const ID = {
   'Add anything that helps us understand what happened…':
     'Tambahkan apa pun yang membantu kami memahami kejadiannya…',
   Cancel: 'Batal',
+  Confirm: 'Konfirmasi',
   'Send Report': 'Kirim Laporan',
   'Report Sent': 'Laporan Terkirim',
   'Thanks — our team will review your report about {name}. Reports are kept confidential.':
@@ -310,6 +311,8 @@ const ID = {
   'Manage Session': 'Kelola Sesi',
   'Edit Details': 'Ubah Detail',
   'Cancel Session': 'Batalkan Sesi',
+  'End Session': 'Akhiri Sesi',
+  'Keep Session': 'Pertahankan Sesi',
   'End Weekly Session': 'Akhiri Sesi Mingguan',
   'Transfer Host': 'Pindahkan Host',
   'Hand this weekly session over to a confirmed participant. They become the host; you stay on as a regular participant.':
@@ -353,7 +356,7 @@ const ID = {
   'Being recorded by {name}': 'Sedang dicatat oleh {name}',
   'Being recorded right now': 'Sedang dicatat sekarang',
   'Recording…': 'Mencatat…',
-  'How were the scores kept?': 'Bagaimana skor dihitung?',
+  'Scoring Type': 'Tipe Skor',
   'Who played?': 'Siapa yang bermain?',
   'Pick at least two players.': 'Pilih minimal dua pemain.',
   'Pick at least one player.': 'Pilih minimal satu pemain.',
@@ -379,8 +382,6 @@ const ID = {
   'Recorded by {name}': 'Dicatat oleh {name}',
   '← Back to Session': '← Kembali ke Sesi',
   'Score a Game': 'Beri Skor Permainan',
-  'Tap a player to add them, then enter how it went.':
-    'Ketuk pemain untuk menambahkan, lalu isi hasilnya.',
   'No games on this session’s list yet.': 'Belum ada game di daftar sesi ini.',
   'Score (optional)': 'Skor (opsional)',
   'Team Score (optional)': 'Skor Tim (opsional)',

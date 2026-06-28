@@ -10,6 +10,7 @@ import {
 } from '../lib/format'
 import Avatar from '../components/Avatar'
 import GameScoreCard from '../components/GameScoreCard'
+import ConfirmModal from '../components/ConfirmModal'
 
 // Embedded select for a submitted play + its players and teams. Scores are
 // public, so this needs no participant gate to read.
@@ -36,6 +37,7 @@ export default function SessionScore() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [confirmCancel, setConfirmCancel] = useState(null)  // play pending discard
 
   const load = useCallback(async () => {
     setError('')
@@ -151,8 +153,12 @@ export default function SessionScore() {
     await load()
   }
 
-  const cancelResult = async (play) => {
-    if (!window.confirm(t('Remove this game from the session record? This can’t be undone.'))) return
+  const cancelResult = (play) => setConfirmCancel(play)
+
+  const confirmCancelResult = async () => {
+    const play = confirmCancel
+    if (!play) return
+    setConfirmCancel(null)
     setBusy(true)
     const { error: e } = await supabase.rpc('delete_game_play', { p_play_id: play.id })
     setBusy(false)
@@ -274,6 +280,17 @@ export default function SessionScore() {
       )}
 
       <Link to={`/sessions/${id}`} className="btn btn-secondary btn-block" style={{ marginTop: 20 }}>{t('← Back to Session')}</Link>
+
+      {confirmCancel && (
+        <ConfirmModal
+          message={t('Remove this game from the session record? This can’t be undone.')}
+          confirmLabel={t('Discard')}
+          danger
+          busy={busy}
+          onCancel={() => setConfirmCancel(null)}
+          onConfirm={confirmCancelResult}
+        />
+      )}
     </div>
   )
 }
@@ -427,7 +444,7 @@ function RecordForm({ playId, gameName, participants, busy, setBusy, onSubmitted
       </div>
 
       {/* Mode */}
-      <div className="field-label" style={{ margin: '14px 0 6px' }}>{t('How were the scores kept?')}</div>
+      <div className="field-label" style={{ margin: '14px 0 6px' }}>{t('Scoring Type')}</div>
       <div className="mode-grid">
         {SCORE_MODES.map((m) => (
           <button
@@ -461,7 +478,6 @@ function RecordForm({ playId, gameName, participants, busy, setBusy, onSubmitted
 
       {/* Players */}
       <div className="field-label" style={{ margin: '16px 0 6px' }}>{t('Who played?')}</div>
-      <p className="muted" style={{ fontSize: 13, marginTop: -2 }}>{t('Tap a player to add them, then enter how it went.')}</p>
       <div className="player-pick">
         {participants.map((p) => {
           const on = !!selected[p.id]

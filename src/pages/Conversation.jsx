@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import Avatar from '../components/Avatar'
 import ReportDialog from '../components/ReportDialog'
+import ConfirmModal from '../components/ConfirmModal'
 import { useBlock } from '../lib/useBlock'
 import { useLang } from '../lib/i18n'
 import { timeAgo } from '../lib/format'
@@ -19,6 +20,7 @@ export default function Conversation() {
   const [loading, setLoading] = useState(true)
   const [sendError, setSendError] = useState('')
   const [showReport, setShowReport] = useState(false)
+  const [confirmBlock, setConfirmBlock] = useState(false)
   const { blocked, busy: blockBusy, block, unblock } = useBlock(userId)
   const endRef = useRef(null)
 
@@ -105,7 +107,7 @@ export default function Conversation() {
       await unblock()
       return
     }
-    if (window.confirm(t('Block {name}? They won’t be able to message you.', { name }))) await block()
+    setConfirmBlock(true)
   }
 
   if (user && userId === user.id) return <Navigate to="/messages" replace />
@@ -168,6 +170,17 @@ export default function Conversation() {
 
       {showReport && (
         <ReportDialog targetId={userId} targetName={name} onClose={() => setShowReport(false)} />
+      )}
+
+      {confirmBlock && (
+        <ConfirmModal
+          message={t('Block {name}? They won’t be able to message you.', { name })}
+          confirmLabel={t('Block')}
+          danger
+          busy={blockBusy}
+          onCancel={() => setConfirmBlock(false)}
+          onConfirm={async () => { setConfirmBlock(false); await block() }}
+        />
       )}
     </div>
   )

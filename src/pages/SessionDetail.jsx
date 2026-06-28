@@ -16,6 +16,7 @@ import { useGameCatalog } from '../lib/useGameCatalog'
 import { SessionDetailSkeleton } from '../components/Skeleton'
 import ShareSessionButton from '../components/ShareSessionButton'
 import ShareScoreButton from '../components/ShareScoreButton'
+import ConfirmModal from '../components/ConfirmModal'
 import { userPath } from '../lib/nickname'
 
 export default function SessionDetail() {
@@ -41,6 +42,8 @@ export default function SessionDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [confirmCancel, setConfirmCancel] = useState(false)
+  const [confirmStepDown, setConfirmStepDown] = useState(false)
 
   // When arriving from the home "rate" card (…/sessions/:id#review), drop the
   // participant straight onto the optional written-review box once it mounts.
@@ -251,12 +254,10 @@ export default function SessionDetail() {
     await loadAll()
   }
 
-  const cancelSession = async () => {
-    const weekly = !!session.series_id
-    const msg = weekly
-      ? t("End this weekly session? This removes the upcoming session, stops it repeating, and notifies the confirmed guests. Past weeks stay in everyone's history.")
-      : t('Cancel this session? This removes it for everyone and notifies the confirmed guests. This cannot be undone.')
-    if (!window.confirm(msg)) return
+  const cancelSession = () => setConfirmCancel(true)
+
+  const doCancelSession = async () => {
+    setConfirmCancel(false)
     setBusy(true)
     setError('')
     // RPC notifies approved guests before deleting (and ends the series if weekly).
@@ -268,8 +269,10 @@ export default function SessionDetail() {
 
   // A co-host resigns: they're removed from the series and from this and any
   // upcoming occurrence (their past weeks stay in their history).
-  const stepDown = async () => {
-    if (!window.confirm(t('Step down as co-host? You will be removed from this and every upcoming week.'))) return
+  const stepDown = () => setConfirmStepDown(true)
+
+  const doStepDown = async () => {
+    setConfirmStepDown(false)
     setBusy(true)
     setError('')
     const { error } = await supabase.rpc('step_down_cohost', { p_series_id: session.series_id })
@@ -758,6 +761,31 @@ export default function SessionDetail() {
       )}
 
       {isParticipant && <SessionChat sessionId={id} readOnly={finished} />}
+
+      {confirmCancel && (
+        <ConfirmModal
+          message={session.series_id
+            ? t("End this weekly session? This removes the upcoming session, stops it repeating, and notifies the confirmed guests. Past weeks stay in everyone's history.")
+            : t('Cancel this session? This removes it for everyone and notifies the confirmed guests. This cannot be undone.')}
+          confirmLabel={session.series_id ? t('End Session') : t('Cancel Session')}
+          cancelLabel={t('Keep Session')}
+          danger
+          busy={busy}
+          onCancel={() => setConfirmCancel(false)}
+          onConfirm={doCancelSession}
+        />
+      )}
+
+      {confirmStepDown && (
+        <ConfirmModal
+          message={t('Step down as co-host? You will be removed from this and every upcoming week.')}
+          confirmLabel={t('Step Down')}
+          danger
+          busy={busy}
+          onCancel={() => setConfirmStepDown(false)}
+          onConfirm={doStepDown}
+        />
+      )}
     </div>
   )
 }
