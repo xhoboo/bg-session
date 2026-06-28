@@ -54,12 +54,6 @@ export default function WelcomeModal() {
         aria-modal="true"
         aria-label={t('Welcome to BG Session')}
       >
-        <div className="center" style={{ marginBottom: 16 }}>
-          <h2 style={{ marginTop: 0, marginBottom: 6, color: 'var(--teal-700)' }}>{t('Welcome to BG Session')}</h2>
-          <p className="muted" style={{ margin: 0 }}>
-            {t('Sign up to host and join board game meetups — or keep looking around as a guest.')}
-          </p>
-        </div>
         {error && <div className="alert alert-error">{error}</div>}
         <GoogleButton onError={setError} />
         <div className="divider">{t('or')}</div>
