@@ -15,6 +15,16 @@ export function formatDateTime(iso) {
   }) + ' WIB'
 }
 
+export function formatDate(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('en-GB', {
+    timeZone: TZ,
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
 export function formatDateShort(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleString('en-GB', {

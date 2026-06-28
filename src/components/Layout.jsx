@@ -4,12 +4,15 @@ import BottomNav from './BottomNav'
 import WelcomeModal from './WelcomeModal'
 import CreateSessionModal from './CreateSessionModal'
 import ScorePickerModal from './ScorePickerModal'
+import BanBanner from './BanBanner'
 
 export default function Layout() {
   return (
     <div className="app-shell">
       <Navbar />
       <main className="app-main">
+        {/* Suspension notice for banned users; renders nothing otherwise. */}
+        <BanBanner />
         <Outlet />
       </main>
       <BottomNav />

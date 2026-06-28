@@ -53,7 +53,7 @@ export function AuthProvider({ children }) {
     const [{ data: pub }, { data: priv }] = await Promise.all([
       supabase
         .from('profiles')
-        .select('id, display_name, avatar_url, nickname, domicile, favorite_games, owned_games, onboarded, last_seen_at')
+        .select('id, display_name, avatar_url, nickname, domicile, favorite_games, owned_games, onboarded, last_seen_at, banned_until, ban_reason')
         .eq('id', uid)
         .maybeSingle(),
       supabase

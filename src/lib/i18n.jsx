@@ -190,6 +190,11 @@ const ID = {
   'Report Sent': 'Laporan Terkirim',
   'Thanks — our team will review your report about {name}. Reports are kept confidential.':
     'Terima kasih — tim kami akan meninjau laporanmu tentang {name}. Laporan dijaga kerahasiaannya.',
+  // ---- Account suspension (ban) banner ----
+  'Your account is suspended': 'Akunmu sedang ditangguhkan',
+  "Your account is suspended until {date}. Until then you can't host or join sessions.":
+    'Akunmu ditangguhkan sampai {date}. Sampai saat itu kamu tidak bisa membuat atau ikut sesi.',
+  'Reason: {reason}': 'Alasan: {reason}',
   'Please choose a reason.': 'Silakan pilih alasan.',
   '🚩 Report': '🚩 Laporkan',
   '🚫 Block': '🚫 Blokir',
