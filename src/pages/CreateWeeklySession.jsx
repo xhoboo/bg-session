@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import WeeklySessionForm from '../components/WeeklySessionForm'
@@ -162,7 +162,6 @@ export default function CreateWeeklySession() {
 
   return (
     <div className="container container-narrow">
-      <Link to="/create" className="muted" style={{ fontSize: 14 }}>← Back</Link>
       <h1 style={{ marginTop: 12 }}>Host a Weekly Session</h1>
       <p className="subtitle">
         Repeats every week on the day you pick. Everything resets except your co-hosts.

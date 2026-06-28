@@ -3,6 +3,7 @@ import Navbar from './Navbar'
 import BottomNav from './BottomNav'
 import WelcomeModal from './WelcomeModal'
 import CreateSessionModal from './CreateSessionModal'
+import ScorePickerModal from './ScorePickerModal'
 
 export default function Layout() {
   return (
@@ -16,6 +17,8 @@ export default function Layout() {
       <WelcomeModal />
       {/* "Host a session" type chooser, opened on demand via promptCreate(). */}
       <CreateSessionModal />
+      {/* "Score a game" chooser, opened on demand via promptScore(sessionId). */}
+      <ScorePickerModal />
     </div>
   )
 }

@@ -123,7 +123,6 @@ const ID = {
   TBD: 'Menyusul',
 
   // ---- Create chooser ----
-  'Choose how you want to host.': 'Pilih cara kamu jadi host.',
   'One-Time Session': 'Sesi Sekali Jalan',
   'A single meetup on a specific date and time.': 'Satu meetup pada tanggal dan jam tertentu.',
   'Weekly Session': 'Sesi Mingguan',
@@ -165,7 +164,6 @@ const ID = {
   'Share with a Friend': 'Bagikan ke Teman',
   'Share Score': 'Bagikan Skor',
   'Share a Game Result': 'Bagikan Hasil Permainan',
-  'Pick a game to share its scores.': 'Pilih permainan untuk membagikan skornya.',
   'Copy this game’s result:': 'Salin hasil permainan ini:',
   '✓ Copied': '✓ Tersalin',
 
@@ -352,9 +350,6 @@ const ID = {
   'Scoring closes {time}': 'Pencatatan ditutup {time}',
   'Scoring opens once the session starts.': 'Pencatatan skor dibuka setelah sesi dimulai.',
   'Scoring for this session has closed.': 'Pencatatan skor untuk sesi ini sudah ditutup.',
-  'Add the result of a game played from this session’s line-up. Anyone here can record a game.':
-    'Catat hasil permainan dari daftar game sesi ini. Siapa saja di sini bisa mencatat permainan.',
-  'Choose a Game': 'Pilih Permainan',
   'Being recorded by {name}': 'Sedang dicatat oleh {name}',
   'Being recorded right now': 'Sedang dicatat sekarang',
   'Recording…': 'Mencatat…',

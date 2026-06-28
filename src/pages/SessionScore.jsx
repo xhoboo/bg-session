@@ -1,12 +1,12 @@
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
-import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import { useGameCatalog } from '../lib/useGameCatalog'
 import {
   isScoringOpen, scoringClosesAt, hasSessionStarted, SCORE_MODES, scoreMode,
-  teamLetter, formatDateShort, gameAnchor, GAME_COOLDOWN_MIN,
+  teamLetter, formatDateShort, gameAnchor,
 } from '../lib/format'
 import Avatar from '../components/Avatar'
 import GameScoreCard from '../components/GameScoreCard'
@@ -24,33 +24,24 @@ export default function SessionScore() {
   const { id } = useParams()
   const { user } = useAuth()
   const { t } = useLang()
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { catalog } = useGameCatalog()
 
   const [session, setSession] = useState(null)
   const [participants, setParticipants] = useState([])
-  const [available, setAvailable] = useState([]) // game names that may be scored
   const [plays, setPlays] = useState([])          // submitted results
   const [drafts, setDrafts] = useState([])        // live "being recorded" locks
   const [draftId, setDraftId] = useState(null)    // my open draft (form target)
   const [draftGame, setDraftGame] = useState('')
-  const [gamePickerOpen, setGamePickerOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  // Ticks every 30s so the per-game cooldown countdown stays current.
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30_000)
-    return () => clearInterval(id)
-  }, [])
 
   const load = useCallback(async () => {
     setError('')
     const { data: s, error: sErr } = await supabase
       .from('sessions')
-      .select('id, title, host_id, starts_at, duration_minutes, board_games')
+      .select('id, title, host_id, starts_at, duration_minutes')
       .eq('id', id)
       .maybeSingle()
     if (sErr || !s) {
@@ -61,14 +52,13 @@ export default function SessionScore() {
     setSession(s)
 
     // Participants (host + approved guests) — the pool of possible players.
-    const [hostRes, guestsRes, broughtRes, playsRes, draftsRes] = await Promise.all([
+    const [hostRes, guestsRes, playsRes, draftsRes] = await Promise.all([
       supabase.from('profiles').select('id, nickname, display_name, avatar_url').eq('id', s.host_id).maybeSingle(),
       supabase
         .from('join_requests')
         .select('guest:profiles(id, nickname, display_name, avatar_url)')
         .eq('session_id', id)
         .eq('status', 'approved'),
-      supabase.from('session_brought_games').select('game_name').eq('session_id', id),
       supabase.from('session_game_plays').select(PLAY_SELECT).eq('session_id', id).eq('status', 'submitted').order('submitted_at', { ascending: false }),
       supabase
         .from('session_game_plays')
@@ -81,16 +71,6 @@ export default function SessionScore() {
     if (hostRes.data) people.push({ ...hostRes.data, isHost: true })
     ;(guestsRes.data ?? []).forEach((r) => r.guest && people.push({ ...r.guest, isHost: false }))
     setParticipants(people)
-
-    // Available games = host's listed board_games ∪ pledged "bring" games,
-    // de-duplicated case-insensitively (keeping the first spelling seen).
-    const listed = (s.board_games || '').split(',').map((g) => g.trim()).filter(Boolean)
-    const seen = new Map()
-    ;[...listed, ...(broughtRes.data ?? []).map((b) => b.game_name)].forEach((g) => {
-      const low = g.toLowerCase()
-      if (!seen.has(low)) seen.set(low, g)
-    })
-    setAvailable([...seen.values()])
 
     setPlays(playsRes.data ?? [])
 
@@ -123,36 +103,6 @@ export default function SessionScore() {
 
   const isParticipant = session && (session.host_id === user.id || participants.some((p) => p.id === user.id))
   const scoringOpen = session && isScoringOpen(session)
-
-  // Lock map: lower(game) -> the OTHER person's live draft (mine isn't a lock).
-  const lockedBy = useMemo(() => {
-    const m = new Map()
-    drafts.forEach((d) => {
-      if (d.recorded_by !== user.id) m.set(d.game_name.toLowerCase(), d.recorder)
-    })
-    return m
-  }, [drafts, user.id])
-
-  // How many submitted plays exist per game (for the "Played n×" hint).
-  const playCount = useMemo(() => {
-    const m = new Map()
-    plays.forEach((p) => m.set(p.game_name.toLowerCase(), (m.get(p.game_name.toLowerCase()) || 0) + 1))
-    return m
-  }, [plays])
-
-  // Per-game 30-minute cooldown (migration 0053): a game can't be re-scored until
-  // 30 min after its most recent submitted play. Map of lower(game) -> the time
-  // the cooldown lifts (ms); a game is on cooldown while now < that.
-  const cooldownUntil = useMemo(() => {
-    const m = new Map()
-    plays.forEach((p) => {
-      if (!p.submitted_at) return
-      const low = p.game_name.toLowerCase()
-      const until = new Date(p.submitted_at).getTime() + GAME_COOLDOWN_MIN * 60_000
-      if (until > (m.get(low) || 0)) m.set(low, until)
-    })
-    return m
-  }, [plays])
 
   // Results are grouped by game so a game's plays sit together: oldest-first
   // within each game (so repeats read #1, #2, #3…), and the groups themselves
@@ -190,31 +140,6 @@ export default function SessionScore() {
       plays: plays.filter((p) => p.game_name.toLowerCase() === low).sort((a, b) => ts(a) - ts(b)),
     }
   }, [focusSlug, plays])
-
-  // The FAB jumps straight here with ?pick=1 so the game picker pops open on
-  // arrival instead of making the user tap "Choose a Game to Score" first. Only
-  // auto-open once, and only when there's actually something to record.
-  const autoOpened = useRef(false)
-  const wantsPicker = searchParams.get('pick')
-  useEffect(() => {
-    if (loading || autoOpened.current) return
-    if (wantsPicker && scoringOpen && !draftId && available.length > 0) {
-      autoOpened.current = true
-      setGamePickerOpen(true)
-    }
-  }, [loading, wantsPicker, scoringOpen, draftId, available.length])
-
-  const startRecording = async (gameName) => {
-    setBusy(true)
-    setError('')
-    const { data, error: e } = await supabase.rpc('start_game_play', { p_session_id: id, p_game_name: gameName })
-    setBusy(false)
-    setGamePickerOpen(false)
-    if (e) return setError(e.message)
-    setDraftId(data)
-    setDraftGame(gameName)
-    setDrafts((prev) => [...prev, { id: data, game_name: gameName, recorded_by: user.id }])
-  }
 
   const discardDraft = async () => {
     if (!draftId) return
@@ -324,107 +249,31 @@ export default function SessionScore() {
 
       {error && <div className="alert alert-error" style={{ marginTop: 12 }}>{error}</div>}
 
-      {/* ---- Recording ---- */}
-      {scoringOpen && (
-        myDraft ? (
-          <RecordForm
-            playId={draftId}
-            gameName={draftGame}
-            participants={participants}
-            busy={busy}
-            setBusy={setBusy}
-            onSubmitted={onSubmitted}
-            onDiscard={discardDraft}
-          />
-        ) : (
-          <>
-            <h2 className="section-title">{t('Score a Game')}</h2>
-            {available.length === 0 ? (
-              <p className="muted">{t('No games on this session’s list yet.')}</p>
-            ) : (
-              <button
-                type="button"
-                className="btn btn-primary btn-block"
-                onClick={() => setGamePickerOpen(true)}
-                disabled={busy}
-              >
-                {t('Choose a Game to Score')}
-              </button>
-            )}
-          </>
-        )
+      {/* Recording form — shown only while the user has an open draft, which is
+          started from the FAB's game picker. Otherwise this page is a read-only
+          list of the session's results (no "Score a Game" button lives here). */}
+      {scoringOpen && myDraft && (
+        <RecordForm
+          playId={draftId}
+          gameName={draftGame}
+          participants={participants}
+          busy={busy}
+          setBusy={setBusy}
+          onSubmitted={onSubmitted}
+          onDiscard={discardDraft}
+        />
       )}
 
       {/* ---- Results ---- */}
-      <h2 className="section-title">{t('Game Results')}</h2>
       {plays.length === 0 ? (
-        <p className="muted">{t('No games have been scored yet.')}</p>
+        <p className="muted" style={{ marginTop: 16 }}>{t('No games have been scored yet.')}</p>
       ) : (
-        <div className="stack">
+        <div className="stack" style={{ marginTop: 16 }}>
           {orderedPlays.map(({ play: p, index, total }) => renderCard(p, index, total))}
         </div>
       )}
 
       <Link to={`/sessions/${id}`} className="btn btn-secondary btn-block" style={{ marginTop: 20 }}>{t('← Back to Session')}</Link>
-
-      {/* Game picker popup — opened from "Choose a Game to Score". Shows about
-          five games before scrolling. */}
-      {gamePickerOpen && scoringOpen && !myDraft && (
-        <div className="modal-overlay" onClick={() => setGamePickerOpen(false)}>
-          <div
-            className="modal"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-label={t('Score a Game')}
-          >
-            <h2 style={{ margin: '0 0 12px', fontSize: 18 }}>{t('Score a Game')}</h2>
-            <div className="score-game-picker">
-              {plays.length > 0 && (
-                <button
-                  type="button"
-                  className="score-game-btn"
-                  onClick={() => setGamePickerOpen(false)}
-                >
-                  <span className="score-game-name">🏆 {t('Game Results')}</span>
-                  <span className="score-game-add">{t('See scores you can still edit')}</span>
-                </button>
-              )}
-              {available.map((g) => {
-                const locker = lockedBy.get(g.toLowerCase())
-                const n = playCount.get(g.toLowerCase()) || 0
-                const cdUntil = cooldownUntil.get(g.toLowerCase()) || 0
-                const onCooldown = !locker && cdUntil > now
-                const cdMins = onCooldown ? Math.max(1, Math.ceil((cdUntil - now) / 60_000)) : 0
-                return (
-                  <button
-                    key={g}
-                    type="button"
-                    className="score-game-btn"
-                    disabled={busy || !!locker || onCooldown}
-                    onClick={() => startRecording(g)}
-                  >
-                    <span className="score-game-name">{g}</span>
-                    {locker ? (
-                      <span className="score-game-lock">
-                        {t('Being recorded by {name}', { name: locker.nickname || locker.display_name || t('Player') })}
-                      </span>
-                    ) : onCooldown ? (
-                      <span className="score-game-lock">
-                        {n > 0 ? t('Played {n}×', { n }) + ' · ' : ''}{cdMins}m
-                      </span>
-                    ) : (
-                      <span className="score-game-add">
-                        {n > 0 ? t('Played {n}×', { n }) + ' · ' : ''}{t('Record Scores')}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

@@ -195,15 +195,6 @@ export function formatDuration(minutes) {
 // Day index matches JS Date.getDay() and Postgres `dow`: 0 = Sunday.
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
-export function dayLabel(n) {
-  return WEEKDAYS[Number(n)] ?? ''
-}
-
-// "One-time" / "Weekly" tag for a session row.
-export function recurrenceLabel(s) {
-  return s?.recurrence === 'weekly' ? 'Weekly' : 'One-time'
-}
-
 // How many times a weekly series has run is folded into its recurrence tag
 // (see components/RecurrenceBadge — "Weekly #5") rather than baked into the
 // title, so the plain session.title is used directly wherever a session is named.

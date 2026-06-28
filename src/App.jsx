@@ -16,7 +16,6 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 const AuthCallback = lazy(() => import('./pages/AuthCallback'))
 const Onboarding = lazy(() => import('./pages/Onboarding'))
 const Browse = lazy(() => import('./pages/Browse'))
-const CreateSessionChooser = lazy(() => import('./pages/CreateSessionChooser'))
 const CreateSession = lazy(() => import('./pages/CreateSession'))
 const CreateWeeklySession = lazy(() => import('./pages/CreateWeeklySession'))
 const EditSession = lazy(() => import('./pages/EditSession'))
@@ -73,7 +72,6 @@ export default function App() {
               to /login by ProtectedRoute. */}
           <Route element={<ProtectedRoute />}>
             <Route element={<OnboardingGate />}>
-              <Route path="/create" element={<CreateSessionChooser />} />
               <Route path="/create/one-time" element={<CreateSession />} />
               <Route path="/create/weekly" element={<CreateWeeklySession />} />
               <Route path="/my-sessions" element={<MySessions />} />
