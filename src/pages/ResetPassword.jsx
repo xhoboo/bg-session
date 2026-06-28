@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import SettingsMenu from '../components/SettingsMenu'
+import { isStrongPassword } from '../lib/password'
 
 // Landing page for the password-reset email link. Supabase detects the recovery
 // token in the URL and establishes a temporary session, which lets the user set
@@ -30,8 +31,8 @@ export default function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    if (password.length < 6) {
-      setError(t('Password must be at least 6 characters.'))
+    if (!isStrongPassword(password)) {
+      setError(t('Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.'))
       return
     }
     if (password !== confirm) {
@@ -103,7 +104,7 @@ export default function ResetPassword() {
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label className="field-label" htmlFor="password">
-                {t('New Password')} <span className="field-hint">{t('(min 6 characters)')}</span>
+                {t('New Password')} <span className="field-hint">{t('(min 8 chars, with uppercase, lowercase & a number)')}</span>
               </label>
               <input
                 id="password"

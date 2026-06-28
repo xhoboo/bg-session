@@ -5,6 +5,7 @@ import { useLang } from '../lib/i18n'
 import GoogleButton from '../components/GoogleButton'
 import SettingsMenu from '../components/SettingsMenu'
 import Turnstile, { captchaEnabled } from '../components/Turnstile'
+import { isStrongPassword } from '../lib/password'
 
 export default function Signup() {
   const { signUpWithEmail } = useAuth()
@@ -24,8 +25,8 @@ export default function Signup() {
     e.preventDefault()
     setError('')
     setInfo('')
-    if (password.length < 6) {
-      setError(t('Password must be at least 6 characters.'))
+    if (!isStrongPassword(password)) {
+      setError(t('Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.'))
       return
     }
     if (captchaEnabled && !captchaToken) {
@@ -96,7 +97,7 @@ export default function Signup() {
           </div>
           <div className="form-group">
             <label className="field-label" htmlFor="password">
-              {t('Password')} <span className="field-hint">{t('(min 6 characters)')}</span>
+              {t('Password')} <span className="field-hint">{t('(min 8 chars, with uppercase, lowercase & a number)')}</span>
             </label>
             <input
               id="password"

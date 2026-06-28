@@ -58,8 +58,10 @@ const ID = {
   'Display Name': 'Nama Tampilan',
   'Check your inbox to confirm your email, then sign in.':
     'Cek inbox-mu untuk konfirmasi email, lalu masuk.',
-  'Password must be at least 6 characters.': 'Kata sandi minimal 6 karakter.',
-  '(min 6 characters)': '(min 6 karakter)',
+  'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.':
+    'Kata sandi minimal 8 karakter dan mengandung huruf besar, huruf kecil, dan angka.',
+  '(min 8 chars, with uppercase, lowercase & a number)':
+    '(min 8 karakter, dengan huruf besar, huruf kecil & angka)',
   'Please complete the verification below.': 'Selesaikan verifikasi di bawah dulu.',
   'e.g. Andi': 'mis. Andi',
   // Forgot / reset password
