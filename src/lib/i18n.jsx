@@ -228,8 +228,9 @@ const ID = {
   'Accept & Join Waitlist': 'Terima & Gabung Daftar Tunggu',
 
   // ---- Notification preferences ----
-  '← Back to Profile': '← Kembali ke Profil',
   'Email Notifications': 'Notifikasi Email',
+  'Save': 'Simpan',
+  'Saved.': 'Tersimpan.',
   'Choose which emails we send you. You’ll always see everything in the in-app bell.':
     'Pilih email mana yang kami kirim. Kamu tetap melihat semuanya di lonceng notifikasi aplikasi.',
   'Join Updates': 'Update Gabung',

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
@@ -33,6 +32,7 @@ export default function NotificationSettings() {
   const [prefs, setPrefs] = useState(DEFAULTS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -52,26 +52,29 @@ export default function NotificationSettings() {
     }
   }, [user.id])
 
-  // Auto-save on toggle (opt-in model). Revert the switch if the upsert fails.
-  const toggle = async (key) => {
-    const prev = prefs
-    const next = { ...prefs, [key]: !prefs[key] }
-    setPrefs(next)
+  // Flip the switch locally; nothing persists until the user hits Save.
+  const toggle = (key) => {
+    setPrefs((p) => ({ ...p, [key]: !p[key] }))
+    setSaved(false)
+  }
+
+  const save = async () => {
     setSaving(true)
+    setSaved(false)
     setError('')
     const { error: upErr } = await supabase
       .from('notification_prefs')
-      .upsert({ user_id: user.id, ...next }, { onConflict: 'user_id' })
+      .upsert({ user_id: user.id, ...prefs }, { onConflict: 'user_id' })
     setSaving(false)
     if (upErr) {
-      setPrefs(prev)
       setError(upErr.message)
+      return
     }
+    setSaved(true)
   }
 
   return (
     <div className="container container-narrow">
-      <Link to="/profile" className="muted" style={{ fontSize: 14 }}>{t('← Back to Profile')}</Link>
       <h1 style={{ marginTop: 12 }}>{t('Email Notifications')}</h1>
       <p className="subtitle">{t('Choose which emails we send you. You’ll always see everything in the in-app bell.')}</p>
 
@@ -88,13 +91,24 @@ export default function NotificationSettings() {
               type="checkbox"
               className="switch"
               checked={!!prefs[f.key]}
-              disabled={loading || saving}
+              disabled={loading}
               onChange={() => toggle(f.key)}
               aria-label={t(f.label)}
             />
           </label>
         ))}
       </div>
+
+      {saved && <div className="alert alert-success" style={{ marginTop: 16 }}>{t('Saved.')}</div>}
+
+      <button
+        className="btn btn-primary btn-block"
+        onClick={save}
+        disabled={loading || saving}
+        style={{ marginTop: 16 }}
+      >
+        {saving ? t('Saving…') : t('Save')}
+      </button>
     </div>
   )
 }

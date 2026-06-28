@@ -59,7 +59,6 @@ export default function MySessions() {
       <h2 className="section-title">{t('Hosting ({n})', { n: hosting.length })}</h2>
       {hosting.length === 0 ? (
         <div className="empty-state" style={{ padding: 24 }}>
-          <p>{t("You're not hosting anything yet.")}</p>
           <Link to="/create" className="btn btn-primary">{t('Host a Session')}</Link>
         </div>
       ) : (

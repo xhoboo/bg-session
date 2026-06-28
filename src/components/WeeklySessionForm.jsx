@@ -84,9 +84,6 @@ export default function WeeklySessionForm({
             <input id="maxPlayers" type="number" min={1} max={50} value={form.maxPlayers} onChange={update('maxPlayers')} disabled={!can('players')} required />
           </div>
         </div>
-        <div className="field-hint">
-          At least 3. Any week that doesn't reach the minimum by its start time is canceled for that week and rolls on to the next.
-        </div>
       </div>
 
       <div className="form-section">
@@ -177,7 +174,7 @@ export default function WeeklySessionForm({
 
         <div className="form-group">
           <label className="field-label" htmlFor="mapsUrl">
-            Google Maps Link <span className="field-hint">— optional</span>
+            Google Maps Link <span className="field-hint">— optional - private</span>
           </label>
           <input id="mapsUrl" type="url" placeholder="https://maps.app.goo.gl/…" value={form.mapsUrl} onChange={update('mapsUrl')} disabled={!can('location')} />
         </div>
@@ -188,8 +185,8 @@ export default function WeeklySessionForm({
 
         {can('board_games') ? (
           <GameTagInput
-            label="Board Games"
-            hint="this week's games — add at least one; they reset every week"
+            label=""
+            hint="what you plan to bring"
             items={games}
             onChange={(g) => setForm((f) => ({ ...f, boardGames: g.join(', ') }))}
             max={20}
@@ -207,10 +204,9 @@ export default function WeeklySessionForm({
       </div>
 
       <div className="form-section">
-        <div className="form-section-title">Joining</div>
+        <div className="form-section-title">Join Type</div>
 
         <div className="form-group">
-          <label className="field-label" htmlFor="type">Join Type</label>
           <select id="type" value={form.sessionType} onChange={update('sessionType')} disabled={!can('session_type')}>
             <option value="approval">Approval required — you review each request</option>
             <option value="open">Open — guests are confirmed instantly</option>

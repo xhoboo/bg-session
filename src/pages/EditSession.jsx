@@ -316,7 +316,6 @@ export default function EditSession() {
 
   return (
     <div className="container container-narrow">
-      <Link to={`/sessions/${id}`} className="muted" style={{ fontSize: 14 }}>← Back to session</Link>
       <h1 style={{ marginTop: 12 }}>Edit {mode === 'weekly' ? 'Weekly Session' : 'Session'}</h1>
       <p className="subtitle">
         {mode === 'weekly'

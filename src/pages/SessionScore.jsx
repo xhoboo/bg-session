@@ -263,7 +263,6 @@ export default function SessionScore() {
     const canonical = focus.name ? (catalog.get(focus.name.trim().toLowerCase()) || focus.name) : null
     return (
       <div className="container container-narrow">
-        <Link to={`/sessions/${id}`} className="muted" style={{ fontSize: 14 }}>{t('← Back to Session')}</Link>
         <h1 style={{ marginTop: 12, marginBottom: 4 }}>{t('Game Results')}</h1>
         <p className="subtitle" style={{ marginTop: 0 }}>{canonical || session.title}</p>
         {focus.plays.length === 0 ? (
@@ -273,6 +272,7 @@ export default function SessionScore() {
             {focus.plays.map((p, i) => renderCard(p, i + 1, focus.plays.length, false))}
           </div>
         )}
+        <Link to={`/sessions/${id}`} className="btn btn-secondary btn-block" style={{ marginTop: 20 }}>{t('← Back to Session')}</Link>
       </div>
     )
   }
@@ -293,7 +293,6 @@ export default function SessionScore() {
 
   return (
     <div className="container container-narrow">
-      <Link to={`/sessions/${id}`} className="muted" style={{ fontSize: 14 }}>{t('← Back to Session')}</Link>
       <h1 style={{ marginTop: 12, marginBottom: 4 }}>{t('Game Results')}</h1>
       <p className="subtitle" style={{ marginTop: 0 }}>{session.title}</p>
 
@@ -378,6 +377,8 @@ export default function SessionScore() {
           {orderedPlays.map(({ play: p, index, total }) => renderCard(p, index, total))}
         </div>
       )}
+
+      <Link to={`/sessions/${id}`} className="btn btn-secondary btn-block" style={{ marginTop: 20 }}>{t('← Back to Session')}</Link>
     </div>
   )
 }

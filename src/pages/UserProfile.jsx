@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link, Navigate } from 'react-router-dom'
+import { useParams, Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { UUID_RE } from '../lib/nickname'
@@ -16,6 +16,8 @@ export default function UserProfile() {
   // still pass the raw user id. We resolve either to a profile below.
   const { id: handle } = useParams()
   const { user } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
@@ -83,11 +85,28 @@ export default function UserProfile() {
   // Viewing your own profile: send to the editable own-profile page.
   if (user && profile && profile.id === user.id) return <Navigate to="/profile" replace />
 
+  // Back link to wherever the profile was opened from. Hidden on a direct/deep
+  // load (location.key === 'default') and when opened from the global search,
+  // which navigates here with { fromSearch: true }.
+  const showBack = location.key !== 'default' && !location.state?.fromSearch
+  const backLink = showBack ? (
+    <>
+      <button
+        type="button"
+        className="muted"
+        onClick={() => navigate(-1)}
+        style={{ fontSize: 14, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
+      >
+        ← Back
+      </button>
+      <div className="spacer" />
+    </>
+  ) : null
+
   if (loading) {
     return (
       <div className="container container-narrow">
-        <Link to="/" className="muted" style={{ fontSize: 14 }}>← Back to browse</Link>
-        <div className="spacer" />
+        {backLink}
         <ProfileSkeleton />
       </div>
     )
@@ -95,8 +114,7 @@ export default function UserProfile() {
 
   return (
     <div className="container container-narrow">
-      <Link to="/" className="muted" style={{ fontSize: 14 }}>← Back to browse</Link>
-      <div className="spacer" />
+      {backLink}
       {profile ? (
         <ProfileView
           profile={profile}

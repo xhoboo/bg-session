@@ -38,8 +38,7 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
   return (
     <form onSubmit={handleSubmit}>
       {/* Public profile — visible to everyone */}
-      <h2 className="section-title" style={{ marginTop: 0, marginBottom: 4 }}>Public Profile</h2>
-      <p className="subtitle" style={{ marginBottom: 12 }}>Shown to everyone — on your profile and in sessions.</p>
+      <h2 className="section-title" style={{ marginTop: 0, marginBottom: 12 }}>Public Profile</h2>
       <div className="card">
         <AvatarUpload
           label="Avatar"
@@ -84,7 +83,7 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
 
         <GameTagInput
           label="Board Games You Own"
-          hint="optional — it's fine to own none"
+          hint="optional"
           items={form.ownedGames}
           onChange={setField('ownedGames')}
           max={30}
@@ -92,10 +91,9 @@ export default function ProfileForm({ initial, submitLabel, busy, onSubmit }) {
       </div>
 
       {/* Confirmed participants only — shared once a session is confirmed */}
-      <h2 className="section-title" style={{ marginBottom: 4 }}>
+      <h2 className="section-title" style={{ marginBottom: 12 }}>
         Confirmed Participants Only <span className="field-hint">— optional</span>
       </h2>
-      <p className="subtitle" style={{ marginBottom: 12 }}>Only shared with players once a session is confirmed, so they can recognize you.</p>
       <div className="card">
         <AvatarUpload
           label="In-Person Photo"

@@ -86,9 +86,6 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
             />
           </div>
         </div>
-        <div className="field-hint">
-          At least 3. If fewer than the minimum confirm by the start time, the session is automatically canceled and removed.
-        </div>
       </div>
 
       <div className="form-section">
@@ -175,7 +172,7 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
 
         <div className="form-group">
           <label className="field-label" htmlFor="mapsUrl">
-            Google Maps Link <span className="field-hint">— optional, pin the exact spot so guests can navigate</span>
+            Google Maps Link <span className="field-hint">— optional - private</span>
           </label>
           <input
             id="mapsUrl"
@@ -191,8 +188,8 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
         <div className="form-section-title">Board games</div>
 
         <GameTagInput
-          label="Board Games"
-          hint="what you plan to bring/play — add at least one"
+          label=""
+          hint="what you plan to bring"
           items={(form.boardGames || '').split(',').map((s) => s.trim()).filter(Boolean)}
           onChange={(games) => setForm((f) => ({ ...f, boardGames: games.join(', ') }))}
           max={20}
@@ -200,10 +197,9 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
       </div>
 
       <div className="form-section">
-        <div className="form-section-title">Joining</div>
+        <div className="form-section-title">Join Type</div>
 
         <div className="form-group">
-          <label className="field-label" htmlFor="type">Join Type</label>
           <select id="type" value={form.sessionType} onChange={update('sessionType')}>
             <option value="approval">Approval required — you review each request</option>
             <option value="open">Open — guests are confirmed instantly</option>

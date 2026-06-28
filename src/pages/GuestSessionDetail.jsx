@@ -69,8 +69,6 @@ export default function GuestSessionDetail() {
 
   return (
     <div className="container container-narrow">
-      <Link to="/" className="muted" style={{ fontSize: 14 }}>{t('← Back to Browse')}</Link>
-
       <div className="row-between" style={{ marginTop: 12 }}>
         <h1 style={{ marginBottom: 0 }}>{session.title}</h1>
         <span style={{ display: 'inline-flex', gap: 6, flex: 'none' }}>
@@ -130,12 +128,6 @@ export default function GuestSessionDetail() {
       {/* Join CTA — opens the sign-in popup. */}
       {!finished && (
         <div className="card">
-          <h2 style={{ marginTop: 0, fontSize: 18 }}>
-            {isFull ? t('Session full — join the waitlist?') : t('Want to join?')}
-          </h2>
-          <p className="muted" style={{ marginTop: 0 }}>
-            {t('Sign in or create an account to join this session and message the host.')}
-          </p>
           <button className="btn btn-primary btn-block" onClick={promptAuth}>{t('Sign In to Join')}</button>
         </div>
       )}

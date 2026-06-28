@@ -56,7 +56,7 @@ export default function GameTagInput({ label, hint, items, onChange, max }) {
   return (
     <div className="form-group">
       <label className="field-label">
-        {label} {hint && <span className="field-hint">— {hint}</span>}
+        {label} {hint && <span className="field-hint">{label ? '— ' : ''}{hint}</span>}
       </label>
 
       {list.length > 0 && (

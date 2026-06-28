@@ -56,7 +56,6 @@ export default function GameDetail() {
   if (loading) {
     return (
       <div className="container container-narrow" role="status" aria-label="Loading game">
-        <Link to="/" className="muted" style={{ fontSize: 14 }}>← Back to browse</Link>
         <Skeleton width="60%" height={25} style={{ marginTop: 14 }} />
         <Skeleton width={180} height={34} radius={10} style={{ marginTop: 14 }} />
         <Skeleton width="45%" height={17} style={{ marginTop: 26 }} />
@@ -71,7 +70,6 @@ export default function GameDetail() {
 
   return (
     <div className="container container-narrow">
-      <Link to="/" className="muted" style={{ fontSize: 14 }}>← Back to browse</Link>
       {/* Name + type label. overflowWrap/wordBreak let very long names wrap
           instead of pushing the page wider than the screen (e.g. iPhone SE). */}
       <h1 style={{ marginTop: 12, marginBottom: 4, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>

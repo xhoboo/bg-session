@@ -109,10 +109,6 @@ export default function InviteMemberBox({ sessionId }) {
     <>
       <h2 className="section-title">{t('Invite a Member')}</h2>
       <div className="card stack">
-        <p className="muted" style={{ margin: 0, fontSize: 13 }}>
-          {t('Invite someone to this session. They still join through the normal flow, so the host stays in control.')}
-        </p>
-
         <div className="invite-search">
           <input
             type="text"

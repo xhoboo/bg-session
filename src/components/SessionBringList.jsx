@@ -47,9 +47,6 @@ export default function SessionBringList({ sessionId, brought, setBrought, sessi
   return (
     <>
       <h2 className="section-title">{t('Bring a Board Game')}</h2>
-      <p className="muted" style={{ marginTop: -4 }}>
-        {t("Add what you can bring and it shows in the board games list above, so nobody doubles up.")}
-      </p>
       {quickAdd.length > 0 && (
         <>
           <div className="field-hint" style={{ marginBottom: 6 }}>{t('Quick add from your collection')}</div>

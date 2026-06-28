@@ -44,14 +44,14 @@ export default function GlobalSearch() {
             .from('profiles')
             .select('id, nickname, display_name, avatar_url')
             .or(`nickname.ilike.%${safe}%,display_name.ilike.%${safe}%`)
-            .limit(6)
+            .limit(5)
         : Promise.resolve({ data: [] }),
       supabase
         .from('board_games')
         .select('name, category')
         .ilike('name', `%${q}%`)
         .order('name')
-        .limit(6),
+        .limit(5),
     ])
     if (q !== latest.current) return
     setMembers(memRes.data ?? [])
@@ -83,7 +83,8 @@ export default function GlobalSearch() {
 
   const goMember = (m) => {
     close()
-    navigate(userPath(m.nickname || m.id))
+    // Flag the source so UserProfile knows not to show a back button.
+    navigate(userPath(m.nickname || m.id), { state: { fromSearch: true } })
   }
 
   const goGame = (g) => {
