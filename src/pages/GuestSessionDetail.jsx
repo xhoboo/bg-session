@@ -174,7 +174,7 @@ export default function GuestSessionDetail() {
           (no profile-page access). */}
       {plays.length > 0 && (
         <>
-          <h2 className="section-title">{t('Game Results')}</h2>
+          <h2 className="section-title">{t('Game Scores')}</h2>
           <GameResultsAccordion plays={plays} catalog={catalog} linkPlayers={false} />
         </>
       )}

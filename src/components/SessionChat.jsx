@@ -5,10 +5,13 @@ import { useAuth } from '../context/AuthContext'
 import Avatar from './Avatar'
 import { timeAgo } from '../lib/format'
 import { userPath } from '../lib/nickname'
+import AccordionSection from './AccordionSection'
 
 // Group chat for a session, shown to confirmed participants (RLS-gated). Once
 // the session is finished the thread becomes read-only history (`readOnly`).
-export default function SessionChat({ sessionId, readOnly = false }) {
+// `embedded` renders the thread as a collapsible section inside a finished
+// session's history group (no standalone heading or card frame).
+export default function SessionChat({ sessionId, readOnly = false, embedded = false }) {
   const { user } = useAuth()
   const [messages, setMessages] = useState([])
   const [authors, setAuthors] = useState({}) // userId -> profile
@@ -103,11 +106,9 @@ export default function SessionChat({ sessionId, readOnly = false }) {
     }
   }
 
-  return (
+  const body = (
     <>
-      <h2 className="section-title">Session Chat</h2>
-      <div className="card">
-        <div className="chat-thread">
+      <div className="chat-thread">
           {messages.length === 0 ? (
             <p className="muted center" style={{ margin: 'auto' }}>No messages yet — start the conversation.</p>
           ) : (
@@ -147,7 +148,17 @@ export default function SessionChat({ sessionId, readOnly = false }) {
             )}
           </>
         )}
-      </div>
+    </>
+  )
+
+  if (embedded) {
+    return <AccordionSection title="Session Chat">{body}</AccordionSection>
+  }
+
+  return (
+    <>
+      <h2 className="section-title">Session Chat</h2>
+      <div className="card">{body}</div>
     </>
   )
 }

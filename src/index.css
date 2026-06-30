@@ -361,7 +361,7 @@ textarea { resize: vertical; min-height: 80px; }
 .btn-primary:hover:not(:disabled) { background: #b15f40; }
 .btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--slate-200); }
 .btn-secondary:hover:not(:disabled) { background: var(--slate-50); }
-.btn-danger { background: var(--surface); color: var(--red-600); border-color: var(--slate-200); }
+.btn-danger { background: var(--surface); color: var(--red-600); border-color: var(--red-600); }
 .btn-danger:hover:not(:disabled) { background: var(--red-soft); }
 .btn-google { background: var(--field); color: var(--ink); border-color: var(--slate-200); font-family: var(--font-body); font-weight: 600; }
 .btn-google:hover:not(:disabled) { background: var(--slate-50); }
@@ -401,6 +401,10 @@ textarea { resize: vertical; min-height: 80px; }
    buttons pushed to the right edge beside it. */
 .detail-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .detail-actions-right { margin-left: auto; display: flex; gap: 8px; }
+/* Finished session's overall rating, pushed to the right edge beside Share. */
+.detail-rating { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+.detail-rating strong { font-size: 15px; }
+.detail-rating .muted { font-size: 13px; }
 
 .address-box { background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius-sm); padding: 13px; }
 .address-locked { background: var(--neutral-soft); border: 1px dashed var(--slate-200); border-radius: var(--radius-sm); padding: 13px; color: var(--slate-600); }
@@ -487,7 +491,7 @@ textarea { resize: vertical; min-height: 80px; }
 .invite-result { display: flex; align-items: center; gap: 10px; padding: 8px 10px; }
 .invite-result + .invite-result { border-top: 1px solid var(--slate-100); }
 .invite-result-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 14px var(--font-body); }
-.invite-list { display: flex; flex-direction: column; gap: 8px; }
+.invite-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 .invite-row { display: flex; align-items: center; gap: 8px; }
 .invite-row .user-link { flex: 1; min-width: 0; }
 
@@ -675,11 +679,43 @@ textarea { resize: vertical; min-height: 80px; }
 .user-link.user-link-static { cursor: default; }
 .user-link.user-link-static:hover { text-decoration: none; }
 
-/* Participant ("who's coming") cards */
+/* Participant ("who's coming") cards — a single connected list with hairline
+   dividers, no gaps between rows. `-bare` drops the outer frame when the list
+   sits inside a finished session's history accordion. */
 .participant-card { display: flex; align-items: center; gap: 12px; padding: 12px; }
 .participant-card .user-link { flex-wrap: wrap; }
-.participants-list { display: flex; flex-direction: column; gap: 9px; }
-.participants-list .card + .card { margin-top: 0; }
+.participants-list {
+  display: flex; flex-direction: column;
+  border: 1px solid var(--slate-200); border-radius: var(--radius);
+  box-shadow: var(--shadow); overflow: hidden;
+}
+.participants-list .participant-card.card { border: none; border-radius: 0; box-shadow: none; margin-top: 0; }
+.participants-list .participant-card + .participant-card { border-top: 1px solid var(--slate-200); }
+.participants-list-bare { border: none; box-shadow: none; border-radius: 0; }
+
+/* ---------- Finished session history accordion ----------
+   Reviews, Game Scores, Participants and Session Chat fold into one connected
+   group, divided by hairlines; each header toggles its own body (collapsed by
+   default). */
+.section-group {
+  margin-top: 16px;
+  border: 1px solid var(--slate-200); border-radius: var(--radius);
+  box-shadow: var(--shadow); overflow: hidden; background: var(--surface);
+}
+.section-acc + .section-acc { border-top: 1px solid var(--slate-200); }
+.section-acc-head {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 15px 16px; background: none; border: none; cursor: pointer; text-align: left;
+  font-family: var(--font-head); font-weight: 700; font-size: 16px; color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.section-acc-head:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: -2px; }
+.section-acc-title { display: inline-flex; align-items: center; gap: 7px; min-width: 0; }
+.section-acc-count { font-family: var(--font-body); font-weight: 600; font-size: 13px; color: var(--slate-500); }
+.section-acc-chevron { flex: none; color: var(--slate-500); font-size: 14px; transition: transform 0.18s ease; }
+.section-acc.is-open .section-acc-chevron { transform: rotate(180deg); }
+.section-acc-body { padding: 0 16px 16px; }
+.section-acc-body.is-flush { padding: 0; }
 
 /* ---------- Star rating ---------- */
 .stars { display: inline-flex; align-items: center; line-height: 1; }
@@ -1040,6 +1076,9 @@ html[data-theme="dark"] .skeleton::after {
   color: var(--accent-ink); background: var(--accent-soft);
   border-radius: 999px; padding: 1px 8px; margin-left: 8px; vertical-align: middle;
 }
+/* When the replay tag (#1, #2…) leads the game name (accordion header) it sits
+   before it; the trailing variant beside the mode label keeps its left gap. */
+.score-card-game .score-card-replay { margin-left: 0; margin-right: 8px; }
 .score-card-game .chip-bring-name { font-size: 16px; }
 .score-card-mode { font-size: 12px; color: var(--slate-600); margin-top: 2px; }
 .score-card-actions { display: flex; gap: 8px; flex-shrink: 0; }
@@ -1051,6 +1090,9 @@ html[data-theme="dark"] .skeleton::after {
   border: 1px solid var(--slate-200); border-radius: var(--radius);
   box-shadow: var(--shadow); overflow: hidden;
 }
+/* Inside a finished session's history accordion the group has no frame of its
+   own — the section provides it. */
+.score-accordion-bare { border: none; box-shadow: none; border-radius: 0; }
 .score-accordion .score-card-acc { border: none; border-radius: 0; box-shadow: none; }
 .score-accordion .score-card-acc + .score-card-acc {
   margin-top: 0; border-top: 1px solid var(--slate-200);

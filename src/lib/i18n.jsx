@@ -284,6 +284,7 @@ const ID = {
   '· full': '· penuh',
   '· min {n}': '· min {n}',
   'Ratings & Reviews': 'Rating & Ulasan',
+  Reviews: 'Ulasan',
   'No ratings yet — be the first.': 'Belum ada rating — jadi yang pertama.',
   '· {n} ratings': '· {n} rating',
   'Your Rating': 'Ratingmu',
@@ -351,7 +352,7 @@ const ID = {
   // ---- Game scores ----
   Scores: 'Skor',
   Score: 'Skor',
-  'Game Results': 'Hasil Permainan',
+  'Game Scores': 'Skor Permainan',
   'Record Scores': 'Catat Skor',
   'Record a Result': 'Catat Hasil',
   'No results recorded yet.': 'Belum ada hasil yang dicatat.',

@@ -183,12 +183,12 @@ export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayI
           }}
         >
           <div className="score-card-game">
-            {canonical || play.game_name}
             {replayTotal > 1 && (
               <span className="score-card-replay" title={t('Play {n} of {total}', { n: replayIndex, total: replayTotal })}>
                 #{replayIndex}
               </span>
             )}
+            {canonical || play.game_name}
           </div>
           <span className="score-card-chevron" aria-hidden="true">▾</span>
         </div>

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import { userPath } from '../lib/nickname'
 import Avatar from './Avatar'
+import AccordionSection from './AccordionSection'
 
 // The session's people (host + approved guests). Shown to every signed-in member
 // — including ones who aren't in this session — so the base list comes from the
@@ -17,8 +18,10 @@ import Avatar from './Avatar'
 // display fields, with nothing private to hide on the client.
 //
 // `finished` switches the heading to "Participants" (a past session's record)
-// from "Who's Coming" (an upcoming one).
-export default function SessionParticipants({ sessionId, seriesId, finished }) {
+// from "Who's Coming" (an upcoming one). `embedded` renders the list as a
+// collapsible section inside a finished session's history group (no standalone
+// heading or outer frame — the accordion provides them).
+export default function SessionParticipants({ sessionId, seriesId, finished, embedded = false }) {
   const { user } = useAuth()
   const { t } = useLang()
   const [people, setPeople] = useState([])
@@ -75,33 +78,45 @@ export default function SessionParticipants({ sessionId, seriesId, finished }) {
 
   if (people.length === 0) return null
 
+  const list = (
+    <div className={'participants-list' + (embedded ? ' participants-list-bare' : '')}>
+      {people.map((p) => {
+        const name = p.nickname || p.display_name || t('Player')
+        const extras = [p.real_name].filter(Boolean)
+        return (
+          <div className="participant-card card" key={p.id}>
+            <Avatar name={name} src={p.photo_url || p.avatar_url} size={52} />
+            <div style={{ minWidth: 0 }}>
+              <Link to={userPath(p.nickname || p.id)} className="user-link">
+                {name}
+                {p.isHost && <span className="badge badge-area">{t('Host')}</span>}
+                {!p.isHost && cohostIds.has(p.id) && <span className="badge badge-cohost">{t('Co-host')}</span>}
+                {p.id === user.id && <span className="muted" style={{ fontWeight: 400 }}>· {t('you')}</span>}
+              </Link>
+              {extras.length > 0 && (
+                <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>{extras.join(' · ')}</div>
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+
+  if (embedded) {
+    return (
+      <AccordionSection title={t('Participants')} count={people.length} flush>
+        {list}
+      </AccordionSection>
+    )
+  }
+
   return (
     <>
       <h2 className="section-title">
         {finished ? t('Participants') : t("Who's Coming")} ({people.length})
       </h2>
-      <div className="participants-list">
-        {people.map((p) => {
-          const name = p.nickname || p.display_name || t('Player')
-          const extras = [p.real_name].filter(Boolean)
-          return (
-            <div className="participant-card card" key={p.id}>
-              <Avatar name={name} src={p.photo_url || p.avatar_url} size={52} />
-              <div style={{ minWidth: 0 }}>
-                <Link to={userPath(p.nickname || p.id)} className="user-link">
-                  {name}
-                  {p.isHost && <span className="badge badge-area">{t('Host')}</span>}
-                  {!p.isHost && cohostIds.has(p.id) && <span className="badge badge-cohost">{t('Co-host')}</span>}
-                  {p.id === user.id && <span className="muted" style={{ fontWeight: 400 }}>· {t('you')}</span>}
-                </Link>
-                {extras.length > 0 && (
-                  <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>{extras.join(' · ')}</div>
-                )}
-              </div>
-            </div>
-          )
-        })}
-      </div>
+      {list}
     </>
   )
 }

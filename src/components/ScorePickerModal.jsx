@@ -141,7 +141,7 @@ export default function ScorePickerModal() {
           <div className="score-game-picker">
             {hasResults && (
               <button type="button" className="score-game-btn" onClick={goToResults}>
-                <span className="score-game-name">🏆 {t('Game Results')}</span>
+                <span className="score-game-name">🏆 {t('Game Scores')}</span>
                 <span className="score-game-add">{t('See scores you can still edit')}</span>
               </button>
             )}

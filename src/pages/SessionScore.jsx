@@ -172,7 +172,7 @@ export default function SessionScore() {
 
   return (
     <div className="container container-narrow">
-      <h1 style={{ marginTop: 12, marginBottom: 4 }}>{t('Game Results')}</h1>
+      <h1 style={{ marginTop: 12, marginBottom: 4 }}>{t('Game Scores')}</h1>
       <p className="subtitle" style={{ marginTop: 0 }}>{session.title}</p>
 
       {/* Scoring-window banner */}
@@ -427,7 +427,7 @@ function RecordForm({ playId, gameName, participants, busy, setBusy, onSubmitted
     <div className="card record-form">
       <div className="row-between">
         <h2 style={{ margin: 0, fontSize: 18 }}>{gameName}</h2>
-        <button type="button" className="btn btn-secondary btn-sm" onClick={onDiscard} disabled={busy}>
+        <button type="button" className={'btn btn-sm ' + (editMode ? 'btn-secondary' : 'btn-danger')} onClick={onDiscard} disabled={busy}>
           {editMode ? t('Cancel') : t('Discard')}
         </button>
       </div>

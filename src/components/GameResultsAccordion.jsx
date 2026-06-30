@@ -8,13 +8,13 @@ import { groupPlaysByGame } from '../lib/format'
 // guests). When `isEditable(play)` is true, that card's expanded body shows the
 // recorder's Edit/Discard buttons (onEdit/onCancel) — used on the score page
 // within the 30-minute edit window.
-export default function GameResultsAccordion({ plays, catalog, linkPlayers = true, isEditable, onEdit, onCancel }) {
+export default function GameResultsAccordion({ plays, catalog, linkPlayers = true, isEditable, onEdit, onCancel, bare = false }) {
   const ordered = groupPlaysByGame(plays)
     .slice()
     .sort((a, b) => new Date(a.play.submitted_at) - new Date(b.play.submitted_at))
 
   return (
-    <div className="score-accordion">
+    <div className={'score-accordion' + (bare ? ' score-accordion-bare' : '')}>
       {ordered.map(({ play, index, total }) => {
         const editable = isEditable ? isEditable(play) : false
         return (

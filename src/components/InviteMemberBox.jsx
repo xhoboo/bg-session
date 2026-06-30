@@ -108,63 +108,61 @@ export default function InviteMemberBox({ sessionId }) {
   return (
     <>
       <h2 className="section-title">{t('Invite a Member')}</h2>
-      <div className="card stack">
-        <div className="invite-search">
-          <input
-            type="text"
-            placeholder={t('Search a member by name…')}
-            value={query}
-            autoComplete="off"
-            onChange={(e) => onChange(e.target.value)}
-          />
-          {query.trim() && (
-            <div className="invite-results">
-              {searching ? (
-                <p className="search-hint">{t('Searching…')}</p>
-              ) : results.length === 0 ? (
-                <p className="search-hint">{t('No members match “{term}”.', { term: query.trim() })}</p>
-              ) : (
-                results.map((m) => {
-                  const nm = m.nickname || m.display_name || t('Player')
-                  return (
-                    <div key={m.id} className="invite-result">
-                      <Avatar name={nm} src={m.avatar_url} size={30} />
-                      <span className="invite-result-name">{nm}</span>
-                      <button type="button" className="btn btn-primary btn-sm" onClick={() => invite(m)} disabled={busy}>
-                        {t('Invite')}
-                      </button>
-                    </div>
-                  )
-                })
-              )}
-            </div>
-          )}
-        </div>
-
-        {msg && <div className="alert alert-success" style={{ margin: 0 }}>{msg}</div>}
-        {error && <div className="alert alert-error" style={{ margin: 0 }}>{error}</div>}
-
-        {invites.length > 0 && (
-          <div className="invite-list">
-            {invites.map((iv) => {
-              const nm = iv.invitee?.nickname || iv.invitee?.display_name || t('Player')
-              const canRescind = iv.status === 'pending' && iv.inviter_id === user.id
-              return (
-                <div key={iv.id} className="invite-row">
-                  <Link to={userPath(iv.invitee?.nickname || iv.invitee_id)} className="user-link">
-                    <Avatar name={nm} src={iv.invitee?.avatar_url} size={24} />
-                    {nm}
-                  </Link>
-                  <span className="muted" style={{ fontSize: 13 }}>{statusLabel(iv.status)}</span>
-                  {canRescind && (
-                    <button type="button" className="chip-x" onClick={() => rescind(iv.id)} disabled={busy} aria-label={t('Rescind Invite')}>×</button>
-                  )}
-                </div>
-              )
-            })}
+      <div className="invite-search">
+        <input
+          type="text"
+          placeholder={t('Search a member by name…')}
+          value={query}
+          autoComplete="off"
+          onChange={(e) => onChange(e.target.value)}
+        />
+        {query.trim() && (
+          <div className="invite-results">
+            {searching ? (
+              <p className="search-hint">{t('Searching…')}</p>
+            ) : results.length === 0 ? (
+              <p className="search-hint">{t('No members match “{term}”.', { term: query.trim() })}</p>
+            ) : (
+              results.map((m) => {
+                const nm = m.nickname || m.display_name || t('Player')
+                return (
+                  <div key={m.id} className="invite-result">
+                    <Avatar name={nm} src={m.avatar_url} size={30} />
+                    <span className="invite-result-name">{nm}</span>
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => invite(m)} disabled={busy}>
+                      {t('Invite')}
+                    </button>
+                  </div>
+                )
+              })
+            )}
           </div>
         )}
       </div>
+
+      {msg && <div className="alert alert-success" style={{ margin: '10px 0 0' }}>{msg}</div>}
+      {error && <div className="alert alert-error" style={{ margin: '10px 0 0' }}>{error}</div>}
+
+      {invites.length > 0 && (
+        <div className="invite-list">
+          {invites.map((iv) => {
+            const nm = iv.invitee?.nickname || iv.invitee?.display_name || t('Player')
+            const canRescind = iv.status === 'pending' && iv.inviter_id === user.id
+            return (
+              <div key={iv.id} className="invite-row">
+                <Link to={userPath(iv.invitee?.nickname || iv.invitee_id)} className="user-link">
+                  <Avatar name={nm} src={iv.invitee?.avatar_url} size={24} />
+                  {nm}
+                </Link>
+                <span className="muted" style={{ fontSize: 13 }}>{statusLabel(iv.status)}</span>
+                {canRescind && (
+                  <button type="button" className="chip-x" onClick={() => rescind(iv.id)} disabled={busy} aria-label={t('Rescind Invite')}>×</button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </>
   )
 }

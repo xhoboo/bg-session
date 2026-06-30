@@ -17,6 +17,7 @@ import { SessionDetailSkeleton } from '../components/Skeleton'
 import ShareSessionButton from '../components/ShareSessionButton'
 import ShareScoreButton from '../components/ShareScoreButton'
 import GameResultsAccordion from '../components/GameResultsAccordion'
+import AccordionSection from '../components/AccordionSection'
 import ConfirmModal from '../components/ConfirmModal'
 import { userPath } from '../lib/nickname'
 
@@ -354,6 +355,86 @@ export default function SessionDetail() {
   const avgRating = ratings.length
     ? (ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length).toFixed(1)
     : null
+  // Reviews are attributed to their writer; the numeric ratings stay anonymous.
+  const othersReviews = ratings.filter((r) => r.user_id !== user.id && r.review)
+  // Arriving from the home "rate" card (…#review) opens the Reviews section.
+  const openReview = typeof window !== 'undefined' && window.location.hash === '#review'
+
+  // The rate-yourself + read-others block that fills the finished session's
+  // "Reviews" accordion. The numeric average lives separately, up by Share.
+  const reviewsContent = (
+    <>
+      {isParticipant && (
+        <div>
+          {/* Rating: editable until submitted, then permanent. Your score is
+              shown only to you; to everyone else your rating is anonymous. */}
+          <div className="field-label" style={{ marginBottom: 8 }}>
+            {myRating ? t('Your Rating') : t('Rate This Session')}
+            {!myRating && <span className="field-hint"> {t('— required for participants, and can’t be changed once sent')}</span>}
+          </div>
+          <div className="rating-row" style={{ marginBottom: 12 }}>
+            {myRating ? (
+              <StarRating value={myRating.rating} size={18} />
+            ) : (
+              <>
+                <StarRating value={ratingValue} onChange={setRatingValue} />
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={submitRating}
+                  disabled={busy || ratingValue < 1}
+                  title={ratingValue < 1 ? t('Pick a star rating first') : t('Submit Rating')}
+                >
+                  {t('Submit')}
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Review: a separate, optional step that's only available once
+              you've rated. Stays editable until sent, then read-only. */}
+          {myRating?.review ? (
+            <div className="muted" style={{ fontSize: 14 }}>“{myRating.review}”</div>
+          ) : myRating ? (
+            <div className="review-input-wrap">
+              <textarea
+                ref={reviewRef}
+                placeholder={t('Add a review (optional)…')}
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+              />
+              <button
+                className="btn btn-primary btn-sm review-send-btn"
+                onClick={submitReview}
+                disabled={busy || !reviewText.trim()}
+              >
+                {t('Send Review')}
+              </button>
+            </div>
+          ) : (
+            <p className="muted" style={{ margin: 0, fontSize: 14 }}>{t('You can add a written review after you submit your rating.')}</p>
+          )}
+        </div>
+      )}
+
+      {othersReviews.length > 0 && (
+        <div style={{
+          marginTop: isParticipant ? 14 : 0,
+          borderTop: isParticipant ? '1px solid var(--slate-100)' : 'none',
+          paddingTop: isParticipant ? 14 : 0,
+        }}>
+          {othersReviews.map((r) => (
+            <div className="review-item" key={r.id}>
+              <Link to={userPath(r.rater?.nickname || r.user_id)} className="user-link">
+                <Avatar name={r.rater?.nickname || r.rater?.display_name || t('Player')} src={r.rater?.avatar_url} size={24} />
+                {r.rater?.nickname || r.rater?.display_name || t('Player')}
+              </Link>
+              <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>{r.review}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  )
 
   return (
     <div className="container container-narrow">
@@ -386,6 +467,15 @@ export default function SessionDetail() {
           <ShareScoreButton session={session} />
         ) : (
           <ShareSessionButton session={session} address={address} hostName={session.host?.display_name} />
+        )}
+        {/* On a finished session the overall rating sits up here, right-aligned
+            beside Share — no card. The reviews themselves live below. */}
+        {finished && ratings.length >= 1 && (
+          <div className="detail-rating">
+            <StarRating value={Math.round(avgRating)} showValue={false} size={15} />
+            <strong>{avgRating}/10</strong>
+            {ratings.length >= 3 && <span className="muted">{t('· {n} ratings', { n: ratings.length })}</span>}
+          </div>
         )}
         {isHost && !started && (
           <div className="detail-actions-right">
@@ -482,105 +572,13 @@ export default function SessionDetail() {
         </div>
       </div>
 
-      {/* ---------------- Game results / scores (once the session has started) ----------------
-          The session's recorded results as a collapsed-by-default accordion;
-          tapping a game expands its score breakdown. Recording lives on the FAB. */}
-      {started && plays.length > 0 && (
+      {/* ---------------- Game scores (in-progress session) ----------------
+          While the session is under way, its recorded results show as a normal
+          section. Once finished they fold into the history accordion below. */}
+      {started && !finished && plays.length > 0 && (
         <>
-          <h2 className="section-title">{t('Game Results')}</h2>
+          <h2 className="section-title">{t('Game Scores')}</h2>
           <GameResultsAccordion plays={plays} catalog={catalog} />
-        </>
-      )}
-
-      {/* ---------------- Ratings & reviews (finished sessions) ----------------
-          Shown to everyone for a finished session — a non-participant sees the
-          average and the written reviews. Only a participant gets the rate /
-          review input, so the card stays useful (and visible) for them even
-          before anyone has rated. */}
-      {finished && (isParticipant || ratings.length > 0) && (
-        <>
-          <h2 className="section-title">{t('Ratings & Reviews')}</h2>
-          <div className="card stack">
-            {ratings.length >= 1 ? (
-              <div className="rating-row">
-                <StarRating value={Math.round(avgRating)} showValue={false} />
-                <strong>{avgRating}/10</strong>
-                {/* Hide the count below 3 ratings: with only the average shown and
-                    no count, a lone rating can't be singled out. */}
-                {ratings.length >= 3 && <span className="muted">{t('· {n} ratings', { n: ratings.length })}</span>}
-              </div>
-            ) : (
-              <p className="muted" style={{ margin: 0 }}>{t('No ratings yet — be the first.')}</p>
-            )}
-
-            {isParticipant && (
-              <div style={{ borderTop: '1px solid var(--slate-100)', paddingTop: 14 }}>
-                {/* Rating: editable until submitted, then permanent. Your score is
-                    shown only to you; to everyone else your rating is anonymous. */}
-                <div className="field-label" style={{ marginBottom: 8 }}>
-                  {myRating ? t('Your Rating') : t('Rate This Session')}
-                  {!myRating && <span className="field-hint"> {t('— required for participants, and can’t be changed once sent')}</span>}
-                </div>
-                <div className="rating-row" style={{ marginBottom: 12 }}>
-                  {myRating ? (
-                    <StarRating value={myRating.rating} size={18} />
-                  ) : (
-                    <>
-                      <StarRating value={ratingValue} onChange={setRatingValue} />
-                      {/* Submit button sits right beside the stars it sends. */}
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={submitRating}
-                        disabled={busy || ratingValue < 1}
-                        title={ratingValue < 1 ? t('Pick a star rating first') : t('Submit Rating')}
-                      >
-                        {t('Submit')}
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                {/* Review: a separate, optional step that's only available once
-                    you've rated. Stays editable until sent, then read-only. */}
-                {myRating?.review ? (
-                  <div className="muted" style={{ fontSize: 14 }}>“{myRating.review}”</div>
-                ) : myRating ? (
-                  <div className="review-input-wrap">
-                    <textarea
-                      ref={reviewRef}
-                      placeholder={t('Add a review (optional)…')}
-                      value={reviewText}
-                      onChange={(e) => setReviewText(e.target.value)}
-                    />
-                    <button
-                      className="btn btn-primary btn-sm review-send-btn"
-                      onClick={submitReview}
-                      disabled={busy || !reviewText.trim()}
-                    >
-                      {t('Send Review')}
-                    </button>
-                  </div>
-                ) : (
-                  <p className="muted" style={{ margin: 0, fontSize: 14 }}>{t('You can add a written review after you submit your rating.')}</p>
-                )}
-              </div>
-            )}
-
-            {/* Reviews are attributed to the writer; the numeric ratings stay anonymous. */}
-            {ratings.filter((r) => r.user_id !== user.id && r.review).length > 0 && (
-              <div>
-                {ratings.filter((r) => r.user_id !== user.id && r.review).map((r) => (
-                  <div className="review-item" key={r.id}>
-                    <Link to={userPath(r.rater?.nickname || r.user_id)} className="user-link">
-                      <Avatar name={r.rater?.nickname || r.rater?.display_name || t('Player')} src={r.rater?.avatar_url} size={24} />
-                      {r.rater?.nickname || r.rater?.display_name || t('Player')}
-                    </Link>
-                    <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>{r.review}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </>
       )}
 
@@ -740,22 +738,44 @@ export default function SessionDetail() {
         </>
       )}
 
-      {/* The participant list is shown to every signed-in member, even ones who
-          aren't in this session. On a finished session it reads "Participants"
-          (history); on an upcoming one it's "Who's Coming". */}
-      <SessionParticipants sessionId={id} seriesId={session.series_id} finished={finished} />
+      {finished ? (
+        /* ---------------- Finished session history ----------------
+            Reviews, Game Scores, Participants and Session Chat collapse into one
+            connected group of accordions, divided by hairlines and closed by
+            default. */
+        <div className="section-group">
+          {(isParticipant || othersReviews.length > 0) && (
+            <AccordionSection title={t('Reviews')} defaultOpen={openReview}>
+              {reviewsContent}
+            </AccordionSection>
+          )}
+          {plays.length > 0 && (
+            <AccordionSection title={t('Game Scores')} flush>
+              <GameResultsAccordion plays={plays} catalog={catalog} bare />
+            </AccordionSection>
+          )}
+          <SessionParticipants sessionId={id} seriesId={session.series_id} finished embedded />
+          {isParticipant && <SessionChat sessionId={id} readOnly embedded />}
+        </div>
+      ) : (
+        <>
+          {/* The participant list is shown to every signed-in member, even ones
+              who aren't in this session — here it reads "Who's Coming". */}
+          <SessionParticipants sessionId={id} seriesId={session.series_id} finished={finished} />
 
-      {/* Confirmed participants can invite a specific member while the session
-          is still upcoming. */}
-      {isParticipant && !started && <InviteMemberBox sessionId={id} />}
+          {/* Confirmed participants can invite a specific member while the
+              session is still upcoming. */}
+          {isParticipant && !started && <InviteMemberBox sessionId={id} />}
 
-      {/* Bringing a game only makes sense before the session starts — once it's
-          under way the line-up is set, so the add-a-game form drops away. */}
-      {isParticipant && !started && (
-        <SessionBringList sessionId={id} brought={brought} setBrought={setBrought} sessionGames={listedGames} />
+          {/* Bringing a game only makes sense before the session starts — once
+              it's under way the line-up is set, so the form drops away. */}
+          {isParticipant && !started && (
+            <SessionBringList sessionId={id} brought={brought} setBrought={setBrought} sessionGames={listedGames} />
+          )}
+
+          {isParticipant && <SessionChat sessionId={id} readOnly={finished} />}
+        </>
       )}
-
-      {isParticipant && <SessionChat sessionId={id} readOnly={finished} />}
 
       {confirmCancel && (
         <ConfirmModal
