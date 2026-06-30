@@ -100,6 +100,18 @@ export default function GuestSessionDetail() {
         {hostName}
       </p>
 
+      {/* On a finished session the overall rating sits up here where Share lives
+          for signed-in users — left-aligned, no card. The reviews live below. */}
+      {finished && ratings.length >= 1 && (
+        <div className="detail-actions">
+          <div className="detail-rating" style={{ marginLeft: 0 }}>
+            <StarRating value={Math.round(avgRating)} showValue={false} size={15} />
+            <strong>{avgRating}/10</strong>
+            {ratings.length >= 3 && <span className="muted">{t('· {n} ratings', { n: ratings.length })}</span>}
+          </div>
+        </div>
+      )}
+
       <div className="card">
         <div className="stack">
           <div className="row-between"><span className="muted">{t('When')}</span><strong>{formatDateTime(session.starts_at)}</strong></div>
@@ -135,35 +147,20 @@ export default function GuestSessionDetail() {
         </div>
       </div>
 
-      {/* Ratings & reviews — shown to everyone (guests included) once a session
-          has finished. Reviewer names are masked to their first letter by the
-          RPC, so there's nothing to hide on the client. Sits above the game
-          results, which open on demand. */}
-      {finished && ratings.length > 0 && (
+      {/* Reviews — shown to everyone (guests included) once a session has
+          finished. The overall rating sits up top by the header; here we list
+          the written reviews. Reviewer names are masked to their first letter by
+          the RPC, and the avatar is hidden for guests — just the name shows. */}
+      {finished && reviews.length > 0 && (
         <>
-          <h2 className="section-title">{t('Ratings & Reviews')}</h2>
-          <div className="card stack">
-            <div className="rating-row">
-              <StarRating value={Math.round(avgRating)} showValue={false} />
-              <strong>{avgRating}/10</strong>
-              {/* Hide the count below 3 ratings: with only the average shown and
-                  no count, a lone rating can't be singled out. */}
-              {ratings.length >= 3 && <span className="muted">{t('· {n} ratings', { n: ratings.length })}</span>}
-            </div>
-
-            {reviews.length > 0 && (
-              <div style={{ borderTop: '1px solid var(--slate-100)', paddingTop: 14 }}>
-                {reviews.map((r, i) => (
-                  <div className="review-item" key={i}>
-                    <span className="user-link user-link-static">
-                      <Avatar name={r.masked_name} size={24} />
-                      {r.masked_name}
-                    </span>
-                    <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>{r.review}</div>
-                  </div>
-                ))}
+          <h2 className="section-title">{t('Reviews')}</h2>
+          <div className="card">
+            {reviews.map((r, i) => (
+              <div className="review-item" key={i}>
+                <span className="user-link user-link-static">{r.masked_name}</span>
+                <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>{r.review}</div>
               </div>
-            )}
+            ))}
           </div>
         </>
       )}

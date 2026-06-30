@@ -105,7 +105,7 @@ export default function SessionParticipants({ sessionId, seriesId, finished, emb
 
   if (embedded) {
     return (
-      <AccordionSection title={t('Participants')} count={people.length} flush>
+      <AccordionSection title={t('Participants')} flush>
         {list}
       </AccordionSection>
     )
