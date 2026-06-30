@@ -169,11 +169,9 @@ export default function ScorePickerModal() {
                     <span className="score-game-lock">
                       {n > 0 ? t('Played {n}×', { n }) + ' · ' : ''}{cdMins}m
                     </span>
-                  ) : (
-                    <span className="score-game-add">
-                      {n > 0 ? t('Played {n}×', { n }) + ' · ' : ''}{t('Record Scores')}
-                    </span>
-                  )}
+                  ) : n > 0 ? (
+                    <span className="score-game-add">{t('Played {n}×', { n })}</span>
+                  ) : null}
                 </button>
               )
             })}

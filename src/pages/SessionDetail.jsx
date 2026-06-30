@@ -765,8 +765,8 @@ export default function SessionDetail() {
       {confirmCancel && (
         <ConfirmModal
           message={session.series_id
-            ? t("End this weekly session? This removes the upcoming session, stops it repeating, and notifies the confirmed guests. Past weeks stay in everyone's history.")
-            : t('Cancel this session? This removes it for everyone and notifies the confirmed guests. This cannot be undone.')}
+            ? t('End this weekly session?')
+            : t('Cancel this session?')}
           confirmLabel={session.series_id ? t('End Session') : t('Cancel Session')}
           cancelLabel={t('Keep Session')}
           danger

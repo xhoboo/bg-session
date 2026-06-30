@@ -10,7 +10,7 @@ import { userPath } from '../lib/nickname'
 // profile) and `teams` (session_play_teams). Scores are public, so this renders
 // for anyone — only the recorder, inside the 30-minute window, gets the Edit and
 // Discard buttons (passed in as `onEdit` / `onCancel`).
-export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayIndex, replayTotal }) {
+export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayIndex, replayTotal, hideGameName }) {
   const { t } = useLang()
   const mode = scoreMode(play.mode)
   if (!mode) return null
@@ -109,18 +109,20 @@ export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayI
     <div className="card score-card">
       <div className="row-between" style={{ alignItems: 'flex-start' }}>
         <div>
-          <div className="score-card-game">
-            {canonical ? (
-              <Link to={`/games/${encodeURIComponent(canonical)}`} className="chip-bring-name">{canonical}</Link>
-            ) : (
-              play.game_name
-            )}
-            {replayTotal > 1 && (
-              <span className="score-card-replay" title={t('Play {n} of {total}', { n: replayIndex, total: replayTotal })}>
-                #{replayIndex}
-              </span>
-            )}
-          </div>
+          {(!hideGameName || replayTotal > 1) && (
+            <div className="score-card-game">
+              {!hideGameName && (canonical ? (
+                <Link to={`/games/${encodeURIComponent(canonical)}`} className="chip-bring-name">{canonical}</Link>
+              ) : (
+                play.game_name
+              ))}
+              {replayTotal > 1 && (
+                <span className="score-card-replay" title={t('Play {n} of {total}', { n: replayIndex, total: replayTotal })}>
+                  #{replayIndex}
+                </span>
+              )}
+            </div>
+          )}
           <div className="score-card-mode">
             {t(mode.label)}
             {mode.lowestOption && play.lowest_wins && <span className="muted"> · {t('Lowest score wins')}</span>}

@@ -61,13 +61,17 @@ export default function SettingsMenu() {
 
       {open && (
         <div className="settings-panel" role="menu">
-          <div className="settings-group">
-            <div className="settings-group-label">{t('Language')}</div>
-            <div className="settings-options">
-              <button className={'settings-opt' + (lang === 'en' ? ' is-on' : '')} onClick={() => setLang('en')}>EN</button>
-              <button className={'settings-opt' + (lang === 'id' ? ' is-on' : '')} onClick={() => setLang('id')}>ID</button>
+          {/* Language picker temporarily hidden — default stays EN. Keep this
+              block so it can be re-enabled later. */}
+          {false && (
+            <div className="settings-group">
+              <div className="settings-group-label">{t('Language')}</div>
+              <div className="settings-options">
+                <button className={'settings-opt' + (lang === 'en' ? ' is-on' : '')} onClick={() => setLang('en')}>EN</button>
+                <button className={'settings-opt' + (lang === 'id' ? ' is-on' : '')} onClick={() => setLang('id')}>ID</button>
+              </div>
             </div>
-          </div>
+          )}
           <div className="settings-group">
             <div className="settings-group-label">{t('Theme')}</div>
             <div className="settings-options">

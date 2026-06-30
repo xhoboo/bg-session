@@ -177,7 +177,7 @@ export default function SessionScore() {
   // One result card. Within 30 min of recording, the recorder gets Edit + Discard
   // buttons (only on the full page — the focused chip view is read-only). Editing
   // bumps submitted_at server-side, so the 30-min window resets after each save.
-  const renderCard = (p, index, total, allowEdit = true) => {
+  const renderCard = (p, index, total, allowEdit = true, hideGameName = false) => {
     const owned =
       allowEdit &&
       scoringOpen &&
@@ -189,6 +189,7 @@ export default function SessionScore() {
         key={p.id}
         play={p}
         catalog={catalog}
+        hideGameName={hideGameName}
         replayIndex={total > 1 ? index : undefined}
         replayTotal={total > 1 ? total : undefined}
         onEdit={owned ? setEditPlay : undefined}
@@ -214,13 +215,12 @@ export default function SessionScore() {
     const canonical = focus.name ? (catalog.get(focus.name.trim().toLowerCase()) || focus.name) : null
     return (
       <div className="container container-narrow">
-        <h1 style={{ marginTop: 12, marginBottom: 4 }}>{t('Game Results')}</h1>
-        <p className="subtitle" style={{ marginTop: 0 }}>{canonical || session.title}</p>
+        <h1 style={{ marginTop: 12, marginBottom: 16 }}>{canonical || session.title}</h1>
         {focus.plays.length === 0 ? (
           <p className="muted" style={{ marginTop: 16 }}>{t('No games have been scored yet.')}</p>
         ) : (
           <div className="stack" style={{ marginTop: 16 }}>
-            {focus.plays.map((p, i) => renderCard(p, i + 1, focus.plays.length, false))}
+            {focus.plays.map((p, i) => renderCard(p, i + 1, focus.plays.length, false, true))}
           </div>
         )}
         <Link to={`/sessions/${id}`} className="btn btn-secondary btn-block" style={{ marginTop: 20 }}>{t('← Back to Session')}</Link>

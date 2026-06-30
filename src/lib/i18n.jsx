@@ -337,10 +337,8 @@ const ID = {
   Player: 'Pemain',
   Guest: 'Tamu',
   'This session is full.': 'Sesi ini penuh.',
-  "End this weekly session? This removes the upcoming session, stops it repeating, and notifies the confirmed guests. Past weeks stay in everyone's history.":
-    'Akhiri sesi mingguan ini? Sesi mendatang dihapus, perulangan dihentikan, dan tamu yang sudah konfirmasi diberi tahu. Minggu-minggu sebelumnya tetap ada di riwayat semua orang.',
-  'Cancel this session? This removes it for everyone and notifies the confirmed guests. This cannot be undone.':
-    'Batalkan sesi ini? Sesi dihapus untuk semua orang dan tamu yang sudah konfirmasi diberi tahu. Tindakan ini tidak bisa dibatalkan.',
+  'End this weekly session?': 'Akhiri sesi mingguan ini?',
+  'Cancel this session?': 'Batalkan sesi ini?',
   'Step down as co-host? You will be removed from this and every upcoming week.':
     'Mundur sebagai co-host? Kamu akan dikeluarkan dari sesi ini dan semua minggu mendatang.',
 
