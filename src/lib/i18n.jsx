@@ -277,6 +277,7 @@ const ID = {
   Players: 'Pemain',
   'Board Games': 'Board Game',
   'To be decided': 'Menyusul',
+  'No games were recorded.': 'Tidak ada game yang tercatat.',
   Address: 'Alamat',
   '🗺️ Open in Google Maps': '🗺️ Buka di Google Maps',
   '🔒 The full address is revealed once the host confirms your spot.':

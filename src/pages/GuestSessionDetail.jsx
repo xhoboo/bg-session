@@ -124,7 +124,14 @@ export default function GuestSessionDetail() {
           {session.area && (
             <div className="row-between"><span className="muted">{t('Area')}</span><span className="badge badge-area">{session.area}</span></div>
           )}
-          <div className="row-between"><span className="muted">{t('Players')}</span><strong>{playerCount(session)}{isFull ? ` ${t('· full')}` : ''}{session.min_players > 1 ? ` ${t('· min {n}', { n: session.min_players })}` : ''}</strong></div>
+          <div className="row-between">
+            <span className="muted">{finished ? t('Participants') : t('Players')}</span>
+            <strong>
+              {finished
+                ? t('{n} players', { n: (session.confirmed_count ?? 0) + 1 })
+                : <>{playerCount(session)}{isFull ? ` ${t('· full')}` : ''}{session.min_players > 1 ? ` ${t('· min {n}', { n: session.min_players })}` : ''}</>}
+            </strong>
+          </div>
           <div>
             <div className="muted" style={{ marginBottom: 4 }}>{t('Board Games')}</div>
             {listedGames.length > 0 ? (
@@ -134,7 +141,7 @@ export default function GuestSessionDetail() {
                 ))}
               </div>
             ) : (
-              <div>{t('To be decided')}</div>
+              <div>{finished ? t('No games were recorded.') : t('To be decided')}</div>
             )}
           </div>
 
