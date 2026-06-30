@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
-import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration, hasSessionStarted, isSessionFinished, gameAnchor, FALLBACK_DURATION_MIN } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFull, mapsLink, formatDuration, hasSessionStarted, isSessionFinished, FALLBACK_DURATION_MIN } from '../lib/format'
 import Avatar from '../components/Avatar'
 import GameChip from '../components/GameChip'
 import RecurrenceBadge from '../components/RecurrenceBadge'
@@ -16,8 +16,18 @@ import { useGameCatalog } from '../lib/useGameCatalog'
 import { SessionDetailSkeleton } from '../components/Skeleton'
 import ShareSessionButton from '../components/ShareSessionButton'
 import ShareScoreButton from '../components/ShareScoreButton'
+import GameResultsAccordion from '../components/GameResultsAccordion'
 import ConfirmModal from '../components/ConfirmModal'
 import { userPath } from '../lib/nickname'
+
+// Submitted play + its players/teams, shaped for GameResultsAccordion. Scores are
+// public, so this reads for any signed-in member (RLS allows authenticated).
+const PLAY_SELECT = `
+  id, game_name, mode, lowest_wins, coop_won, recorded_by, submitted_at, status,
+  recorder:profiles(nickname, display_name, avatar_url),
+  scores:session_play_scores(user_id, score, is_winner, team, player:profiles(nickname, display_name, avatar_url)),
+  teams:session_play_teams(team, score, is_winner)
+`
 
 export default function SessionDetail() {
   const { id } = useParams()
@@ -29,7 +39,7 @@ export default function SessionDetail() {
   const [session, setSession] = useState(null)
   const [address, setAddress] = useState(null)
   const [brought, setBrought] = useState([]) // games participants pledged to bring
-  const [playsSummary, setPlaysSummary] = useState([]) // submitted game results (for the chips)
+  const [plays, setPlays] = useState([]) // submitted game results (full breakdown)
   const [myRequest, setMyRequest] = useState(null)
   const [myInvite, setMyInvite] = useState(null) // a pending invite addressed to me
   const [requests, setRequests] = useState([]) // host view
@@ -151,14 +161,14 @@ export default function SessionDetail() {
       .order('created_at', { ascending: true })
     setBrought(bg ?? [])
 
-    // Submitted game results — public, so the chips show for anyone. Just the
-    // names here; the full breakdown lives on the score page.
+    // Submitted game results — public, so they show for anyone. Loaded in full so
+    // they render inline as the collapsible Game Results accordion.
     const { data: pl } = await supabase
       .from('session_game_plays')
-      .select('id, game_name')
+      .select(PLAY_SELECT)
       .eq('session_id', id)
       .eq('status', 'submitted')
-    setPlaysSummary(pl ?? [])
+    setPlays(pl ?? [])
 
     setLoading(false)
   }, [id, user.id])
@@ -333,18 +343,6 @@ export default function SessionDetail() {
 
   const started = hasSessionStarted(session)
   const finished = isSessionFinished(session)
-  // Games that have at least one recorded result, with replay counts, keeping
-  // the first spelling seen. Chips link to the score page.
-  const scoreGames = (() => {
-    const m = new Map()
-    playsSummary.forEach((p) => {
-      const low = p.game_name.toLowerCase()
-      const cur = m.get(low)
-      if (cur) cur.n += 1
-      else m.set(low, { name: p.game_name, n: 1 })
-    })
-    return [...m.values()]
-  })()
   // Host-listed games; brought pledges are deduped against these so nobody
   // pledges a game that's already on the bill.
   const listedGames = session.board_games
@@ -384,7 +382,7 @@ export default function SessionDetail() {
         {/* Once the session is over, "share" becomes "share a game's result" —
             the listing is past and its address is hidden anyway. Falls back to the
             normal session share if no games were scored. */}
-        {finished && scoreGames.length > 0 ? (
+        {finished && plays.length > 0 ? (
           <ShareScoreButton session={session} />
         ) : (
           <ShareSessionButton session={session} address={address} hostName={session.host?.display_name} />
@@ -485,24 +483,12 @@ export default function SessionDetail() {
       </div>
 
       {/* ---------------- Game results / scores (once the session has started) ----------------
-          Just the chips of games that already have a recorded result; each one
-          deep-links to its card on the score page. Recording lives on the FAB. */}
-      {started && scoreGames.length > 0 && (
+          The session's recorded results as a collapsed-by-default accordion;
+          tapping a game expands its score breakdown. Recording lives on the FAB. */}
+      {started && plays.length > 0 && (
         <>
           <h2 className="section-title">{t('Game Results')}</h2>
-          <div className="card">
-            <div className="chips">
-              {scoreGames.map((g) => {
-                const canonical = catalog.get(g.name.trim().toLowerCase())
-                return (
-                  <Link key={g.name} to={`/sessions/${id}/score?game=${gameAnchor(g.name)}`} className="chip chip-score">
-                    <span>{canonical || g.name}</span>
-                    {g.n > 1 && <span className="chip-count">×{g.n}</span>}
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
+          <GameResultsAccordion plays={plays} catalog={catalog} />
         </>
       )}
 

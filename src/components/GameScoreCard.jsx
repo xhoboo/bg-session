@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Avatar from './Avatar'
 import { useLang } from '../lib/i18n'
@@ -10,8 +11,14 @@ import { userPath } from '../lib/nickname'
 // profile) and `teams` (session_play_teams). Scores are public, so this renders
 // for anyone — only the recorder, inside the 30-minute window, gets the Edit and
 // Discard buttons (passed in as `onEdit` / `onCancel`).
-export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayIndex, replayTotal, hideGameName, linkPlayers = true }) {
+//
+// `collapsible` makes the card an accordion (used in the guest view): only the
+// game name + mode show until the header is tapped, then the score breakdown
+// expands. In that mode the name is plain text, not a catalog link, so the whole
+// header is one safe toggle.
+export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayIndex, replayTotal, hideGameName, linkPlayers = true, collapsible = false }) {
   const { t } = useLang()
+  const [open, setOpen] = useState(false)
   const mode = scoreMode(play.mode)
   if (!mode) return null
 
@@ -38,7 +45,7 @@ export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayI
         {linkPlayers ? (
           <Link to={userPath(p.player?.nickname || p.user_id)} className="user-link">{who}</Link>
         ) : (
-          <span className="user-link" style={{ cursor: 'default' }}>{who}</span>
+          <span className="user-link user-link-static">{who}</span>
         )}
         {winner && <span className="score-trophy" aria-label={t('Winner')}>🏆</span>}
         {trailing}
@@ -116,31 +123,110 @@ export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayI
     </>
   )
 
-  return (
-    <div className="card score-card">
-      <div className="row-between" style={{ alignItems: 'flex-start' }}>
-        <div>
-          {!hideGameName && (
-            <div className="score-card-game">
-              {canonical ? (
-                <Link to={`/games/${encodeURIComponent(canonical)}`} className="chip-bring-name">{canonical}</Link>
-              ) : (
-                play.game_name
-              )}
-            </div>
+  // Game name + mode + the replayed-game order tag (#1, #2…), which sits beside
+  // the mode label, aligned with it — so it reads "Individual Scores #2". In a
+  // collapsible card the name is plain text (no catalog link) so the header is a
+  // single safe toggle.
+  const titleBlock = (
+    <div>
+      {!hideGameName && (
+        <div className="score-card-game">
+          {!collapsible && canonical ? (
+            <Link to={`/games/${encodeURIComponent(canonical)}`} className="chip-bring-name">{canonical}</Link>
+          ) : (
+            canonical || play.game_name
           )}
-          {/* For a replayed game the order tag (#1, #2…) sits beside the mode
-              label, aligned with it — so it reads "Individual Scores #2". */}
-          <div className="score-card-mode">
-            {t(mode.label)}
+        </div>
+      )}
+      <div className="score-card-mode">
+        {t(mode.label)}
+        {replayTotal > 1 && (
+          <span className="score-card-replay" title={t('Play {n} of {total}', { n: replayIndex, total: replayTotal })}>
+            #{replayIndex}
+          </span>
+        )}
+        {mode.lowestOption && play.lowest_wins && <span className="muted"> · {t('Lowest score wins')}</span>}
+      </div>
+    </div>
+  )
+
+  const body = (
+    <>
+      <div className="spacer" />
+      {mode.team ? teamBody() : mode.key === 'cooperative' ? coopBody() : individualBody()}
+      <div className="score-card-foot muted">
+        {t('Recorded by {name}', { name: recorderName })}
+        {play.submitted_at && <span> · {formatDateShort(play.submitted_at)}</span>}
+      </div>
+    </>
+  )
+
+  // Accordion card: tap the header to reveal the scores. The header is a div with
+  // a button role (not a <button>) because it wraps block-level title markup.
+  // Collapsed, it shows only the game name and the replay order tag (#1, #2…) —
+  // the mode label lives only on the expanded score page, not here.
+  if (collapsible) {
+    const toggle = () => setOpen((o) => !o)
+    return (
+      <div className={'card score-card score-card-acc' + (open ? ' is-open' : '')}>
+        <div
+          className="score-card-toggle"
+          role="button"
+          tabIndex={0}
+          aria-expanded={open}
+          onClick={toggle}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              toggle()
+            }
+          }}
+        >
+          <div className="score-card-game">
+            {canonical || play.game_name}
             {replayTotal > 1 && (
               <span className="score-card-replay" title={t('Play {n} of {total}', { n: replayIndex, total: replayTotal })}>
                 #{replayIndex}
               </span>
             )}
-            {mode.lowestOption && play.lowest_wins && <span className="muted"> · {t('Lowest score wins')}</span>}
           </div>
+          <span className="score-card-chevron" aria-hidden="true">▾</span>
         </div>
+        {open && (
+          <>
+            {/* Scoring type returns here once expanded — it's kept out of the
+                collapsed header to keep that to just the game name + order. */}
+            <div className="score-card-mode">
+              {t(mode.label)}
+              {mode.lowestOption && play.lowest_wins && <span className="muted"> · {t('Lowest score wins')}</span>}
+            </div>
+            {body}
+            {/* Recorder controls live at the foot of the expanded card (the
+                collapsed header is a toggle, so they can't sit up there). */}
+            {(onEdit || onCancel) && (
+              <div className="score-card-actions" style={{ marginTop: 12 }}>
+                {onEdit && (
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => onEdit(play)}>
+                    {t('Edit')}
+                  </button>
+                )}
+                {onCancel && (
+                  <button type="button" className="btn btn-danger btn-sm" onClick={() => onCancel(play)}>
+                    {t('Discard')}
+                  </button>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="card score-card">
+      <div className="row-between" style={{ alignItems: 'flex-start' }}>
+        {titleBlock}
         {(onEdit || onCancel) && (
           <div className="score-card-actions">
             {onEdit && (
@@ -156,15 +242,7 @@ export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayI
           </div>
         )}
       </div>
-
-      <div className="spacer" />
-
-      {mode.team ? teamBody() : mode.key === 'cooperative' ? coopBody() : individualBody()}
-
-      <div className="score-card-foot muted">
-        {t('Recorded by {name}', { name: recorderName })}
-        {play.submitted_at && <span> · {formatDateShort(play.submitted_at)}</span>}
-      </div>
+      {body}
     </div>
   )
 }

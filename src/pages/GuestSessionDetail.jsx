@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useLang } from '../lib/i18n'
-import { formatDateTime, playerCount, isSessionFull, formatDuration, isSessionFinished, groupPlaysByGame } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFull, formatDuration, isSessionFinished } from '../lib/format'
 import { useGameCatalog } from '../lib/useGameCatalog'
 import { promptAuth } from '../lib/authPrompt'
 import Avatar from '../components/Avatar'
 import GameChip from '../components/GameChip'
-import GameScoreCard from '../components/GameScoreCard'
+import GameResultsAccordion from '../components/GameResultsAccordion'
 import RecurrenceBadge from '../components/RecurrenceBadge'
 import StarRating from '../components/StarRating'
 import { SessionDetailSkeleton } from '../components/Skeleton'
@@ -76,8 +76,6 @@ export default function GuestSessionDetail() {
     ? (ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length).toFixed(1)
     : null
   const reviews = ratings.filter((r) => r.review)
-  // Submitted results grouped by game (oldest-first, freshest game on top).
-  const orderedPlays = groupPlaysByGame(plays)
 
   return (
     <div className="container container-narrow">
@@ -137,36 +135,10 @@ export default function GuestSessionDetail() {
         </div>
       </div>
 
-      {/* Game results — the session's submitted scores, shown read-only to
-          guests. Player names aren't clickable here (no profile-page access). */}
-      {orderedPlays.length > 0 && (
-        <>
-          <h2 className="section-title">{t('Game Results')}</h2>
-          <div className="stack">
-            {orderedPlays.map(({ play, index, total }) => (
-              <GameScoreCard
-                key={play.id}
-                play={play}
-                catalog={catalog}
-                linkPlayers={false}
-                replayIndex={total > 1 ? index : undefined}
-                replayTotal={total > 1 ? total : undefined}
-              />
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* Join CTA — opens the sign-in popup. */}
-      {!finished && (
-        <div className="card">
-          <button className="btn btn-primary btn-block" onClick={promptAuth}>{t('Sign In to Join')}</button>
-        </div>
-      )}
-
       {/* Ratings & reviews — shown to everyone (guests included) once a session
           has finished. Reviewer names are masked to their first letter by the
-          RPC, so there's nothing to hide on the client. */}
+          RPC, so there's nothing to hide on the client. Sits above the game
+          results, which open on demand. */}
       {finished && ratings.length > 0 && (
         <>
           <h2 className="section-title">{t('Ratings & Reviews')}</h2>
@@ -183,7 +155,7 @@ export default function GuestSessionDetail() {
               <div style={{ borderTop: '1px solid var(--slate-100)', paddingTop: 14 }}>
                 {reviews.map((r, i) => (
                   <div className="review-item" key={i}>
-                    <span className="user-link" style={{ cursor: 'default' }}>
+                    <span className="user-link user-link-static">
                       <Avatar name={r.masked_name} size={24} />
                       {r.masked_name}
                     </span>
@@ -194,6 +166,24 @@ export default function GuestSessionDetail() {
             )}
           </div>
         </>
+      )}
+
+      {/* Game results — the session's submitted scores, shown read-only to
+          guests. Each game is collapsed to its name + order; tapping it expands
+          the score breakdown (accordion). Player names aren't clickable here
+          (no profile-page access). */}
+      {plays.length > 0 && (
+        <>
+          <h2 className="section-title">{t('Game Results')}</h2>
+          <GameResultsAccordion plays={plays} catalog={catalog} linkPlayers={false} />
+        </>
+      )}
+
+      {/* Join CTA — opens the sign-in popup. */}
+      {!finished && (
+        <div className="card">
+          <button className="btn btn-primary btn-block" onClick={promptAuth}>{t('Sign In to Join')}</button>
+        </div>
       )}
     </div>
   )

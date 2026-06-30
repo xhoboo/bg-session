@@ -671,6 +671,9 @@ textarea { resize: vertical; min-height: 80px; }
 
 .user-link { display: inline-flex; align-items: center; gap: 8px; line-height: 1; color: inherit; text-decoration: none; font-weight: 600; }
 .user-link:hover { text-decoration: underline; }
+/* A name that's display-only (e.g. guest game results) — no link affordance. */
+.user-link.user-link-static { cursor: default; }
+.user-link.user-link-static:hover { text-decoration: none; }
 
 /* Participant ("who's coming") cards */
 .participant-card { display: flex; align-items: center; gap: 12px; padding: 12px; }
@@ -1041,6 +1044,27 @@ html[data-theme="dark"] .skeleton::after {
 .score-card-mode { font-size: 12px; color: var(--slate-600); margin-top: 2px; }
 .score-card-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .score-card-foot { font-size: 12px; margin-top: 12px; }
+
+/* Accordion (guest) result list — the cards sit flush as one connected group
+   with hairline dividers; each card's header is the toggle. */
+.score-accordion {
+  border: 1px solid var(--slate-200); border-radius: var(--radius);
+  box-shadow: var(--shadow); overflow: hidden;
+}
+.score-accordion .score-card-acc { border: none; border-radius: 0; box-shadow: none; }
+.score-accordion .score-card-acc + .score-card-acc {
+  margin-top: 0; border-top: 1px solid var(--slate-200);
+}
+.score-card-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  cursor: pointer; border-radius: var(--radius-sm);
+}
+.score-card-toggle:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: -2px; }
+.score-card-chevron {
+  flex: none; color: var(--slate-500); font-size: 14px; line-height: 1.5;
+  transition: transform 0.18s ease;
+}
+.score-card-acc.is-open .score-card-chevron { transform: rotate(180deg); }
 
 .score-players { display: flex; flex-direction: column; gap: 6px; }
 .score-player {

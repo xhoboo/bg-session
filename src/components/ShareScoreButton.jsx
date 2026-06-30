@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useLang } from '../lib/i18n'
 import { useGameCatalog } from '../lib/useGameCatalog'
-import { scoreMode, teamLetter, gameAnchor } from '../lib/format'
+import { scoreMode, teamLetter } from '../lib/format'
 
 // What we need to render a game's result as shareable text. Scores are public, so
 // no participant gate — anyone viewing a finished session can share its results.
@@ -101,7 +101,9 @@ export default function ShareScoreButton({ session, label = 'Share Score', class
 
   const shareGame = async (game) => {
     const text = buildText(game)
-    const url = `${window.location.origin}/sessions/${session.id}/score?game=${gameAnchor(game.name)}`
+    // Link back to the session page, where the game results live as an accordion
+    // (the dedicated per-game page was removed).
+    const url = `${window.location.origin}/sessions/${session.id}`
     const canonical = catalog.get(game.name.trim().toLowerCase()) || game.name
     const shareData = { title: `BG Session — ${canonical}`, text, url }
 

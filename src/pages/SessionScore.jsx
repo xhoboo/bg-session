@@ -1,15 +1,15 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
-import { useParams, Link, useSearchParams } from 'react-router-dom'
+import { useEffect, useState, useCallback } from 'react'
+import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import { useGameCatalog } from '../lib/useGameCatalog'
 import {
   isScoringOpen, scoringClosesAt, hasSessionStarted, SCORE_MODES, scoreMode,
-  teamLetter, formatDateShort, gameAnchor, groupPlaysByGame,
+  teamLetter, formatDateShort,
 } from '../lib/format'
 import Avatar from '../components/Avatar'
-import GameScoreCard from '../components/GameScoreCard'
+import GameResultsAccordion from '../components/GameResultsAccordion'
 import ConfirmModal from '../components/ConfirmModal'
 
 // Embedded select for a submitted play + its players and teams. Scores are
@@ -25,7 +25,6 @@ export default function SessionScore() {
   const { id } = useParams()
   const { user } = useAuth()
   const { t } = useLang()
-  const [searchParams] = useSearchParams()
   const { catalog } = useGameCatalog()
 
   const [session, setSession] = useState(null)
@@ -107,25 +106,14 @@ export default function SessionScore() {
   const isParticipant = session && (session.host_id === user.id || participants.some((p) => p.id === user.id))
   const scoringOpen = session && isScoringOpen(session)
 
-  // Results are grouped by game so a game's plays sit together (oldest-first,
-  // freshest game on top) — see groupPlaysByGame.
-  const orderedPlays = useMemo(() => groupPlaysByGame(plays), [plays])
-
-  // Focused view: a game chip on the session page links here with ?game=<slug>
-  // to show just that one game's results (oldest-first), with no recording UI —
-  // scores are only ever entered from the FAB. Matched by the chip's anchor slug.
-  const focusSlug = searchParams.get('game')
-  const focus = useMemo(() => {
-    if (!focusSlug) return null
-    const match = plays.find((p) => gameAnchor(p.game_name) === focusSlug)
-    if (!match) return { name: null, plays: [] }
-    const low = match.game_name.toLowerCase()
-    const ts = (p) => (p.submitted_at ? new Date(p.submitted_at).getTime() : 0)
-    return {
-      name: match.game_name,
-      plays: plays.filter((p) => p.game_name.toLowerCase() === low).sort((a, b) => ts(a) - ts(b)),
-    }
-  }, [focusSlug, plays])
+  // The recorder can Edit/Discard their own result for 30 minutes after recording,
+  // while scoring is still open. Editing bumps submitted_at server-side, so the
+  // window resets after each save. The accordion surfaces these in the card body.
+  const isEditable = (p) =>
+    scoringOpen &&
+    p.recorded_by === user.id &&
+    p.submitted_at &&
+    Date.now() < new Date(p.submitted_at).getTime() + 30 * 60_000
 
   const discardDraft = async () => {
     if (!draftId) return
@@ -157,30 +145,6 @@ export default function SessionScore() {
     await load()
   }
 
-  // One result card. Within 30 min of recording, the recorder gets Edit + Discard
-  // buttons (only on the full page — the focused chip view is read-only). Editing
-  // bumps submitted_at server-side, so the 30-min window resets after each save.
-  const renderCard = (p, index, total, allowEdit = true, hideGameName = false) => {
-    const owned =
-      allowEdit &&
-      scoringOpen &&
-      p.recorded_by === user.id &&
-      p.submitted_at &&
-      Date.now() < new Date(p.submitted_at).getTime() + 30 * 60_000
-    return (
-      <GameScoreCard
-        key={p.id}
-        play={p}
-        catalog={catalog}
-        hideGameName={hideGameName}
-        replayIndex={total > 1 ? index : undefined}
-        replayTotal={total > 1 ? total : undefined}
-        onEdit={owned ? setEditPlay : undefined}
-        onCancel={owned ? cancelResult : undefined}
-      />
-    )
-  }
-
   if (loading) {
     return <div className="container container-narrow"><div className="spinner" aria-label="Loading" /></div>
   }
@@ -192,25 +156,6 @@ export default function SessionScore() {
       </div>
     )
   }
-  // Focused, read-only view of a single game's results (reached from a chip on
-  // the session page). Public — no participant gate — and no recording UI.
-  if (focusSlug) {
-    const canonical = focus.name ? (catalog.get(focus.name.trim().toLowerCase()) || focus.name) : null
-    return (
-      <div className="container container-narrow">
-        <h1 style={{ marginTop: 12, marginBottom: 16 }}>{canonical || session.title}</h1>
-        {focus.plays.length === 0 ? (
-          <p className="muted" style={{ marginTop: 16 }}>{t('No games have been scored yet.')}</p>
-        ) : (
-          <div className="stack" style={{ marginTop: 16 }}>
-            {focus.plays.map((p, i) => renderCard(p, i + 1, focus.plays.length, false, true))}
-          </div>
-        )}
-        <Link to={`/sessions/${id}`} className="btn btn-secondary btn-block" style={{ marginTop: 20 }}>{t('← Back to Session')}</Link>
-      </div>
-    )
-  }
-
   if (!isParticipant) {
     // Results are public, but recording is participant-only — send onlookers to
     // the detail page where the read-only results live.
@@ -279,8 +224,14 @@ export default function SessionScore() {
       {plays.length === 0 ? (
         <p className="muted" style={{ marginTop: 16 }}>{t('No games have been scored yet.')}</p>
       ) : (
-        <div className="stack" style={{ marginTop: 16 }}>
-          {orderedPlays.map(({ play: p, index, total }) => renderCard(p, index, total))}
+        <div style={{ marginTop: 16 }}>
+          <GameResultsAccordion
+            plays={plays}
+            catalog={catalog}
+            isEditable={isEditable}
+            onEdit={setEditPlay}
+            onCancel={cancelResult}
+          />
         </div>
       )}
 
