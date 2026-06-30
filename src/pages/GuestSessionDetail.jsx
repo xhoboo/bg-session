@@ -149,15 +149,15 @@ export default function GuestSessionDetail() {
 
       {/* Reviews — shown to everyone (guests included) once a session has
           finished. The overall rating sits up top by the header; here we list
-          the written reviews. Reviewer names are masked to their first letter by
-          the RPC, and the avatar is hidden for guests — just the name shows. */}
+          the written reviews. The reviewer's full public nickname shows (from
+          the RPC), with the avatar hidden for guests — just the name. */}
       {finished && reviews.length > 0 && (
         <>
           <h2 className="section-title">{t('Reviews')}</h2>
           <div className="card">
             {reviews.map((r, i) => (
               <div className="review-item" key={i}>
-                <span className="user-link user-link-static">{r.masked_name}</span>
+                <span className="user-link user-link-static">{r.reviewer_name}</span>
                 <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>{r.review}</div>
               </div>
             ))}
