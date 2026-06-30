@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useLang } from '../lib/i18n'
-import { formatDateTime, playerCount, isSessionFull, formatDuration, isSessionFinished } from '../lib/format'
+import { formatDateTime, playerCount, isSessionFull, formatDuration, isSessionFinished, groupPlaysByGame } from '../lib/format'
 import { useGameCatalog } from '../lib/useGameCatalog'
 import { promptAuth } from '../lib/authPrompt'
 import Avatar from '../components/Avatar'
 import GameChip from '../components/GameChip'
+import GameScoreCard from '../components/GameScoreCard'
 import RecurrenceBadge from '../components/RecurrenceBadge'
 import StarRating from '../components/StarRating'
 import { SessionDetailSkeleton } from '../components/Skeleton'
@@ -26,6 +27,7 @@ export default function GuestSessionDetail() {
 
   const [session, setSession] = useState(null)
   const [ratings, setRatings] = useState([])
+  const [plays, setPlays] = useState([]) // submitted game results (public)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -33,9 +35,10 @@ export default function GuestSessionDetail() {
     let active = true
     ;(async () => {
       setLoading(true)
-      const [sRes, rRes] = await Promise.all([
+      const [sRes, rRes, pRes] = await Promise.all([
         supabase.rpc('get_public_session', { p_id: id }),
         supabase.rpc('get_public_session_ratings', { p_session_id: id }),
+        supabase.rpc('get_public_session_plays', { p_session_id: id }),
       ])
       if (!active) return
       if (sRes.error || !sRes.data?.length) {
@@ -45,6 +48,7 @@ export default function GuestSessionDetail() {
       }
       setSession(sRes.data[0])
       setRatings(rRes.data ?? [])
+      setPlays(pRes.data ?? [])
       setLoading(false)
     })()
     return () => {
@@ -72,6 +76,8 @@ export default function GuestSessionDetail() {
     ? (ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length).toFixed(1)
     : null
   const reviews = ratings.filter((r) => r.review)
+  // Submitted results grouped by game (oldest-first, freshest game on top).
+  const orderedPlays = groupPlaysByGame(plays)
 
   return (
     <div className="container container-narrow">
@@ -130,6 +136,26 @@ export default function GuestSessionDetail() {
           )}
         </div>
       </div>
+
+      {/* Game results — the session's submitted scores, shown read-only to
+          guests. Player names aren't clickable here (no profile-page access). */}
+      {orderedPlays.length > 0 && (
+        <>
+          <h2 className="section-title">{t('Game Results')}</h2>
+          <div className="stack">
+            {orderedPlays.map(({ play, index, total }) => (
+              <GameScoreCard
+                key={play.id}
+                play={play}
+                catalog={catalog}
+                linkPlayers={false}
+                replayIndex={total > 1 ? index : undefined}
+                replayTotal={total > 1 ? total : undefined}
+              />
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Join CTA — opens the sign-in popup. */}
       {!finished && (

@@ -6,7 +6,7 @@ import { useLang } from '../lib/i18n'
 import { useGameCatalog } from '../lib/useGameCatalog'
 import {
   isScoringOpen, scoringClosesAt, hasSessionStarted, SCORE_MODES, scoreMode,
-  teamLetter, formatDateShort, gameAnchor,
+  teamLetter, formatDateShort, gameAnchor, groupPlaysByGame,
 } from '../lib/format'
 import Avatar from '../components/Avatar'
 import GameScoreCard from '../components/GameScoreCard'
@@ -107,26 +107,9 @@ export default function SessionScore() {
   const isParticipant = session && (session.host_id === user.id || participants.some((p) => p.id === user.id))
   const scoringOpen = session && isScoringOpen(session)
 
-  // Results are grouped by game so a game's plays sit together: oldest-first
-  // within each game (so repeats read #1, #2, #3…), and the groups themselves
-  // ordered by their most recent play so the freshest game stays on top.
-  const orderedPlays = useMemo(() => {
-    const ts = (p) => (p.submitted_at ? new Date(p.submitted_at).getTime() : 0)
-    const groups = new Map() // lower(game) -> { name, plays: [] }
-    plays.forEach((p) => {
-      const low = p.game_name.toLowerCase()
-      if (!groups.has(low)) groups.set(low, { name: p.game_name, plays: [] })
-      groups.get(low).plays.push(p)
-    })
-    const ordered = [...groups.values()].map((g) => ({
-      name: g.name,
-      plays: g.plays.slice().sort((a, b) => ts(a) - ts(b)),
-    }))
-    ordered.sort((a, b) => Math.max(...b.plays.map(ts)) - Math.max(...a.plays.map(ts)))
-    return ordered.flatMap((g) =>
-      g.plays.map((p, i) => ({ play: p, index: i + 1, total: g.plays.length }))
-    )
-  }, [plays])
+  // Results are grouped by game so a game's plays sit together (oldest-first,
+  // freshest game on top) — see groupPlaysByGame.
+  const orderedPlays = useMemo(() => groupPlaysByGame(plays), [plays])
 
   // Focused view: a game chip on the session page links here with ?game=<slug>
   // to show just that one game's results (oldest-first), with no recording UI —

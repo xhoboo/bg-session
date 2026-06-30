@@ -156,6 +156,28 @@ export function scoreMode(key) {
   return SCORE_MODES.find((m) => m.key === key) || null
 }
 
+// Group a flat list of submitted plays by game so each game's plays sit
+// together: oldest-first within a game (so repeats read #1, #2, #3…), with the
+// groups themselves ordered by their most recent play (the freshest game on
+// top). Returns a flat list of { play, index, total } ready to render as cards.
+export function groupPlaysByGame(plays) {
+  const ts = (p) => (p.submitted_at ? new Date(p.submitted_at).getTime() : 0)
+  const groups = new Map() // lower(game) -> { name, plays: [] }
+  plays.forEach((p) => {
+    const low = (p.game_name || '').toLowerCase()
+    if (!groups.has(low)) groups.set(low, { name: p.game_name, plays: [] })
+    groups.get(low).plays.push(p)
+  })
+  const ordered = [...groups.values()].map((g) => ({
+    name: g.name,
+    plays: g.plays.slice().sort((a, b) => ts(a) - ts(b)),
+  }))
+  ordered.sort((a, b) => Math.max(...b.plays.map(ts)) - Math.max(...a.plays.map(ts)))
+  return ordered.flatMap((g) =>
+    g.plays.map((p, i) => ({ play: p, index: i + 1, total: g.plays.length }))
+  )
+}
+
 // A stable URL-fragment id for a game's result card, so a chip on the session
 // page can deep-link straight to that game's card on the score page. Case-folded
 // and slugified so the same spelling always lands on the same anchor.

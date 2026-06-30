@@ -40,7 +40,6 @@ export default function RecentSessions() {
   return (
     <div className="container">
       <h1>{t('Recent Sessions')}</h1>
-      <p className="subtitle">{t('The latest board game meetups that have wrapped up.')}</p>
 
       {error && <div className="alert alert-error">{error}</div>}
 

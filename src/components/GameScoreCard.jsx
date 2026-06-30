@@ -10,7 +10,7 @@ import { userPath } from '../lib/nickname'
 // profile) and `teams` (session_play_teams). Scores are public, so this renders
 // for anyone — only the recorder, inside the 30-minute window, gets the Edit and
 // Discard buttons (passed in as `onEdit` / `onCancel`).
-export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayIndex, replayTotal, hideGameName }) {
+export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayIndex, replayTotal, hideGameName, linkPlayers = true }) {
   const { t } = useLang()
   const mode = scoreMode(play.mode)
   if (!mode) return null
@@ -24,16 +24,27 @@ export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayI
   const playerName = (p) => p.player?.nickname || p.player?.display_name || t('Player')
 
   // A single player row (avatar, name, trailing content like a score/winner tag).
-  const PlayerRow = ({ p, trailing, winner }) => (
-    <div className={'score-player' + (winner ? ' is-winner' : '')}>
-      <Link to={userPath(p.player?.nickname || p.user_id)} className="user-link">
+  // Names link to the player's profile, except in the guest view (linkPlayers
+  // false) where there's no profile-page access — then it's plain, unclickable.
+  const PlayerRow = ({ p, trailing, winner }) => {
+    const who = (
+      <>
         <Avatar name={playerName(p)} src={p.player?.avatar_url} size={28} />
         <span className="score-player-name">{playerName(p)}</span>
-      </Link>
-      {winner && <span className="score-trophy" aria-label={t('Winner')}>🏆</span>}
-      {trailing}
-    </div>
-  )
+      </>
+    )
+    return (
+      <div className={'score-player' + (winner ? ' is-winner' : '')}>
+        {linkPlayers ? (
+          <Link to={userPath(p.player?.nickname || p.user_id)} className="user-link">{who}</Link>
+        ) : (
+          <span className="user-link" style={{ cursor: 'default' }}>{who}</span>
+        )}
+        {winner && <span className="score-trophy" aria-label={t('Winner')}>🏆</span>}
+        {trailing}
+      </div>
+    )
+  }
 
   // Individual modes — flat list, winners first then by score.
   const individualBody = () => {
@@ -109,22 +120,24 @@ export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayI
     <div className="card score-card">
       <div className="row-between" style={{ alignItems: 'flex-start' }}>
         <div>
-          {(!hideGameName || replayTotal > 1) && (
+          {!hideGameName && (
             <div className="score-card-game">
-              {!hideGameName && (canonical ? (
+              {canonical ? (
                 <Link to={`/games/${encodeURIComponent(canonical)}`} className="chip-bring-name">{canonical}</Link>
               ) : (
                 play.game_name
-              ))}
-              {replayTotal > 1 && (
-                <span className="score-card-replay" title={t('Play {n} of {total}', { n: replayIndex, total: replayTotal })}>
-                  #{replayIndex}
-                </span>
               )}
             </div>
           )}
+          {/* For a replayed game the order tag (#1, #2…) sits beside the mode
+              label, aligned with it — so it reads "Individual Scores #2". */}
           <div className="score-card-mode">
             {t(mode.label)}
+            {replayTotal > 1 && (
+              <span className="score-card-replay" title={t('Play {n} of {total}', { n: replayIndex, total: replayTotal })}>
+                #{replayIndex}
+              </span>
+            )}
             {mode.lowestOption && play.lowest_wins && <span className="muted"> · {t('Lowest score wins')}</span>}
           </div>
         </div>

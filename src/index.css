@@ -389,6 +389,9 @@ textarea { resize: vertical; min-height: 80px; }
    screens (see desktop media query) so they fill the page instead of leaving a
    narrow strip. */
 .session-list { display: flex; flex-direction: column; gap: 12px; }
+/* The list spaces its cards with gap; cancel the adjacent-card margin so grid
+   cells (desktop 2/3-col) don't push later cards down within their cell. */
+.session-list .card + .card { margin-top: 0; }
 .empty-state { text-align: center; color: var(--slate-600); padding: 44px 16px; }
 
 .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 18px; }
