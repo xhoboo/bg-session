@@ -110,7 +110,9 @@ export default function SessionChat({ sessionId, readOnly = false, embedded = fa
     <>
       <div className="chat-thread">
           {messages.length === 0 ? (
-            <p className="muted center" style={{ margin: 'auto' }}>No messages yet — start the conversation.</p>
+            <p className="muted center" style={{ margin: 'auto' }}>
+              {readOnly ? 'No chat in this session.' : 'No messages yet — start the conversation.'}
+            </p>
           ) : (
             messages.map((m) => {
               const mine = m.user_id === user.id
@@ -134,9 +136,11 @@ export default function SessionChat({ sessionId, readOnly = false, embedded = fa
         </div>
 
         {readOnly ? (
-          <p className="muted center" style={{ margin: '12px 0 0', fontSize: 13 }}>
-            This session has ended — chat is now read-only.
-          </p>
+          messages.length > 0 && (
+            <p className="muted center" style={{ margin: '12px 0 0', fontSize: 13 }}>
+              This session has ended — chat is now read-only.
+            </p>
+          )
         ) : (
           <>
             <form className="chat-input-row" onSubmit={send}>
