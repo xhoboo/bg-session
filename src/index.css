@@ -10,6 +10,9 @@
   --backdrop: #F4F1EA;
   --dots: #ddd6c7;
   --surface: #ffffff;
+  /* ~80% transparent surface — a faint panel that lets the dotted backdrop show
+     through, so it reads as a layer beneath the solid cards it contains. */
+  --panel: rgba(255, 255, 255, 0.2);
   --field: #ffffff;
   --navbg: #ffffff;
   --accent: #C26B4A;
@@ -54,6 +57,7 @@ html[data-theme="dark"] {
   --backdrop: #1E1B18;
   --dots: #2e2922;
   --surface: #28241F;
+  --panel: rgba(40, 36, 31, 0.2);
   --field: #28241F;
   --navbg: #211e1a;
   --accent: #C26B4A;
@@ -694,15 +698,20 @@ textarea { resize: vertical; min-height: 80px; }
 .participants-list-bare { border: none; box-shadow: none; border-radius: 0; }
 
 /* ---------- Finished session history accordion ----------
-   Reviews, Game Scores, Participants and Session Chat fold into one connected
-   group, divided by hairlines; each header toggles its own body (collapsed by
-   default). */
+   Reviews, Game Scores, Participants and Session Chat each become their own
+   translucent panel — spaced apart with a hairline outline so they read as
+   distinct areas, not one fused block. The panel is see-through, so the solid
+   cards inside it (score rows, participants) stand out as a layer above. Each
+   header toggles its own body; all collapsed by default. */
 .section-group {
   margin-top: 16px;
-  border: 1px solid var(--slate-200); border-radius: var(--radius);
-  box-shadow: var(--shadow); overflow: hidden; background: var(--surface);
+  display: flex; flex-direction: column; gap: 10px;
 }
-.section-acc + .section-acc { border-top: 1px solid var(--slate-200); }
+.section-acc {
+  background: var(--panel);
+  border: 1px solid var(--slate-200); border-radius: var(--radius);
+  overflow: hidden;
+}
 .section-acc-head {
   width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 15px 16px; background: none; border: none; cursor: pointer; text-align: left;
