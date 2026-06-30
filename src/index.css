@@ -805,6 +805,88 @@ html[data-theme="dark"] .skeleton::after {
   .session-list { grid-template-columns: repeat(3, 1fr); }
 }
 
+/* Desktop-only sidebar bits — hidden until the rail layout kicks in (below). */
+.nav-brand-desktop { display: none; }
+.fab-label { display: none; }
+
+/* ---- Wide desktop: the phone-width bottom bar becomes a left sidebar, and
+   content gets a roomier reading column instead of a thin centred strip. ---- */
+@media (min-width: 1024px) {
+  /* Reserve the left rail; the fixed sidebar lives in this gutter while the
+     header + main flow start to its right. */
+  .app-shell { padding-left: 240px; }
+
+  /* Bottom bar -> fixed vertical sidebar. */
+  .bottom-nav {
+    left: 0;
+    top: 0;
+    bottom: 0;
+    transform: none;
+    width: 240px;
+    height: auto;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 18px 14px 22px;
+    border-top: none;
+    border-right: 1px solid var(--slate-200);
+    box-shadow: none;
+  }
+  .nav-brand-desktop {
+    display: flex;
+    font-size: 19px;
+    padding: 8px 10px 6px;
+    margin-bottom: 12px;
+  }
+  .bottom-nav-item {
+    flex: none;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 13px;
+    font-size: 14px;
+    padding: 11px 14px;
+    border-radius: 12px;
+    transition: background .15s, color .15s;
+  }
+  .bottom-nav-item svg { width: 21px; height: 21px; }
+  .bottom-nav-item:hover { background: var(--slate-50); color: var(--ink); }
+  .bottom-nav-item.active { background: var(--accent-soft); color: var(--accent); }
+  .bottom-nav-spacer { display: none; }
+
+  /* Unread badge moves to the right end of the Messages row. */
+  .bottom-nav-badge {
+    position: static;
+    margin-left: auto;
+    border: none;
+  }
+
+  /* The FAB becomes a full-width "Host"/"Score" button pinned to the rail foot. */
+  .fab {
+    position: static;
+    transform: none;
+    width: 100%;
+    height: auto;
+    border-radius: 13px;
+    padding: 13px 14px;
+    margin-top: auto;
+    gap: 10px;
+    box-shadow: var(--accent-glow);
+  }
+  .fab:hover { transform: translateY(-1px); }
+  .fab-score { box-shadow: 0 8px 18px rgba(21, 184, 134, 0.32); }
+  .fab-label { display: inline; font-family: var(--font-head); font-weight: 700; font-size: 14px; }
+
+  /* Header: drop the duplicate brand, keep the utility actions aligned with the
+     content column's right edge. */
+  .top-bar { max-width: 1120px; }
+  .top-bar .brand { display: none; }
+
+  /* No bottom bar to clear, and narrow pages get a wider reading column. */
+  .container { padding-bottom: 48px; }
+  .container-narrow { max-width: 680px; }
+}
+
 /* ---- Phones: shrink type + spacing so one card no longer fills the screen ---- */
 @media (max-width: 480px) {
   .container { padding: 14px 13px 92px; }

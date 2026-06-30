@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
@@ -85,6 +85,12 @@ export default function BottomNav() {
 
   return (
     <nav className="bottom-nav" aria-label="Primary">
+      {/* Brand sits at the head of the desktop sidebar; hidden on the mobile bar
+          (where the brand lives in the top bar instead). */}
+      <Link to="/" className="brand nav-brand-desktop">
+        <span className="brand-dot" />
+        BG Session
+      </Link>
       <NavLink to="/" end className={cls}><Icon name="browse" /><span>{t('Browse')}</span></NavLink>
       <NavLink to="/my-sessions" className={cls} onClick={guestGuard}><Icon name="sessions" /><span>{t('Sessions')}</span></NavLink>
       <div className="bottom-nav-spacer" aria-hidden="true" />
@@ -98,10 +104,12 @@ export default function BottomNav() {
         <button className="fab fab-score" onClick={() => promptScore(activeSession.id)} aria-label={t('Score a Game')}>
           {/* Trophy — "record a result for your live session" */}
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4h12v3a6 6 0 0 1-12 0V4z" /><path d="M6 6H3v1a3 3 0 0 0 3 3M18 6h3v1a3 3 0 0 1-3 3M9 17h6M10 17v3M14 17v3M8 20h8" /></svg>
+          <span className="fab-label">{t('Score a Game')}</span>
         </button>
       ) : (
         <button className="fab" onClick={() => (user ? promptCreate() : promptAuth())} aria-label={t('Host a Session')}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+          <span className="fab-label">{t('Host a Session')}</span>
         </button>
       )}
     </nav>
