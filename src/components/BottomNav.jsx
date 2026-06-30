@@ -74,15 +74,6 @@ export default function BottomNav() {
 
   const cls = ({ isActive }) => 'bottom-nav-item' + (isActive ? ' active' : '')
 
-  // Browse is public; the other tabs need an account, so for guests we open the
-  // sign-in popup right here instead of navigating (same as the FAB).
-  const guestGuard = (e) => {
-    if (!user) {
-      e.preventDefault()
-      promptAuth()
-    }
-  }
-
   return (
     <nav className="bottom-nav" aria-label="Primary">
       {/* Brand sits at the head of the desktop sidebar; hidden on the mobile bar
@@ -92,13 +83,26 @@ export default function BottomNav() {
         BG Session
       </Link>
       <NavLink to="/" end className={cls}><Icon name="browse" /><span>{t('Browse')}</span></NavLink>
-      <NavLink to="/my-sessions" className={cls} onClick={guestGuard}><Icon name="sessions" /><span>{t('Sessions')}</span></NavLink>
-      <div className="bottom-nav-spacer" aria-hidden="true" />
-      <NavLink to="/messages" className={cls} onClick={guestGuard}>
-        <Icon name="messages" /><span>{t('Messages')}</span>
-        {unread > 0 && <span className="bottom-nav-badge">{unread > 9 ? '9+' : unread}</span>}
-      </NavLink>
-      <NavLink to="/profile" className={cls} onClick={guestGuard}><Icon name="profile" /><span>{t('Profile')}</span></NavLink>
+
+      {user ? (
+        // Signed-in: the full tab set, split around the center FAB.
+        <>
+          <NavLink to="/my-sessions" className={cls}><Icon name="sessions" /><span>{t('Sessions')}</span></NavLink>
+          <div className="bottom-nav-spacer" aria-hidden="true" />
+          <NavLink to="/messages" className={cls}>
+            <Icon name="messages" /><span>{t('Messages')}</span>
+            {unread > 0 && <span className="bottom-nav-badge">{unread > 9 ? '9+' : unread}</span>}
+          </NavLink>
+          <NavLink to="/profile" className={cls}><Icon name="profile" /><span>{t('Profile')}</span></NavLink>
+        </>
+      ) : (
+        // Guest: just Browse + the FAB + a read-only Sessions feed of recently
+        // finished meetups (no account-only tabs).
+        <>
+          <div className="bottom-nav-spacer" aria-hidden="true" />
+          <NavLink to="/recent" className={cls}><Icon name="sessions" /><span>{t('Sessions')}</span></NavLink>
+        </>
+      )}
 
       {activeSession ? (
         <button className="fab fab-score" onClick={() => promptScore(activeSession.id)} aria-label={t('Score a Game')}>

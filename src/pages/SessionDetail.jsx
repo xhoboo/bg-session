@@ -506,8 +506,12 @@ export default function SessionDetail() {
         </>
       )}
 
-      {/* ---------------- Ratings & reviews (finished sessions) ---------------- */}
-      {finished && isParticipant && (
+      {/* ---------------- Ratings & reviews (finished sessions) ----------------
+          Shown to everyone for a finished session — a non-participant sees the
+          average and the written reviews. Only a participant gets the rate /
+          review input, so the card stays useful (and visible) for them even
+          before anyone has rated. */}
+      {finished && (isParticipant || ratings.length > 0) && (
         <>
           <h2 className="section-title">{t('Ratings & Reviews')}</h2>
           <div className="card stack">
@@ -523,56 +527,58 @@ export default function SessionDetail() {
               <p className="muted" style={{ margin: 0 }}>{t('No ratings yet — be the first.')}</p>
             )}
 
-            <div style={{ borderTop: '1px solid var(--slate-100)', paddingTop: 14 }}>
-              {/* Rating: editable until submitted, then permanent. Your score is
-                  shown only to you; to everyone else your rating is anonymous. */}
-              <div className="field-label" style={{ marginBottom: 8 }}>
-                {myRating ? t('Your Rating') : t('Rate This Session')}
-                {!myRating && <span className="field-hint"> {t('— required for participants, and can’t be changed once sent')}</span>}
-              </div>
-              <div className="rating-row" style={{ marginBottom: 12 }}>
-                {myRating ? (
-                  <StarRating value={myRating.rating} size={18} />
-                ) : (
-                  <>
-                    <StarRating value={ratingValue} onChange={setRatingValue} />
-                    {/* Submit button sits right beside the stars it sends. */}
+            {isParticipant && (
+              <div style={{ borderTop: '1px solid var(--slate-100)', paddingTop: 14 }}>
+                {/* Rating: editable until submitted, then permanent. Your score is
+                    shown only to you; to everyone else your rating is anonymous. */}
+                <div className="field-label" style={{ marginBottom: 8 }}>
+                  {myRating ? t('Your Rating') : t('Rate This Session')}
+                  {!myRating && <span className="field-hint"> {t('— required for participants, and can’t be changed once sent')}</span>}
+                </div>
+                <div className="rating-row" style={{ marginBottom: 12 }}>
+                  {myRating ? (
+                    <StarRating value={myRating.rating} size={18} />
+                  ) : (
+                    <>
+                      <StarRating value={ratingValue} onChange={setRatingValue} />
+                      {/* Submit button sits right beside the stars it sends. */}
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={submitRating}
+                        disabled={busy || ratingValue < 1}
+                        title={ratingValue < 1 ? t('Pick a star rating first') : t('Submit Rating')}
+                      >
+                        {t('Submit')}
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Review: a separate, optional step that's only available once
+                    you've rated. Stays editable until sent, then read-only. */}
+                {myRating?.review ? (
+                  <div className="muted" style={{ fontSize: 14 }}>“{myRating.review}”</div>
+                ) : myRating ? (
+                  <div className="review-input-wrap">
+                    <textarea
+                      ref={reviewRef}
+                      placeholder={t('Add a review (optional)…')}
+                      value={reviewText}
+                      onChange={(e) => setReviewText(e.target.value)}
+                    />
                     <button
-                      className="btn btn-primary btn-sm"
-                      onClick={submitRating}
-                      disabled={busy || ratingValue < 1}
-                      title={ratingValue < 1 ? t('Pick a star rating first') : t('Submit Rating')}
+                      className="btn btn-primary btn-sm review-send-btn"
+                      onClick={submitReview}
+                      disabled={busy || !reviewText.trim()}
                     >
-                      {t('Submit')}
+                      {t('Send Review')}
                     </button>
-                  </>
+                  </div>
+                ) : (
+                  <p className="muted" style={{ margin: 0, fontSize: 14 }}>{t('You can add a written review after you submit your rating.')}</p>
                 )}
               </div>
-
-              {/* Review: a separate, optional step that's only available once
-                  you've rated. Stays editable until sent, then read-only. */}
-              {myRating?.review ? (
-                <div className="muted" style={{ fontSize: 14 }}>“{myRating.review}”</div>
-              ) : myRating ? (
-                <div className="review-input-wrap">
-                  <textarea
-                    ref={reviewRef}
-                    placeholder={t('Add a review (optional)…')}
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                  />
-                  <button
-                    className="btn btn-primary btn-sm review-send-btn"
-                    onClick={submitReview}
-                    disabled={busy || !reviewText.trim()}
-                  >
-                    {t('Send Review')}
-                  </button>
-                </div>
-              ) : (
-                <p className="muted" style={{ margin: 0, fontSize: 14 }}>{t('You can add a written review after you submit your rating.')}</p>
-              )}
-            </div>
+            )}
 
             {/* Reviews are attributed to the writer; the numeric ratings stay anonymous. */}
             {ratings.filter((r) => r.user_id !== user.id && r.review).length > 0 && (
@@ -748,7 +754,10 @@ export default function SessionDetail() {
         </>
       )}
 
-      {isParticipant && <SessionParticipants sessionId={id} hostId={session.host_id} seriesId={session.series_id} />}
+      {/* The participant list is shown to every signed-in member, even ones who
+          aren't in this session. On a finished session it reads "Participants"
+          (history); on an upcoming one it's "Who's Coming". */}
+      <SessionParticipants sessionId={id} seriesId={session.series_id} finished={finished} />
 
       {/* Confirmed participants can invite a specific member while the session
           is still upcoming. */}

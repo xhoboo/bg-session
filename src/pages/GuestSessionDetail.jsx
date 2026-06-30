@@ -8,21 +8,24 @@ import { promptAuth } from '../lib/authPrompt'
 import Avatar from '../components/Avatar'
 import GameChip from '../components/GameChip'
 import RecurrenceBadge from '../components/RecurrenceBadge'
+import StarRating from '../components/StarRating'
 import { SessionDetailSkeleton } from '../components/Skeleton'
 
 // Read-only session page for guests (not signed in). Shows the same public
-// listing info a signed-in user sees, plus the host and confirmed participants
-// as PLAIN, non-clickable cards — guests can look but can't open a profile, join,
-// chat, or see the address. Every member field comes from SECURITY DEFINER RPCs
-// (get_public_session / get_public_participants), so `sessions` and `profiles`
-// stay closed to anon. The signed-in experience lives in SessionDetail.jsx.
+// listing info a signed-in user sees, plus — for finished sessions — its ratings
+// and reviews with the reviewer's name MASKED (first letter only). Guests can
+// look but can't open a profile, join, chat, or see the address; the confirmed
+// participant list is intentionally hidden from guests (members-only). Every
+// field comes from SECURITY DEFINER RPCs (get_public_session /
+// get_public_session_ratings), so `sessions` and `profiles` stay closed to anon.
+// The signed-in experience lives in SessionDetail.jsx.
 export default function GuestSessionDetail() {
   const { id } = useParams()
   const { t } = useLang()
   const { catalog, loading: catalogLoading } = useGameCatalog()
 
   const [session, setSession] = useState(null)
-  const [participants, setParticipants] = useState([])
+  const [ratings, setRatings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -30,9 +33,9 @@ export default function GuestSessionDetail() {
     let active = true
     ;(async () => {
       setLoading(true)
-      const [sRes, pRes] = await Promise.all([
+      const [sRes, rRes] = await Promise.all([
         supabase.rpc('get_public_session', { p_id: id }),
-        supabase.rpc('get_public_participants', { p_session_id: id }),
+        supabase.rpc('get_public_session_ratings', { p_session_id: id }),
       ])
       if (!active) return
       if (sRes.error || !sRes.data?.length) {
@@ -41,8 +44,7 @@ export default function GuestSessionDetail() {
         return
       }
       setSession(sRes.data[0])
-      // Host first, then approved guests.
-      setParticipants((pRes.data ?? []).slice().sort((a, b) => Number(b.is_host) - Number(a.is_host)))
+      setRatings(rRes.data ?? [])
       setLoading(false)
     })()
     return () => {
@@ -66,6 +68,10 @@ export default function GuestSessionDetail() {
   const listedGames = session.board_games
     ? session.board_games.split(',').map((g) => g.trim()).filter(Boolean)
     : []
+  const avgRating = ratings.length
+    ? (ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length).toFixed(1)
+    : null
+  const reviews = ratings.filter((r) => r.review)
 
   return (
     <div className="container container-narrow">
@@ -132,26 +138,34 @@ export default function GuestSessionDetail() {
         </div>
       )}
 
-      {/* Confirmed participants — plain, non-clickable cards (public display
-          info only; no real names / photos, no profile links). */}
-      {participants.length > 0 && (
+      {/* Ratings & reviews — shown to everyone (guests included) once a session
+          has finished. Reviewer names are masked to their first letter by the
+          RPC, so there's nothing to hide on the client. */}
+      {finished && ratings.length > 0 && (
         <>
-          <h2 className="section-title">{t("Who's Coming")} ({participants.length})</h2>
-          <div className="participants-list">
-            {participants.map((p) => {
-              const name = p.nickname || p.display_name || t('Player')
-              return (
-                <div className="participant-card card" key={p.id}>
-                  <Avatar name={name} src={p.avatar_url} size={52} />
-                  <div style={{ minWidth: 0 }}>
-                    <span style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      {name}
-                      {p.is_host && <span className="badge badge-area">{t('Host')}</span>}
+          <h2 className="section-title">{t('Ratings & Reviews')}</h2>
+          <div className="card stack">
+            <div className="rating-row">
+              <StarRating value={Math.round(avgRating)} showValue={false} />
+              <strong>{avgRating}/10</strong>
+              {/* Hide the count below 3 ratings: with only the average shown and
+                  no count, a lone rating can't be singled out. */}
+              {ratings.length >= 3 && <span className="muted">{t('· {n} ratings', { n: ratings.length })}</span>}
+            </div>
+
+            {reviews.length > 0 && (
+              <div style={{ borderTop: '1px solid var(--slate-100)', paddingTop: 14 }}>
+                {reviews.map((r, i) => (
+                  <div className="review-item" key={i}>
+                    <span className="user-link" style={{ cursor: 'default' }}>
+                      <Avatar name={r.masked_name} size={24} />
+                      {r.masked_name}
                     </span>
+                    <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>{r.review}</div>
                   </div>
-                </div>
-              )
-            })}
+                ))}
+              </div>
+            )}
           </div>
         </>
       )}

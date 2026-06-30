@@ -53,6 +53,10 @@ const ID = {
   'Sign in or create an account to join this session and message the host.':
     'Masuk atau buat akun untuk gabung ke sesi ini dan mengirim pesan ke host.',
   "Who's Coming": 'Yang Akan Datang',
+  'Recent Sessions': 'Sesi Terbaru',
+  'The latest board game meetups that have wrapped up.':
+    'Meetup board game terbaru yang sudah selesai.',
+  'No finished sessions yet.': 'Belum ada sesi yang selesai.',
   'Session not found.': 'Sesi tidak ditemukan.',
   Player: 'Pemain',
   'Display Name': 'Nama Tampilan',
@@ -335,6 +339,8 @@ const ID = {
   'Step Down': 'Mundur',
   Host: 'Host',
   Player: 'Pemain',
+  Participants: 'Peserta',
+  you: 'kamu',
   Guest: 'Tamu',
   'This session is full.': 'Sesi ini penuh.',
   'End this weekly session?': 'Akhiri sesi mingguan ini?',

@@ -2,16 +2,25 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { useLang } from '../lib/i18n'
 import { userPath } from '../lib/nickname'
 import Avatar from './Avatar'
 
-// Shown to confirmed participants (host + approved guests) of a session. Lists
-// everyone coming, together with the private "additional info" — real name and
-// in-person photo — to help people recognize each other in person.
-// That private data is returned only for confirmed co-participants by
-// profile_private's RLS, so there's nothing to hide on the client here.
-export default function SessionParticipants({ sessionId, hostId, seriesId }) {
+// The session's people (host + approved guests). Shown to every signed-in member
+// — including ones who aren't in this session — so the base list comes from the
+// public get_public_participants RPC (which any member can call), not a direct
+// read of join_requests (that stays participant-only).
+//
+// The private "additional info" — real name + in-person photo, to help people
+// recognize each other — is overlaid from profile_private, whose RLS returns it
+// only to confirmed co-participants. So a non-participant simply sees the public
+// display fields, with nothing private to hide on the client.
+//
+// `finished` switches the heading to "Participants" (a past session's record)
+// from "Who's Coming" (an upcoming one).
+export default function SessionParticipants({ sessionId, seriesId, finished }) {
   const { user } = useAuth()
+  const { t } = useLang()
   const [people, setPeople] = useState([])
   const [cohostIds, setCohostIds] = useState(() => new Set())
 
@@ -38,21 +47,17 @@ export default function SessionParticipants({ sessionId, hostId, seriesId }) {
   useEffect(() => {
     let active = true
     ;(async () => {
-      const [hostRes, guestsRes] = await Promise.all([
-        supabase.from('profiles').select('id, nickname, display_name, avatar_url').eq('id', hostId).maybeSingle(),
-        supabase
-          .from('join_requests')
-          .select('guest:profiles(id, nickname, display_name, avatar_url)')
-          .eq('session_id', sessionId)
-          .eq('status', 'approved'),
-      ])
-
-      const list = []
-      if (hostRes.data) list.push({ ...hostRes.data, isHost: true })
-      ;(guestsRes.data ?? []).forEach((r) => r.guest && list.push({ ...r.guest, isHost: false }))
+      const { data: pub } = await supabase.rpc('get_public_participants', { p_session_id: sessionId })
+      // Host first, then approved guests.
+      const list = (pub ?? [])
+        .slice()
+        .sort((a, b) => Number(b.is_host) - Number(a.is_host))
+        .map((p) => ({ ...p, isHost: p.is_host }))
 
       const ids = list.map((p) => p.id)
       if (ids.length) {
+        // Returns rows only for confirmed co-participants (profile_private RLS);
+        // everyone else gets nothing extra here.
         const { data: priv } = await supabase
           .from('profile_private')
           .select('id, real_name, photo_url')
@@ -66,16 +71,18 @@ export default function SessionParticipants({ sessionId, hostId, seriesId }) {
     return () => {
       active = false
     }
-  }, [sessionId, hostId])
+  }, [sessionId])
 
   if (people.length === 0) return null
 
   return (
     <>
-      <h2 className="section-title">Who's Coming ({people.length})</h2>
+      <h2 className="section-title">
+        {finished ? t('Participants') : t("Who's Coming")} ({people.length})
+      </h2>
       <div className="participants-list">
         {people.map((p) => {
-          const name = p.nickname || p.display_name || 'Player'
+          const name = p.nickname || p.display_name || t('Player')
           const extras = [p.real_name].filter(Boolean)
           return (
             <div className="participant-card card" key={p.id}>
@@ -83,9 +90,9 @@ export default function SessionParticipants({ sessionId, hostId, seriesId }) {
               <div style={{ minWidth: 0 }}>
                 <Link to={userPath(p.nickname || p.id)} className="user-link">
                   {name}
-                  {p.isHost && <span className="badge badge-area">Host</span>}
-                  {!p.isHost && cohostIds.has(p.id) && <span className="badge badge-cohost">Co-host</span>}
-                  {p.id === user.id && <span className="muted" style={{ fontWeight: 400 }}>· you</span>}
+                  {p.isHost && <span className="badge badge-area">{t('Host')}</span>}
+                  {!p.isHost && cohostIds.has(p.id) && <span className="badge badge-cohost">{t('Co-host')}</span>}
+                  {p.id === user.id && <span className="muted" style={{ fontWeight: 400 }}>· {t('you')}</span>}
                 </Link>
                 {extras.length > 0 && (
                   <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>{extras.join(' · ')}</div>

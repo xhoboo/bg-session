@@ -23,6 +23,7 @@ const SessionDetail = lazy(() => import('./pages/SessionDetail'))
 const GuestSessionDetail = lazy(() => import('./pages/GuestSessionDetail'))
 const SessionScore = lazy(() => import('./pages/SessionScore'))
 const MySessions = lazy(() => import('./pages/MySessions'))
+const RecentSessions = lazy(() => import('./pages/RecentSessions'))
 const Profile = lazy(() => import('./pages/Profile'))
 const EditProfile = lazy(() => import('./pages/EditProfile'))
 const NotificationSettings = lazy(() => import('./pages/NotificationSettings'))
@@ -62,6 +63,7 @@ export default function App() {
               still pushed to /onboarding by PublicGate. */}
           <Route element={<PublicGate />}>
             <Route path="/" element={<Browse />} />
+            <Route path="/recent" element={<RecentSessions />} />
             <Route path="/games/:name" element={<GameDetail />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/sessions/:id" element={<SessionDetailRoute />} />
