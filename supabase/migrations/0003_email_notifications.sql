@@ -3,9 +3,10 @@
 --
 -- Sends a transactional email whenever a row is inserted into `notifications`,
 -- calling the Resend API directly from Postgres using the pg_net extension.
--- This is an alternative to the Edge Function approach (supabase/functions/
--- send-notification-email) that needs no CLI / deploy — everything runs from
--- the SQL editor. Use ONE of the two approaches, not both (avoid double emails).
+-- This needs no CLI / deploy — everything runs from the SQL editor. (An
+-- earlier draft also had a supabase/functions/send-notification-email Edge
+-- Function as an alternative path; it was never used and was decommissioned
+-- 2026-07-01 — this trigger is the only email sender now.)
 --
 -- After running this, store your Resend API key (kept out of this file):
 --   insert into app_config (key, value)

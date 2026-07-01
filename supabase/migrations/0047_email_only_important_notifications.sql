@@ -6,9 +6,10 @@
 -- spam, so we now email only the handful that genuinely warrant a push:
 -- join approvals/confirmations/rejections, session reminders, and cancellations.
 --
--- This patches the pg_net trigger path from migration 0003. The Edge Function
--- path (supabase/functions/send-notification-email) carries the same whitelist;
--- keep the two in sync. Everything still lands in-app regardless of this filter.
+-- This patches the pg_net trigger path from migration 0003, the only email
+-- sender (the old Edge Function alternative was decommissioned 2026-07-01, so
+-- there's now a single whitelist to maintain). Everything still lands in-app
+-- regardless of this filter.
 -- ============================================================================
 
 create or replace function send_notification_email()
