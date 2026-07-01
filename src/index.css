@@ -1124,7 +1124,9 @@ html[data-theme="dark"] .skeleton::after {
 }
 .score-player.is-winner { background: var(--medal-soft); }
 .score-player .user-link { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
-.score-player-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* line-height 1.4 (not the 1 inherited from .user-link) so overflow:hidden — needed
+   for the ellipsis truncation — doesn't clip descenders like the tail of "g". */
+.score-player-name { font-weight: 600; font-size: 14px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .score-trophy { flex: none; }
 .score-value { font-family: var(--font-mono); font-weight: 700; font-size: 15px; color: var(--ink); margin-left: auto; }
 .score-value-sm { font-size: 13px; color: var(--slate-600); }

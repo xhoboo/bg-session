@@ -19,7 +19,7 @@ export const PLAY_SELECT = `
 // guests). When `isEditable(play)` is true, that card's expanded body shows the
 // recorder's Edit/Discard buttons (onEdit/onCancel) — used on the score page
 // within the 30-minute edit window.
-export default function GameResultsAccordion({ plays, catalog, linkPlayers = true, hideAvatars = false, isEditable, onEdit, onCancel, bare = false }) {
+export default function GameResultsAccordion({ plays, catalog, linkPlayers = true, isEditable, onEdit, onCancel, bare = false }) {
   const ordered = groupPlaysByGame(plays)
     .slice()
     .sort((a, b) => new Date(a.play.submitted_at) - new Date(b.play.submitted_at))
@@ -35,7 +35,6 @@ export default function GameResultsAccordion({ plays, catalog, linkPlayers = tru
             catalog={catalog}
             collapsible
             linkPlayers={linkPlayers}
-            hideAvatars={hideAvatars}
             replayIndex={total > 1 ? index : undefined}
             replayTotal={total > 1 ? total : undefined}
             onEdit={editable ? onEdit : undefined}
