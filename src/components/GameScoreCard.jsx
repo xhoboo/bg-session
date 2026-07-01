@@ -16,7 +16,7 @@ import { userPath, personName } from '../lib/nickname'
 // game name + mode show until the header is tapped, then the score breakdown
 // expands. In that mode the name is plain text, not a catalog link, so the whole
 // header is one safe toggle.
-export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayIndex, replayTotal, hideGameName, linkPlayers = true, collapsible = false }) {
+export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayIndex, replayTotal, hideGameName, linkPlayers = true, hideAvatars = false, collapsible = false }) {
   const { t } = useLang()
   const [open, setOpen] = useState(false)
   const mode = scoreMode(play.mode)
@@ -36,7 +36,7 @@ export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayI
   const PlayerRow = ({ p, trailing, winner }) => {
     const who = (
       <>
-        <Avatar name={playerName(p)} src={p.player?.avatar_url} size={28} />
+        {!hideAvatars && <Avatar name={playerName(p)} src={p.player?.avatar_url} size={28} />}
         <span className="score-player-name">{playerName(p)}</span>
       </>
     )
