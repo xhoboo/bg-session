@@ -179,7 +179,7 @@ export default function GlobalSearch() {
                           </svg>
                         </span>
                         <span className="search-result-name">{g.name}</span>
-                        {g.category === 'expansion' && <span className="muted" style={{ fontSize: 12 }}>· Expansion</span>}
+                        {g.category === 'expansion' && <span className="muted search-result-tag" style={{ fontSize: 12 }}>Exp</span>}
                       </button>
                     ))}
                   </>

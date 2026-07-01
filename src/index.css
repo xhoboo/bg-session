@@ -472,8 +472,9 @@ textarea { resize: vertical; min-height: 80px; }
   font: 600 14px var(--font-body);
 }
 .search-result:hover { background: var(--accent-soft); }
-.search-result-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-result-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .search-result-icon { font-size: 18px; width: 30px; text-align: center; flex: none; }
+.search-result-tag { flex: none; margin-left: auto; padding-left: 10px; text-align: right; }
 .search-hint { color: var(--slate-600); font-size: 13px; padding: 16px 12px; margin: 0; text-align: center; }
 
 /* ---------- Invite a member (session detail) ---------- */
