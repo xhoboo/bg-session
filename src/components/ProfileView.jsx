@@ -5,6 +5,7 @@ import GameChip from './GameChip'
 import RecurrenceBadge from './RecurrenceBadge'
 import { useGameCatalog } from '../lib/useGameCatalog'
 import { formatDateTime, playerCount, lastSeen } from '../lib/format'
+import { personName } from '../lib/nickname'
 
 const PAGE_SIZE = 10
 
@@ -20,7 +21,7 @@ export default function ProfileView({ profile, history = [], headerAction }) {
   const { catalog, loading: catalogLoading } = useGameCatalog()
   if (!profile) return null
 
-  const name = profile.nickname || profile.display_name || 'Player'
+  const name = personName(profile) || 'Player'
   const fav = profile.favorite_games || []
   const owned = profile.owned_games || []
   const seen = lastSeen(profile.last_seen_at)

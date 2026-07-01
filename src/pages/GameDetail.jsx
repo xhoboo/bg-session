@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import Avatar from '../components/Avatar'
 import Skeleton from '../components/Skeleton'
 import { bggLink } from '../lib/format'
-import { userPath } from '../lib/nickname'
+import { userPath, personName } from '../lib/nickname'
 
 // Detail page for a board game (by name): its category (if it's in the catalog)
 // plus the members who favorite it and who own it.
@@ -123,7 +123,7 @@ function MemberGrid({ members, emptyText, clickable }) {
   return (
     <div className="member-grid">
       {members.map((m) => {
-        const nm = m.nickname || m.display_name || 'Player'
+        const nm = personName(m) || 'Player'
         const inner = (
           <>
             <Avatar name={nm} src={m.avatar_url} size={32} />

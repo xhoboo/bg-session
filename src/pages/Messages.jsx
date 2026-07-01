@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import Avatar from '../components/Avatar'
 import { timeAgo } from '../lib/format'
+import { personName } from '../lib/nickname'
 import { ConversationListSkeleton } from '../components/Skeleton'
 
 export default function Messages() {
@@ -74,7 +75,7 @@ export default function Messages() {
       ) : (
         <div className="card" style={{ padding: 0 }}>
           {convos.map((c) => {
-            const name = c.profile?.nickname || c.profile?.display_name || 'Player'
+            const name = personName(c.profile) || 'Player'
             const mine = c.last.sender_id === user.id
             return (
               <Link to={`/messages/${c.otherId}`} key={c.otherId} className="conv-item">

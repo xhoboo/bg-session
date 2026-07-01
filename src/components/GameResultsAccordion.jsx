@@ -1,6 +1,17 @@
 import GameScoreCard from './GameScoreCard'
 import { groupPlaysByGame } from '../lib/format'
 
+// The columns a submitted play needs to render as a full result card (recorder,
+// per-player scores, teams). Shared by the session + score pages, which both feed
+// their rows straight into this accordion — keeping the select next to the shape
+// it must satisfy. (ShareScoreButton uses its own leaner select: text only.)
+export const PLAY_SELECT = `
+  id, game_name, mode, lowest_wins, coop_won, recorded_by, submitted_at, status,
+  recorder:profiles(nickname, display_name, avatar_url),
+  scores:session_play_scores(user_id, score, is_winner, team, player:profiles(nickname, display_name, avatar_url)),
+  teams:session_play_teams(team, score, is_winner)
+`
+
 // The compact, collapsed-by-default list of a session's game results — shared by
 // the guest + signed-in session pages and the score page. Plays are shown in the
 // order they were recorded (earliest first), each game keeping its replay tag

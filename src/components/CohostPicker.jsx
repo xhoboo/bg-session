@@ -1,4 +1,5 @@
 import Avatar from './Avatar'
+import { personName } from '../lib/nickname'
 
 // Co-host picker for a weekly session. Current co-hosts show as removable chips
 // (so the host can step any of them down at any time), and confirmed
@@ -8,7 +9,7 @@ import Avatar from './Avatar'
 // defensively — the host is never among the guests anyway.
 export default function CohostPicker({ value = [], onChange, candidates = [], excludeId }) {
   const selectedIds = new Set(value.map((v) => v.id))
-  const nameOf = (m) => m.nickname || m.display_name || 'Player'
+  const nameOf = (m) => personName(m) || 'Player'
 
   const remove = (id) => onChange(value.filter((v) => v.id !== id))
   const add = (m) => onChange([...value, m])

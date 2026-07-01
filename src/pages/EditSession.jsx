@@ -6,6 +6,7 @@ import SessionForm from '../components/SessionForm'
 import WeeklySessionForm from '../components/WeeklySessionForm'
 import ConfirmModal from '../components/ConfirmModal'
 import { toDatetimeLocalValue, hasSessionStarted, nextWeeklyDate } from '../lib/format'
+import { personName } from '../lib/nickname'
 
 const parseGames = (text) => (text || '').split(',').map((s) => s.trim()).filter(Boolean)
 
@@ -292,7 +293,7 @@ export default function EditSession() {
   const handleTransfer = (newHostId) => {
     if (!newHostId) return
     const target = candidates.find((c) => c.id === newHostId)
-    const name = target?.nickname || target?.display_name || 'this participant'
+    const name = personName(target) || 'this participant'
     setConfirmTransfer({ id: newHostId, name })
   }
 

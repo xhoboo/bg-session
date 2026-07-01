@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import Avatar from './Avatar'
 import { useLang } from '../lib/i18n'
 import { scoreMode, teamLetter, formatDateShort } from '../lib/format'
-import { userPath } from '../lib/nickname'
+import { userPath, personName } from '../lib/nickname'
 
 // One submitted game result. Used both on the score page and (read-only) in the
 // finished session's "Game results" on SessionDetail. `play` is a row from
@@ -26,9 +26,9 @@ export default function GameScoreCard({ play, catalog, onEdit, onCancel, replayI
   const teams = (play.teams || []).slice().sort((a, b) => a.team - b.team)
   const canonical = catalog?.get((play.game_name || '').trim().toLowerCase())
   const recorder = play.recorder
-  const recorderName = recorder?.nickname || recorder?.display_name || t('Player')
+  const recorderName = personName(recorder) || t('Player')
 
-  const playerName = (p) => p.player?.nickname || p.player?.display_name || t('Player')
+  const playerName = (p) => personName(p.player) || t('Player')
 
   // A single player row (avatar, name, trailing content like a score/winner tag).
   // Names link to the player's profile, except in the guest view (linkPlayers

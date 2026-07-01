@@ -16,19 +16,10 @@ import { useGameCatalog } from '../lib/useGameCatalog'
 import { SessionDetailSkeleton } from '../components/Skeleton'
 import ShareSessionButton from '../components/ShareSessionButton'
 import ShareScoreButton from '../components/ShareScoreButton'
-import GameResultsAccordion from '../components/GameResultsAccordion'
+import GameResultsAccordion, { PLAY_SELECT } from '../components/GameResultsAccordion'
 import AccordionSection from '../components/AccordionSection'
 import ConfirmModal from '../components/ConfirmModal'
-import { userPath } from '../lib/nickname'
-
-// Submitted play + its players/teams, shaped for GameResultsAccordion. Scores are
-// public, so this reads for any signed-in member (RLS allows authenticated).
-const PLAY_SELECT = `
-  id, game_name, mode, lowest_wins, coop_won, recorded_by, submitted_at, status,
-  recorder:profiles(nickname, display_name, avatar_url),
-  scores:session_play_scores(user_id, score, is_winner, team, player:profiles(nickname, display_name, avatar_url)),
-  teams:session_play_teams(team, score, is_winner)
-`
+import { userPath, personName } from '../lib/nickname'
 
 export default function SessionDetail() {
   const { id } = useParams()
@@ -425,8 +416,8 @@ export default function SessionDetail() {
           {othersReviews.map((r) => (
             <div className="review-item" key={r.id}>
               <Link to={userPath(r.rater?.nickname || r.user_id)} className="user-link">
-                <Avatar name={r.rater?.nickname || r.rater?.display_name || t('Player')} src={r.rater?.avatar_url} size={24} />
-                {r.rater?.nickname || r.rater?.display_name || t('Player')}
+                <Avatar name={personName(r.rater) || t('Player')} src={r.rater?.avatar_url} size={24} />
+                {personName(r.rater) || t('Player')}
               </Link>
               <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>{r.review}</div>
             </div>
@@ -521,7 +512,7 @@ export default function SessionDetail() {
                 {/* Games a participant pledged to bring — shown with the bringer's
                     avatar so everyone sees the full table at a glance. */}
                 {brought.map((r) => {
-                  const bn = r.bringer?.nickname || r.bringer?.display_name || t('Player')
+                  const bn = personName(r.bringer) || t('Player')
                   const mine = r.user_id === user.id
                   // Like any other game, a brought game links to its catalog page
                   // when we can match it; otherwise it stays plain text.
@@ -596,7 +587,7 @@ export default function SessionDetail() {
             <div className="invite-banner stack">
               <div>
                 💌 <Link to={userPath(myInvite.inviter?.nickname || '')} className="user-link">
-                  <strong>{myInvite.inviter?.nickname || myInvite.inviter?.display_name || t('A member')}</strong>
+                  <strong>{personName(myInvite.inviter) || t('A member')}</strong>
                 </Link>{' '}
                 {t('invited you to this session.')}
                 {isFull && <span className="muted"> {t('(It’s full — you’ll join the waitlist.)')}</span>}

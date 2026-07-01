@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import { GAME_COOLDOWN_MIN } from '../lib/format'
+import { personName } from '../lib/nickname'
 import { SCORE_PROMPT_EVENT } from '../lib/scorePrompt'
 
 // "Score a game" chooser popup, opened on demand via promptScore(sessionId) —
@@ -163,7 +164,7 @@ export default function ScorePickerModal() {
                   <span className="score-game-name">{g}</span>
                   {locker ? (
                     <span className="score-game-lock">
-                      {t('Being recorded by {name}', { name: locker.nickname || locker.display_name || t('Player') })}
+                      {t('Being recorded by {name}', { name: personName(locker) || t('Player') })}
                     </span>
                   ) : onCooldown ? (
                     <span className="score-game-lock">

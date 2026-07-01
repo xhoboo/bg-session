@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useDebouncedCallback } from '../lib/useDebouncedCallback'
-import { userPath } from '../lib/nickname'
+import { userPath, personName } from '../lib/nickname'
 import Avatar from './Avatar'
 
 // Magnifier icon shared by the trigger button and the input.
@@ -150,7 +150,7 @@ export default function GlobalSearch() {
                   <>
                     <div className="search-group">Members</div>
                     {members.map((m) => {
-                      const nm = m.nickname || m.display_name || 'Player'
+                      const nm = personName(m) || 'Player'
                       return (
                         <button key={m.id} type="button" className="search-result" onClick={() => goMember(m)}>
                           <Avatar name={nm} src={m.avatar_url} size={30} />

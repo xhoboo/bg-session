@@ -8,7 +8,7 @@ import ConfirmModal from '../components/ConfirmModal'
 import { useBlock } from '../lib/useBlock'
 import { useLang } from '../lib/i18n'
 import { timeAgo } from '../lib/format'
-import { userPath } from '../lib/nickname'
+import { userPath, personName } from '../lib/nickname'
 
 export default function Conversation() {
   const { userId } = useParams()
@@ -75,7 +75,7 @@ export default function Conversation() {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const name = other?.nickname || other?.display_name || 'Player'
+  const name = personName(other) || 'Player'
 
   const send = async (e) => {
     e.preventDefault()

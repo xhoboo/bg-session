@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import { useDebouncedCallback } from '../lib/useDebouncedCallback'
-import { userPath } from '../lib/nickname'
+import { userPath, personName } from '../lib/nickname'
 import { Link } from 'react-router-dom'
 import Avatar from './Avatar'
 
@@ -81,7 +81,7 @@ export default function InviteMemberBox({ sessionId }) {
       .from('session_invites')
       .insert({ session_id: sessionId, inviter_id: user.id, invitee_id: member.id })
     setBusy(false)
-    const name = member.nickname || member.display_name || t('this member')
+    const name = personName(member) || t('this member')
     if (insErr) {
       // Unique violation = already invited; otherwise surface the trigger's
       // friendly message (already in the session, started, etc.).
@@ -124,7 +124,7 @@ export default function InviteMemberBox({ sessionId }) {
               <p className="search-hint">{t('No members match “{term}”.', { term: query.trim() })}</p>
             ) : (
               results.map((m) => {
-                const nm = m.nickname || m.display_name || t('Player')
+                const nm = personName(m) || t('Player')
                 return (
                   <div key={m.id} className="invite-result">
                     <Avatar name={nm} src={m.avatar_url} size={30} />
@@ -146,7 +146,7 @@ export default function InviteMemberBox({ sessionId }) {
       {invites.length > 0 && (
         <div className="invite-list">
           {invites.map((iv) => {
-            const nm = iv.invitee?.nickname || iv.invitee?.display_name || t('Player')
+            const nm = personName(iv.invitee) || t('Player')
             const canRescind = iv.status === 'pending' && iv.inviter_id === user.id
             return (
               <div key={iv.id} className="invite-row">

@@ -3,6 +3,7 @@ import { useRegions } from '../lib/useRegions'
 import GameTagInput from './GameTagInput'
 import CohostPicker from './CohostPicker'
 import { WEEKDAYS, COHOST_FIELDS, nextWeeklyDate, formatDateTime } from '../lib/format'
+import { personName } from '../lib/nickname'
 
 // Shared form for creating / editing a weekly session. Mirrors SessionForm but
 // the schedule is a weekday + time-of-day (it recurs), and it carries co-host
@@ -260,7 +261,7 @@ export default function WeeklySessionForm({
               <select value={transferTo} onChange={(e) => setTransferTo(e.target.value)}>
                 <option value="">Choose a participant…</option>
                 {candidates.map((c) => (
-                  <option key={c.id} value={c.id}>{c.nickname || c.display_name || 'Player'}</option>
+                  <option key={c.id} value={c.id}>{personName(c) || 'Player'}</option>
                 ))}
               </select>
               <button type="button" className="btn btn-secondary" onClick={() => onTransfer(transferTo)} disabled={busy || !transferTo}>

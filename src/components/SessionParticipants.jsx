@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
-import { userPath } from '../lib/nickname'
+import { userPath, personName } from '../lib/nickname'
 import Avatar from './Avatar'
 import AccordionSection from './AccordionSection'
 
@@ -81,7 +81,7 @@ export default function SessionParticipants({ sessionId, seriesId, finished, emb
   const list = (
     <div className={'participants-list' + (embedded ? ' participants-list-bare' : '')}>
       {people.map((p) => {
-        const name = p.nickname || p.display_name || t('Player')
+        const name = personName(p) || t('Player')
         const extras = [p.real_name].filter(Boolean)
         return (
           <div className="participant-card card" key={p.id}>

@@ -8,18 +8,10 @@ import {
   isScoringOpen, scoringClosesAt, hasSessionStarted, SCORE_MODES, scoreMode,
   teamLetter, formatDateShort,
 } from '../lib/format'
+import { personName } from '../lib/nickname'
 import Avatar from '../components/Avatar'
-import GameResultsAccordion from '../components/GameResultsAccordion'
+import GameResultsAccordion, { PLAY_SELECT } from '../components/GameResultsAccordion'
 import ConfirmModal from '../components/ConfirmModal'
-
-// Embedded select for a submitted play + its players and teams. Scores are
-// public, so this needs no participant gate to read.
-const PLAY_SELECT = `
-  id, game_name, mode, lowest_wins, coop_won, recorded_by, submitted_at, status,
-  recorder:profiles(nickname, display_name, avatar_url),
-  scores:session_play_scores(user_id, score, is_winner, team, player:profiles(nickname, display_name, avatar_url)),
-  teams:session_play_teams(team, score, is_winner)
-`
 
 export default function SessionScore() {
   const { id } = useParams()
@@ -350,7 +342,7 @@ function RecordForm({ playId, gameName, participants, busy, setBusy, onSubmitted
     })
   }
 
-  const nameOf = (p) => p.nickname || p.display_name || t('Player')
+  const nameOf = (p) => personName(p) || t('Player')
 
   const validate = () => {
     const n = selectedIds.length

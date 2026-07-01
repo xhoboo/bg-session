@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import Avatar from './Avatar'
 import { timeAgo } from '../lib/format'
-import { userPath } from '../lib/nickname'
+import { userPath, personName } from '../lib/nickname'
 import AccordionSection from './AccordionSection'
 
 // Group chat for a session, shown to confirmed participants (RLS-gated). Once
@@ -117,7 +117,7 @@ export default function SessionChat({ sessionId, readOnly = false, embedded = fa
             messages.map((m) => {
               const mine = m.user_id === user.id
               const author = m.author || authors[m.user_id]
-              const name = author?.nickname || author?.display_name || 'Player'
+              const name = personName(author) || 'Player'
               return (
                 <div key={m.id} className={'chat-msg ' + (mine ? 'me' : 'them')}>
                   {!mine && <Avatar name={name} src={author?.avatar_url} size={28} />}

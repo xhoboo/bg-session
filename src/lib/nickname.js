@@ -19,6 +19,13 @@ export function userPath(handle) {
   return `/users/${encodeURIComponent(handle || '')}`
 }
 
+// A profile's display name: prefer the public nickname, fall back to the full
+// display name, else '' so callers can supply their own localized fallback,
+// e.g. `personName(host) || t('Host')`. Accepts a possibly-null profile.
+export function personName(profile) {
+  return profile?.nickname || profile?.display_name || ''
+}
+
 // Returns a user-facing error string if the nickname's format is invalid, else
 // '' (valid). Trims first, so trailing spaces don't trip the no-spaces rule.
 export function nicknameFormatError(nickname) {
