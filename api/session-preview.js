@@ -1,13 +1,17 @@
-// Vercel Node function. Serves the SPA shell with per-session Open Graph tags
+// Vercel Edge function. Serves the SPA shell with per-session Open Graph tags
 // injected, so a shared session link shows a rich "sneak peek" card (title,
 // details, preview image) and an invite to join in chat apps. Real browsers
 // still boot the React app as usual and ignore the tags.
 //
-// Mapped from /sessions/:id and /score/:playId by vercel.json. Crawlers are
-// anonymous, so it reads only the public `get_session_preview` (migration 0044)
-// and `get_public_play` (migration 0068) RPCs — never the address. Supabase
-// creds come from the project's existing env vars (Vercel exposes them to
-// functions at runtime, VITE_ prefix and all).
+// Runs on the Edge runtime (near-zero cold start) — the fastest possible
+// response so a link's preview is ready the instant it's pasted, even for the
+// very first share of a play. Mapped from /sessions/:id and /score/:playId by
+// vercel.json. Crawlers are anonymous, so it reads only the public
+// `get_session_preview` (migration 0044) and `get_public_play` (migration 0068)
+// RPCs — never the address. Supabase creds come from the project's existing env
+// vars (Vercel exposes them to functions at runtime, VITE_ prefix and all).
+
+export const config = { runtime: 'edge' }
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
@@ -195,13 +199,23 @@ function buildTags({ origin, id, session }) {
   ].join('\n    ')
 }
 
-export default async function handler(req, res) {
-  const id = String(req.query?.id || '')
-  const playId = req.query?.play ? String(req.query.play) : ''
-  const ua = req.headers['user-agent'] || ''
+export default async function handler(req) {
+  const { searchParams } = new URL(req.url)
+  const id = searchParams.get('id') || ''
+  const playId = searchParams.get('play') || ''
+  const ua = req.headers.get('user-agent') || ''
   const crawler = isCrawler(ua)
-  const host = req.headers['x-forwarded-host'] || req.headers.host
+  const host = req.headers.get('x-forwarded-host') || req.headers.get('host')
   const origin = `https://${host}`
+
+  // Cache briefly at the edge; previews refresh as a session fills up. Vary on
+  // UA so the crawler's minimal doc and the browser's full shell never get
+  // cross-served from the shared cache.
+  const baseHeaders = {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Cache-Control': 'public, max-age=0, s-maxage=300, stale-while-revalidate=600',
+    Vary: 'User-Agent',
+  }
 
   // The preview data (one round trip). For a real browser we also need the app
   // shell — fetched in parallel; a crawler skips it entirely (see CRAWLER_UA).
@@ -215,10 +229,7 @@ export default async function handler(req, res) {
   } catch {
     // Couldn't read the shell (real-browser path only) — bounce to the app so
     // the link still works.
-    res.statusCode = 302
-    res.setHeader('Location', `/?s=${encodeURIComponent(id)}`)
-    res.end()
-    return
+    return new Response(null, { status: 302, headers: { Location: `/?s=${encodeURIComponent(id)}` } })
   }
 
   // Share-a-score link (/score/:playId): if we can read the play's result,
@@ -235,19 +246,13 @@ export default async function handler(req, res) {
     titleTag = session ? `<title>${esc(`🎲 ${session.title} · ${SITE_NAME}`)}</title>` : `<title>${SITE_NAME}</title>`
   }
 
-  res.setHeader('Content-Type', 'text/html; charset=utf-8')
-  // Cache briefly at the edge; previews refresh as a session fills up. Vary on
-  // UA so the crawler's minimal doc and the browser's full shell never get
-  // cross-served from the shared cache.
-  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=600')
-  res.setHeader('Vary', 'User-Agent')
-  res.statusCode = 200
-
-  // Crawler: minimal head-only document, no index.html fetch — fast on cold
-  // start so the rich card is ready before "send".
+  // Crawler: minimal head-only document, no index.html fetch — nothing to slow
+  // the response, so the rich card is ready before "send".
   if (crawler) {
-    res.end(`<!doctype html>\n<html lang="en">\n  <head>\n    <meta charset="UTF-8" />\n    ${titleTag}\n    ${tags}\n  </head>\n  <body></body>\n</html>\n`)
-    return
+    return new Response(
+      `<!doctype html>\n<html lang="en">\n  <head>\n    <meta charset="UTF-8" />\n    ${titleTag}\n    ${tags}\n  </head>\n  <body></body>\n</html>\n`,
+      { status: 200, headers: baseHeaders },
+    )
   }
 
   // Real browser: the full app shell with the static OG/Twitter tags dropped
@@ -256,5 +261,5 @@ export default async function handler(req, res) {
     .replace(/<meta\s+(?:property|name)="(?:og:[^"]*|twitter:[^"]*)"[^>]*>\s*/g, '')
     .replace(/<title>[\s\S]*?<\/title>/, titleTag)
     .replace('</head>', `    ${tags}\n  </head>`)
-  res.end(out)
+  return new Response(out, { status: 200, headers: baseHeaders })
 }

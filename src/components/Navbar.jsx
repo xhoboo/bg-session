@@ -9,14 +9,18 @@ import SettingsMenu from './SettingsMenu'
 export default function Navbar() {
   return (
     <header className="top-bar">
-      <Link to="/" className="brand">
-        <span className="brand-dot" />
-        BG Session
-      </Link>
-      <div className="top-bar-actions">
-        <GlobalSearch />
-        <NotificationBell />
-        <SettingsMenu />
+      {/* Full-bleed bar; the inner wrapper keeps the brand + actions aligned to
+          the same centered column as the page content. */}
+      <div className="top-bar-inner">
+        <Link to="/" className="brand">
+          <span className="brand-dot" />
+          BG Session
+        </Link>
+        <div className="top-bar-actions">
+          <GlobalSearch />
+          <NotificationBell />
+          <SettingsMenu />
+        </div>
       </div>
     </header>
   )

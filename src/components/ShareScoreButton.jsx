@@ -51,6 +51,10 @@ export default function ShareScoreButton({ session, label = 'Share Score', class
     // is globally unique, so the session id isn't needed in the URL — the page
     // and its preview resolve everything from the play id alone.
     const url = `${window.location.origin}/score/${play.id}`
+    // Warm the OG preview image now (fire-and-forget): rendering it is the
+    // slowest step, so kicking it off here means it's cached by the time the
+    // recipient's chat app fetches it — the "copy, paste, send fast" case.
+    new Image().src = `${window.location.origin}/api/session-image?play=${play.id}`
     await shareOrCopy({
       title: `BG Session — ${canonicalOf(play)}`,
       url,

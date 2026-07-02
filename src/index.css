@@ -111,22 +111,27 @@ a { color: var(--accent-ink); }
 .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
 .app-main { flex: 1; }
 
-/* Slim top utility bar (brand + notifications + theme), constrained to the
-   same centered column as page content. */
+/* Slim top utility bar. The bar spans full width (its background + bottom border
+   run edge to edge — flush against the desktop sidebar and out to the screen
+   edge), while .top-bar-inner keeps the brand + actions in the same centered
+   column as the page content. */
 .top-bar {
   position: sticky;
   top: 0;
   z-index: 20;
   width: 100%;
-  max-width: 520px;
-  margin: 0 auto;
   background: var(--navbg);
   border-bottom: 1px solid var(--border, var(--slate-200));
+  backdrop-filter: blur(8px);
+}
+.top-bar-inner {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 11px 16px;
-  backdrop-filter: blur(8px);
 }
 /* position: relative so the search/notification dropdowns anchor to this row's
    right edge (the column padding edge), not to their individual buttons — which
@@ -847,7 +852,7 @@ html[data-theme="dark"] .skeleton::after {
 
 /* ---- Desktop: use the screen instead of a phone-width strip ---- */
 @media (min-width: 768px) {
-  .top-bar { max-width: 1120px; }
+  .top-bar-inner { max-width: 1120px; }
   /* Browse / My-sessions use the plain .container and go wide; forms & detail
      keep .container-narrow so reading width stays comfortable. */
   .container:not(.container-narrow) { max-width: 1120px; }
@@ -931,7 +936,7 @@ html[data-theme="dark"] .skeleton::after {
 
   /* Header: drop the duplicate brand, keep the utility actions aligned with the
      content column's right edge. */
-  .top-bar { max-width: 1120px; }
+  .top-bar-inner { max-width: 1120px; }
   .top-bar .brand { display: none; }
 
   /* No bottom bar to clear, and narrow pages get a wider reading column. */
@@ -947,7 +952,7 @@ html[data-theme="dark"] .skeleton::after {
   .section-title { font-size: 15px; margin: 20px 0 10px; }
   .subtitle { font-size: 13px; margin-bottom: 16px; }
 
-  .top-bar { gap: 9px; padding: 9px 13px; }
+  .top-bar-inner { gap: 9px; padding: 9px 13px; }
   .top-bar-actions { gap: 7px; }
   .brand { font-size: 16px; }
   .brand-dot { width: 25px; height: 25px; }
