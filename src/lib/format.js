@@ -178,13 +178,6 @@ export function groupPlaysByGame(plays) {
   )
 }
 
-// A stable URL-fragment id for a game's result card, so a chip on the session
-// page can deep-link straight to that game's card on the score page. Case-folded
-// and slugified so the same spelling always lands on the same anchor.
-export function gameAnchor(name) {
-  return 'game-' + (name || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-}
-
 // Team index → "A", "B", "C"… for display (teams are stored as 1, 2, 3…).
 export function teamLetter(n) {
   return String.fromCharCode(64 + Number(n))

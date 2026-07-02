@@ -22,6 +22,7 @@ const EditSession = lazy(() => import('./pages/EditSession'))
 const SessionDetail = lazy(() => import('./pages/SessionDetail'))
 const GuestSessionDetail = lazy(() => import('./pages/GuestSessionDetail'))
 const SessionScore = lazy(() => import('./pages/SessionScore'))
+const SessionPlayScore = lazy(() => import('./pages/SessionPlayScore'))
 const MySessions = lazy(() => import('./pages/MySessions'))
 const RecentSessions = lazy(() => import('./pages/RecentSessions'))
 const Profile = lazy(() => import('./pages/Profile'))
@@ -67,6 +68,7 @@ export default function App() {
             <Route path="/games/:name" element={<GameDetail />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/sessions/:id" element={<SessionDetailRoute />} />
+            <Route path="/sessions/:id/score/:playId" element={<SessionPlayScore />} />
           </Route>
 
           {/* Everything else requires a signed-in, onboarded user. Guests who

@@ -1,10 +1,13 @@
 // Vercel Edge function. Generates the 1200×630 "sneak peek" preview image used
 // as og:image for a shared session link — a branded card with the session's
 // title, when/where, players and host, plus a "Join this session" call-out.
+// With &play=<uuid>, renders that play's result instead (the share-a-score
+// preview).
 //
 // Called as /api/session-image?id=<uuid> (and with no id for a generic brand
-// card). Reads only the public `get_session_preview` RPC (migration 0044);
-// never the address. Colors mirror src/index.css.
+// card). Reads only the public `get_session_preview` (migration 0044) and
+// `get_public_session_plays` (migration 0063) RPCs; never the address. Colors
+// mirror src/index.css.
 
 import { ImageResponse } from '@vercel/og'
 import { createElement } from 'react'
@@ -60,18 +63,39 @@ async function getSession(id) {
   }
 }
 
-// One game's public result, matched by its anchor slug (migration 0054). Returns
-// the jsonb object directly, or null when nothing matches.
-async function getGameScore(id, anchor) {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !id || !anchor) return null
+// One play's public result, matched by its id — every play gets its own
+// permanent URL now (migration 0063's guest-read RPC covers the data; no
+// per-play SQL function needed). Also works out that play's replay position
+// among same-named plays in the session ("Wingspan #2"). Names are the public
+// NICKNAME only, never display_name — this card is visible to anyone.
+async function getPlayScore(id, playId) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !id || !playId) return null
   try {
     const r = await fetch(
-      `${SUPABASE_URL}/rest/v1/rpc/get_game_score_preview?p_session_id=${encodeURIComponent(id)}&p_anchor=${encodeURIComponent(anchor)}`,
+      `${SUPABASE_URL}/rest/v1/rpc/get_public_session_plays?p_session_id=${encodeURIComponent(id)}`,
       { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
     )
     if (!r.ok) return null
-    const data = await r.json()
-    return data && Array.isArray(data.plays) && data.plays.length ? data : null
+    const plays = await r.json()
+    if (!Array.isArray(plays)) return null
+    const target = plays.find((p) => p.id === playId)
+    if (!target) return null
+    const sameGame = plays
+      .filter((p) => (p.game_name || '').toLowerCase() === (target.game_name || '').toLowerCase())
+      .sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at))
+    const nameOf = (s) => s.player?.nickname?.trim() || 'Player'
+    return {
+      game_name: target.game_name,
+      replay_index: sameGame.findIndex((p) => p.id === playId) + 1,
+      replay_total: sameGame.length,
+      play: {
+        mode: target.mode,
+        lowest_wins: target.lowest_wins,
+        coop_won: target.coop_won,
+        teams: target.teams || [],
+        players: (target.scores || []).map((s) => ({ name: nameOf(s), score: s.score, is_winner: s.is_winner, team: s.team })),
+      },
+    }
   } catch {
     return null
   }
@@ -267,16 +291,12 @@ function coopBanner(won) {
 }
 
 function scoreCard(data) {
-  const plays = Array.isArray(data?.plays) ? data.plays : []
-  // Show the most recent play that actually has results (every real submitted play
-  // does; this just guards odd data so the card is never blank).
-  const withData = plays.filter((p) => (p.players && p.players.length) || (p.teams && p.teams.length))
-  const play = withData[withData.length - 1] || plays[plays.length - 1] || { mode: 'individual_score', players: [], teams: [] }
+  const play = data?.play || { mode: 'individual_score', players: [], teams: [] }
   const players = Array.isArray(play.players) ? play.players : []
   const teams = Array.isArray(play.teams) ? play.teams : []
   const mode = play.mode
 
-  const gameRaw = data?.game_name || 'Game result'
+  const gameRaw = data?.replay_total > 1 ? `${data.game_name || 'Game result'} #${data.replay_index}` : (data?.game_name || 'Game result')
   const gameName = gameRaw.length > 38 ? gameRaw.slice(0, 37) + '…' : gameRaw
   const sessRaw = data?.session_title || ''
   const sessName = sessRaw.length > 52 ? sessRaw.slice(0, 51) + '…' : sessRaw
@@ -314,7 +334,7 @@ function scoreCard(data) {
     rows.push(h('div', { style: { display: 'flex', marginTop: 10, fontSize: 24, color: MUTED } }, `+${all.length - (LIMIT - 1)} more`))
   }
 
-  const subtitle = [sessName, plays.length > 1 ? `Latest of ${plays.length} plays` : null].filter(Boolean).join('  ·  ')
+  const subtitle = sessName
 
   return h(
     'div',
@@ -346,14 +366,14 @@ function scoreCard(data) {
 export default async function handler(req) {
   const { searchParams } = new URL(req.url)
   const id = searchParams.get('id')
-  const game = searchParams.get('game')
+  const playId = searchParams.get('play')
 
-  // Share-a-score link: render the game's result if we can read it; otherwise fall
-  // through to the normal session card.
-  if (id && game) {
-    const score = await getGameScore(id, game)
-    if (score) {
-      return new ImageResponse(scoreCard(score), {
+  // Share-a-score link: render the play's result if we can read it; otherwise
+  // fall through to the normal session card.
+  if (id && playId) {
+    const [result, session] = await Promise.all([getPlayScore(id, playId), getSession(id)])
+    if (result) {
+      return new ImageResponse(scoreCard({ ...result, session_title: session?.title }), {
         width: 1200,
         height: 630,
         headers: { 'Cache-Control': 'public, max-age=0, s-maxage=300, stale-while-revalidate=600' },

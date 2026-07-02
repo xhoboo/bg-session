@@ -396,6 +396,7 @@ const ID = {
   'This result is final.': 'Hasil ini final.',
   'Recorded by {name}': 'Dicatat oleh {name}',
   '← Back to Session': '← Kembali ke Sesi',
+  'This game result could not be found.': 'Hasil permainan ini tidak ditemukan.',
   'Score a Game': 'Beri Skor Permainan',
   'No games on this session’s list yet.': 'Belum ada game di daftar sesi ini.',
   'Score (optional)': 'Skor (opsional)',
