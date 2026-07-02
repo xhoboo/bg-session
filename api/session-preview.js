@@ -15,6 +15,16 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPA
 const SITE_NAME = 'BG Session'
 const DEFAULT_DESC = 'Host & join board game meetups in Indonesia.'
 
+// Link-preview crawlers (chat apps, social bots). They only read the <head>, so
+// we serve them a tiny inline document and skip fetching the real index.html —
+// one fewer network hop, so the preview is ready fast even on a cold start.
+// That matters because chat apps build the preview on the SENDER's device before
+// the message goes out: a slow response means "paste then send immediately" ships
+// with no card. Real browsers (not matched here) still get the full app shell.
+const CRAWLER_UA =
+  /(facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|slackbot|slack-imgproxy|discordbot|linkedinbot|pinterest|redditbot|googlebot|bingbot|embedly|quora link preview|showyoubot|outbrain|vkshare|w3c_validator|skypeuripreview|line-poker|nuzzel|bitlybot|applebot|ia_archiver)/i
+const isCrawler = (ua) => CRAWLER_UA.test(ua || '')
+
 // Cache the built index.html per warm instance. A new deploy is a new instance,
 // so the hashed asset tags inside it stay current.
 let templateCache = null
@@ -188,20 +198,23 @@ function buildTags({ origin, id, session }) {
 export default async function handler(req, res) {
   const id = String(req.query?.id || '')
   const playId = req.query?.play ? String(req.query.play) : ''
+  const ua = req.headers['user-agent'] || ''
+  const crawler = isCrawler(ua)
   const host = req.headers['x-forwarded-host'] || req.headers.host
   const origin = `https://${host}`
 
-  // Fetch the shell and the data in parallel — one fewer serial hop means the
-  // rich card lands before chat apps time out on the preview.
+  // The preview data (one round trip). For a real browser we also need the app
+  // shell — fetched in parallel; a crawler skips it entirely (see CRAWLER_UA).
   let html, result, session
   try {
     ;[html, result, session] = await Promise.all([
-      getTemplate(origin),
+      crawler ? Promise.resolve(null) : getTemplate(origin),
       playId ? getPlayScore(playId) : Promise.resolve(null),
       !playId && id ? getSession(id) : Promise.resolve(null),
     ])
   } catch {
-    // Couldn't read the shell — bounce to the app so the link still works.
+    // Couldn't read the shell (real-browser path only) — bounce to the app so
+    // the link still works.
     res.statusCode = 302
     res.setHeader('Location', `/?s=${encodeURIComponent(id)}`)
     res.end()
@@ -222,15 +235,26 @@ export default async function handler(req, res) {
     titleTag = session ? `<title>${esc(`🎲 ${session.title} · ${SITE_NAME}`)}</title>` : `<title>${SITE_NAME}</title>`
   }
 
-  // Drop the static OG/Twitter tags (we replace them) and set a fresh <title>.
-  let out = html
+  res.setHeader('Content-Type', 'text/html; charset=utf-8')
+  // Cache briefly at the edge; previews refresh as a session fills up. Vary on
+  // UA so the crawler's minimal doc and the browser's full shell never get
+  // cross-served from the shared cache.
+  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=600')
+  res.setHeader('Vary', 'User-Agent')
+  res.statusCode = 200
+
+  // Crawler: minimal head-only document, no index.html fetch — fast on cold
+  // start so the rich card is ready before "send".
+  if (crawler) {
+    res.end(`<!doctype html>\n<html lang="en">\n  <head>\n    <meta charset="UTF-8" />\n    ${titleTag}\n    ${tags}\n  </head>\n  <body></body>\n</html>\n`)
+    return
+  }
+
+  // Real browser: the full app shell with the static OG/Twitter tags dropped
+  // (we replace them) and a fresh <title>.
+  const out = html
     .replace(/<meta\s+(?:property|name)="(?:og:[^"]*|twitter:[^"]*)"[^>]*>\s*/g, '')
     .replace(/<title>[\s\S]*?<\/title>/, titleTag)
     .replace('</head>', `    ${tags}\n  </head>`)
-
-  res.setHeader('Content-Type', 'text/html; charset=utf-8')
-  // Cache briefly at the edge; previews refresh as a session fills up.
-  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=600')
-  res.statusCode = 200
   res.end(out)
 }
