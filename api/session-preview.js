@@ -3,11 +3,11 @@
 // details, preview image) and an invite to join in chat apps. Real browsers
 // still boot the React app as usual and ignore the tags.
 //
-// Mapped from /sessions/:id and /sessions/:id/score/:playId by vercel.json.
-// Crawlers are anonymous, so it reads only the public `get_session_preview`
-// (migration 0044) and `get_public_session_plays` (migration 0063) RPCs — never
-// the address. Supabase creds come from the project's existing env vars (Vercel
-// exposes them to functions at runtime, VITE_ prefix and all).
+// Mapped from /sessions/:id and /score/:playId by vercel.json. Crawlers are
+// anonymous, so it reads only the public `get_session_preview` (migration 0044)
+// and `get_public_play` (migration 0068) RPCs — never the address. Supabase
+// creds come from the project's existing env vars (Vercel exposes them to
+// functions at runtime, VITE_ prefix and all).
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
@@ -70,36 +70,32 @@ async function getSession(id) {
   }
 }
 
-// One play's public result, matched by its id — every play gets its own
-// permanent URL now (migration 0063's guest-read RPC covers the data; no
-// per-play SQL function needed). Also works out that play's replay position
-// among same-named plays in the session ("Wingspan #2"). Names are the public
-// NICKNAME only, never display_name — this card is visible to anyone.
-async function getPlayScore(id, playId) {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !id || !playId) return null
+// One play's public result, matched by its globally-unique id — the owning
+// session's title and the play's replay position ("Wingspan #2") come back in
+// the same call (migration 0068), so the crawler makes just one Supabase round
+// trip. Names are the public NICKNAME only, never display_name — this card is
+// visible to anyone.
+async function getPlayScore(playId) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !playId) return null
   try {
-    const url = `${SUPABASE_URL}/rest/v1/rpc/get_public_session_plays?p_session_id=${encodeURIComponent(id)}`
+    const url = `${SUPABASE_URL}/rest/v1/rpc/get_public_play?p_play_id=${encodeURIComponent(playId)}`
     const r = await fetch(url, {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
     })
     if (!r.ok) return null
-    const plays = await r.json()
-    if (!Array.isArray(plays)) return null
-    const target = plays.find((p) => p.id === playId)
-    if (!target) return null
-    const sameGame = plays
-      .filter((p) => (p.game_name || '').toLowerCase() === (target.game_name || '').toLowerCase())
-      .sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at))
+    const d = await r.json()
+    if (!d || !d.play) return null
     const nameOf = (s) => s.player?.nickname?.trim() || 'Player'
     return {
-      gameName: target.game_name,
-      replayIndex: sameGame.findIndex((p) => p.id === playId) + 1,
-      replayTotal: sameGame.length,
+      gameName: d.play.game_name,
+      sessionTitle: d.session_title,
+      replayIndex: d.replay_index,
+      replayTotal: d.replay_total,
       play: {
-        mode: target.mode,
-        coop_won: target.coop_won,
-        teams: target.teams || [],
-        players: (target.scores || []).map((s) => ({ name: nameOf(s), score: s.score, is_winner: s.is_winner })),
+        mode: d.play.mode,
+        coop_won: d.play.coop_won,
+        teams: d.play.teams || [],
+        players: (d.play.scores || []).map((s) => ({ name: nameOf(s), score: s.score, is_winner: s.is_winner })),
       },
     }
   } catch {
@@ -127,12 +123,12 @@ function winnerSummary(play) {
   return 'Game result'
 }
 
-function buildScoreTags({ origin, id, playId, gameName, sessionTitle, replayIndex, replayTotal, play }) {
-  const url = `${origin}/sessions/${encodeURIComponent(id)}/score/${encodeURIComponent(playId)}`
+function buildScoreTags({ origin, playId, gameName, sessionTitle, replayIndex, replayTotal, play }) {
+  const url = `${origin}/score/${encodeURIComponent(playId)}`
   const game = replayTotal > 1 ? `${gameName} #${replayIndex}` : (gameName || 'Game result')
   const title = `🎲 ${game}${sessionTitle ? ` · ${sessionTitle}` : ''}`
   const desc = `${winnerSummary(play)} — see the full result on ${SITE_NAME}!`
-  const image = `${origin}/api/session-image?id=${encodeURIComponent(id)}&play=${encodeURIComponent(playId)}`
+  const image = `${origin}/api/session-image?play=${encodeURIComponent(playId)}`
 
   return [
     `<meta property="og:type" content="website" />`,
@@ -195,9 +191,15 @@ export default async function handler(req, res) {
   const host = req.headers['x-forwarded-host'] || req.headers.host
   const origin = `https://${host}`
 
-  let html
+  // Fetch the shell and the data in parallel — one fewer serial hop means the
+  // rich card lands before chat apps time out on the preview.
+  let html, result, session
   try {
-    html = await getTemplate(origin)
+    ;[html, result, session] = await Promise.all([
+      getTemplate(origin),
+      playId ? getPlayScore(playId) : Promise.resolve(null),
+      !playId && id ? getSession(id) : Promise.resolve(null),
+    ])
   } catch {
     // Couldn't read the shell — bounce to the app so the link still works.
     res.statusCode = 302
@@ -206,22 +208,16 @@ export default async function handler(req, res) {
     return
   }
 
-  // Share-a-score link (/sessions/:id/score/:playId): if we can read the
-  // play's result, build score-specific tags; otherwise fall back to the
-  // session card.
+  // Share-a-score link (/score/:playId): if we can read the play's result,
+  // build score-specific tags; otherwise fall back to the session card.
   let tags = null
   let titleTag = `<title>${SITE_NAME}</title>`
-  if (playId) {
-    const result = await getPlayScore(id, playId)
-    if (result) {
-      const session = await getSession(id)
-      tags = buildScoreTags({ origin, id, playId, sessionTitle: session?.title, ...result })
-      const label = result.replayTotal > 1 ? `${result.gameName} #${result.replayIndex}` : result.gameName
-      titleTag = `<title>${esc(`🎲 ${label} · ${SITE_NAME}`)}</title>`
-    }
+  if (result) {
+    tags = buildScoreTags({ origin, playId, ...result })
+    const label = result.replayTotal > 1 ? `${result.gameName} #${result.replayIndex}` : result.gameName
+    titleTag = `<title>${esc(`🎲 ${label} · ${SITE_NAME}`)}</title>`
   }
   if (!tags) {
-    const session = await getSession(id)
     tags = buildTags({ origin, id, session })
     titleTag = session ? `<title>${esc(`🎲 ${session.title} · ${SITE_NAME}`)}</title>` : `<title>${SITE_NAME}</title>`
   }

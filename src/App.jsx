@@ -68,6 +68,10 @@ export default function App() {
             <Route path="/games/:name" element={<GameDetail />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/sessions/:id" element={<SessionDetailRoute />} />
+            {/* One page per recorded play. /score/:playId is the short, canonical
+                share link; the longer /sessions/:id/score/:playId is kept so
+                links shared before the switch still resolve. */}
+            <Route path="/score/:playId" element={<SessionPlayScore />} />
             <Route path="/sessions/:id/score/:playId" element={<SessionPlayScore />} />
           </Route>
 

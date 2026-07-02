@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useLang } from '../lib/i18n'
 import { useGameCatalog } from '../lib/useGameCatalog'
 import { groupPlaysByGame } from '../lib/format'
-import { buildPlayShareText, shareOrCopy } from '../lib/shareScore'
+import { shareOrCopy } from '../lib/shareScore'
 
 // What we need to render a game's result as shareable text. Scores are public, so
 // no participant gate — anyone viewing a finished session can share its results.
@@ -46,14 +46,13 @@ export default function ShareScoreButton({ session, label = 'Share Score', class
 
   const canonicalOf = (play) => catalog.get(play.game_name.trim().toLowerCase()) || play.game_name
 
-  const sharePlay = async ({ play, index, total }) => {
-    const canonical = canonicalOf(play)
-    const text = buildPlayShareText({ play, canonical, sessionTitle: session.title, replayIndex: index, replayTotal: total, t })
-    // Link to this play's own score page (one page per play).
-    const url = `${window.location.origin}/sessions/${session.id}/score/${play.id}`
+  const sharePlay = async ({ play }) => {
+    // Short link to this play's own score page (one page per play). The play id
+    // is globally unique, so the session id isn't needed in the URL — the page
+    // and its preview resolve everything from the play id alone.
+    const url = `${window.location.origin}/score/${play.id}`
     await shareOrCopy({
-      title: `BG Session — ${canonical}`,
-      text,
+      title: `BG Session — ${canonicalOf(play)}`,
       url,
       t,
       onDone: () => setOpen(false),

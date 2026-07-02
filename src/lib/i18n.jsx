@@ -170,7 +170,7 @@ const ID = {
   'Share with a Friend': 'Bagikan ke Teman',
   'Share Score': 'Bagikan Skor',
   'Share a Game Result': 'Bagikan Hasil Permainan',
-  'Copy this game’s result:': 'Salin hasil permainan ini:',
+  'Copy this link:': 'Salin tautan ini:',
   '✓ Copied': '✓ Tersalin',
 
   // ---- Report dialog ----

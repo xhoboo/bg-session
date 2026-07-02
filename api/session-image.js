@@ -6,8 +6,8 @@
 //
 // Called as /api/session-image?id=<uuid> (and with no id for a generic brand
 // card). Reads only the public `get_session_preview` (migration 0044) and
-// `get_public_session_plays` (migration 0063) RPCs; never the address. Colors
-// mirror src/index.css.
+// `get_public_play` (migration 0068) RPCs; never the address. Colors mirror
+// src/index.css.
 
 import { ImageResponse } from '@vercel/og'
 import { createElement } from 'react'
@@ -63,37 +63,33 @@ async function getSession(id) {
   }
 }
 
-// One play's public result, matched by its id — every play gets its own
-// permanent URL now (migration 0063's guest-read RPC covers the data; no
-// per-play SQL function needed). Also works out that play's replay position
-// among same-named plays in the session ("Wingspan #2"). Names are the public
-// NICKNAME only, never display_name — this card is visible to anyone.
-async function getPlayScore(id, playId) {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !id || !playId) return null
+// One play's public result, matched by its globally-unique id — the owning
+// session's title and the play's replay position ("Wingspan #2") come back in
+// the same call (migration 0068), so the card renders from one Supabase round
+// trip. Names are the public NICKNAME only, never display_name — this card is
+// visible to anyone.
+async function getPlayScore(playId) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !playId) return null
   try {
     const r = await fetch(
-      `${SUPABASE_URL}/rest/v1/rpc/get_public_session_plays?p_session_id=${encodeURIComponent(id)}`,
+      `${SUPABASE_URL}/rest/v1/rpc/get_public_play?p_play_id=${encodeURIComponent(playId)}`,
       { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
     )
     if (!r.ok) return null
-    const plays = await r.json()
-    if (!Array.isArray(plays)) return null
-    const target = plays.find((p) => p.id === playId)
-    if (!target) return null
-    const sameGame = plays
-      .filter((p) => (p.game_name || '').toLowerCase() === (target.game_name || '').toLowerCase())
-      .sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at))
+    const d = await r.json()
+    if (!d || !d.play) return null
     const nameOf = (s) => s.player?.nickname?.trim() || 'Player'
     return {
-      game_name: target.game_name,
-      replay_index: sameGame.findIndex((p) => p.id === playId) + 1,
-      replay_total: sameGame.length,
+      game_name: d.play.game_name,
+      session_title: d.session_title,
+      replay_index: d.replay_index,
+      replay_total: d.replay_total,
       play: {
-        mode: target.mode,
-        lowest_wins: target.lowest_wins,
-        coop_won: target.coop_won,
-        teams: target.teams || [],
-        players: (target.scores || []).map((s) => ({ name: nameOf(s), score: s.score, is_winner: s.is_winner, team: s.team })),
+        mode: d.play.mode,
+        lowest_wins: d.play.lowest_wins,
+        coop_won: d.play.coop_won,
+        teams: d.play.teams || [],
+        players: (d.play.scores || []).map((s) => ({ name: nameOf(s), score: s.score, is_winner: s.is_winner, team: s.team })),
       },
     }
   } catch {
@@ -370,10 +366,10 @@ export default async function handler(req) {
 
   // Share-a-score link: render the play's result if we can read it; otherwise
   // fall through to the normal session card.
-  if (id && playId) {
-    const [result, session] = await Promise.all([getPlayScore(id, playId), getSession(id)])
+  if (playId) {
+    const result = await getPlayScore(playId)
     if (result) {
-      return new ImageResponse(scoreCard({ ...result, session_title: session?.title }), {
+      return new ImageResponse(scoreCard(result), {
         width: 1200,
         height: 630,
         headers: { 'Cache-Control': 'public, max-age=0, s-maxage=300, stale-while-revalidate=600' },

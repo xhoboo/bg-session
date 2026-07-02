@@ -1,7 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/sessions/:id/score/:playId", "destination": "/api/session-preview?id=:id&play=:playId" },
+    { "source": "/score/:playId", "destination": "/api/session-preview?play=:playId" },
+    { "source": "/sessions/:id/score/:playId", "destination": "/api/session-preview?play=:playId" },
     { "source": "/sessions/:id/score", "destination": "/api/session-preview?id=:id" },
     { "source": "/sessions/:id", "destination": "/api/session-preview?id=:id" },
     { "source": "/(.*)", "destination": "/index.html" }
