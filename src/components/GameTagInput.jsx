@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useDebouncedCallback } from '../lib/useDebouncedCallback'
+import { ilikeWords, prefixFirst } from '../lib/search'
 
 // Single autocomplete input for board game names. Suggestions come from the
 // board_games catalog; you can pick a suggestion OR type a freeform name. Each
@@ -16,15 +17,18 @@ export default function GameTagInput({ label, hint, items, onChange, max }) {
   // Debounced so we hit the catalog once the user pauses, not per keystroke.
   // Drop any response that no longer matches the latest term (handles both
   // out-of-order replies and the user committing a game mid-request).
+  // Matching is word-by-word in any order ("ticket europe" finds "Ticket to
+  // Ride: Europe"), with names that start with the typed term ranked first.
   const fetchSuggestions = useDebouncedCallback(async (q) => {
-    const { data } = await supabase
-      .from('board_games')
-      .select('name, category')
-      .ilike('name', `${q}%`)
+    const { data } = await ilikeWords(
+      supabase.from('board_games').select('name, category'),
+      'name',
+      q,
+    )
       .order('name')
       .limit(8)
     if (q !== latest.current) return
-    setSuggestions(data ?? [])
+    setSuggestions(prefixFirst(data ?? [], q))
     setOpen(true)
   })
 

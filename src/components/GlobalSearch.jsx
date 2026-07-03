@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useDebouncedCallback } from '../lib/useDebouncedCallback'
 import { userPath, personName } from '../lib/nickname'
+import { ilikeWords, profileNameOr, prefixFirst } from '../lib/search'
 import Avatar from './Avatar'
 
 // Magnifier icon shared by the trigger button and the input.
@@ -35,27 +36,26 @@ export default function GlobalSearch() {
   const runSearch = useDebouncedCallback(async (q) => {
     // The profiles `.or()` filter is a comma-separated PostgREST string, so a
     // comma or paren in the term would break its parsing — strip those out.
-    const safe = q.replace(/[,()]/g, ' ').trim()
+    // Both searches match word-by-word in any order ("ticket europe" finds
+    // "Ticket to Ride: Europe").
+    const memberOr = user ? profileNameOr(q.replace(/[,()]/g, ' ')) : null
     const [memRes, gameRes] = await Promise.all([
       // Members are searchable only for signed-in users; guests get games only
       // (profiles stay closed to anon).
-      user && safe
+      memberOr
         ? supabase
             .from('profiles')
             .select('id, nickname, display_name, avatar_url')
-            .or(`nickname.ilike.%${safe}%,display_name.ilike.%${safe}%`)
+            .or(memberOr)
             .limit(5)
         : Promise.resolve({ data: [] }),
-      supabase
-        .from('board_games')
-        .select('name, category')
-        .ilike('name', `%${q}%`)
+      ilikeWords(supabase.from('board_games').select('name, category'), 'name', q)
         .order('name')
         .limit(5),
     ])
     if (q !== latest.current) return
     setMembers(memRes.data ?? [])
-    setGames(gameRes.data ?? [])
+    setGames(prefixFirst(gameRes.data ?? [], q))
     setLoading(false)
   })
 

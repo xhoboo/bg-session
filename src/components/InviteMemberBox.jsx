@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import { useDebouncedCallback } from '../lib/useDebouncedCallback'
 import { userPath, personName } from '../lib/nickname'
+import { profileNameOr } from '../lib/search'
 import { Link } from 'react-router-dom'
 import Avatar from './Avatar'
 
@@ -41,8 +42,9 @@ export default function InviteMemberBox({ sessionId }) {
   // Debounced member search (same shape as the header GlobalSearch). Exclude
   // myself; the DB rejects inviting the host or an existing participant.
   const run = useDebouncedCallback(async (q) => {
-    const safe = q.replace(/[,()]/g, ' ').trim()
-    if (!safe) {
+    // Word-by-word matching in any order, same as the header GlobalSearch.
+    const memberOr = profileNameOr(q.replace(/[,()]/g, ' '))
+    if (!memberOr) {
       setResults([])
       setSearching(false)
       return
@@ -50,7 +52,7 @@ export default function InviteMemberBox({ sessionId }) {
     const { data } = await supabase
       .from('profiles')
       .select('id, nickname, display_name, avatar_url')
-      .or(`nickname.ilike.%${safe}%,display_name.ilike.%${safe}%`)
+      .or(memberOr)
       .neq('id', user.id)
       .limit(6)
     if (q !== latest.current) return

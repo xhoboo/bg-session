@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/i18n'
 import { isSessionFinished } from '../lib/format'
 import { useRegions } from '../lib/useRegions'
+import { matchesWords, prefixFirst } from '../lib/search'
 import { promptAuth } from '../lib/authPrompt'
 import { promptCreate } from '../lib/createPrompt'
 import SessionCard from '../components/SessionCard'
@@ -35,7 +36,9 @@ export default function Browse() {
   const [sessions, setSessions] = useState([])
   const [region, setRegion] = useState('')
   const [area, setArea] = useState('')
-  const [game, setGame] = useState('')
+  const [game, setGame] = useState('')          // applied filter: a picked game name
+  const [gameQuery, setGameQuery] = useState('') // what's typed in the game filter box
+  const [gameOpen, setGameOpen] = useState(false)
   const [gameOptions, setGameOptions] = useState([])
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(false)
@@ -167,8 +170,26 @@ export default function Browse() {
   const areaOptions = region ? areasByRegion[region] || [] : []
 
   // Changing a parent filter invalidates its narrower children.
-  const onRegionChange = (e) => { setRegion(e.target.value); setArea(''); setGame('') }
-  const onAreaChange = (e) => { setArea(e.target.value); setGame('') }
+  const onRegionChange = (e) => { setRegion(e.target.value); setArea(''); setGame(''); setGameQuery('') }
+  const onAreaChange = (e) => { setArea(e.target.value); setGame(''); setGameQuery('') }
+
+  // The game filter is a typed autocomplete over the upcoming-session games
+  // (gameOptions), matched word-by-word in any order. The filter only applies
+  // when a suggestion is picked; blurring reverts stray typed text to the
+  // picked game (or empty), and clearing the box clears the filter.
+  const gameSuggestions = gameQuery.trim()
+    ? prefixFirst(gameOptions.filter((g) => matchesWords(g, gameQuery)), gameQuery, (g) => g).slice(0, 8)
+    : []
+  const onGameInput = (val) => {
+    setGameQuery(val)
+    setGameOpen(!!val.trim())
+    if (!val.trim()) setGame('')
+  }
+  const pickGame = (g) => {
+    setGame(g)
+    setGameQuery(g)
+    setGameOpen(false)
+  }
 
   // Submit a star rating straight from the home card, then hand the participant
   // off to the session's optional written review (#review focuses the box there).
@@ -246,12 +267,33 @@ export default function Browse() {
           ))}
         </select>
 
-        <select aria-label={t('Filter by board game')} value={game} onChange={(e) => setGame(e.target.value)} disabled={gameOptions.length === 0}>
-          <option value="">{t('All games')}</option>
-          {gameOptions.map((g) => (
-            <option key={g} value={g}>{g}</option>
-          ))}
-        </select>
+        <div className="autocomplete filter-autocomplete">
+          <input
+            type="text"
+            aria-label={t('Filter by board game')}
+            placeholder={t('All games')}
+            value={gameQuery}
+            autoComplete="off"
+            disabled={gameOptions.length === 0}
+            onChange={(e) => onGameInput(e.target.value)}
+            onFocus={() => gameQuery.trim() && setGameOpen(true)}
+            onBlur={() => setTimeout(() => { setGameOpen(false); setGameQuery(game) }, 120)}
+          />
+          {gameOpen && gameSuggestions.length > 0 && (
+            <div className="autocomplete-menu">
+              {gameSuggestions.map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  className="autocomplete-item"
+                  onMouseDown={(e) => { e.preventDefault(); pickGame(g) }}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}

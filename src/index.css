@@ -405,6 +405,14 @@ textarea { resize: vertical; min-height: 80px; }
 
 .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 18px; }
 .toolbar select { flex: 1; min-width: 0; font-size: 13px; padding: 11px 30px 11px 12px; }
+/* Typed game filter: the wrapper takes a select's slot; the suggestion menu
+   hangs from the box's right edge so it isn't squeezed to the column width. */
+.toolbar .filter-autocomplete { flex: 1; min-width: 0; }
+.toolbar .filter-autocomplete input { width: 100%; font-size: 13px; padding: 11px 12px; }
+.toolbar .filter-autocomplete .autocomplete-menu {
+  left: auto; right: 0; min-width: 230px; max-width: calc(100vw - 40px); width: max-content;
+}
+.toolbar .filter-autocomplete .autocomplete-item { white-space: nowrap; }
 
 /* Top-of-detail action row: Share on the left, the host's small Edit / Cancel
    buttons pushed to the right edge beside it. */
