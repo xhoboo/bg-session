@@ -340,7 +340,6 @@ const ID = {
   ' The host hasn’t given you edit permissions.': ' Host belum memberimu izin mengubah.',
   'Step Down': 'Mundur',
   Host: 'Host',
-  Player: 'Pemain',
   Participants: 'Peserta',
   you: 'kamu',
   Guest: 'Tamu',

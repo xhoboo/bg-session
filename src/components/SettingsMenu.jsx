@@ -40,7 +40,7 @@ export default function SettingsMenu() {
 
   const applyTheme = (next) => {
     document.documentElement.setAttribute('data-theme', next)
-    try { localStorage.setItem('bg-theme', next) } catch (e) { /* ignore */ }
+    try { localStorage.setItem('bg-theme', next) } catch { /* ignore */ }
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#211e1a' : '#F4F1EA')
     setTheme(next)
   }

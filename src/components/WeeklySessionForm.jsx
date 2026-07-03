@@ -66,7 +66,7 @@ export default function WeeklySessionForm({
           <input
             id="title"
             type="text"
-            maxLength={140}
+            maxLength={30}
             placeholder="e.g. Friday Night Boardgames"
             value={form.title}
             onChange={update('title')}
@@ -82,7 +82,7 @@ export default function WeeklySessionForm({
           </div>
           <div className="form-group">
             <label className="field-label" htmlFor="maxPlayers">Max Players <span className="field-hint">— incl. host</span></label>
-            <input id="maxPlayers" type="number" min={1} max={50} value={form.maxPlayers} onChange={update('maxPlayers')} disabled={!can('players')} required />
+            <input id="maxPlayers" type="number" min={3} max={50} value={form.maxPlayers} onChange={update('maxPlayers')} disabled={!can('players')} required />
           </div>
         </div>
       </div>

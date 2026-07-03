@@ -79,88 +79,77 @@ export default function SessionDetail() {
     }
     setSession(s)
 
-    // Weekly: load the co-hosts (to badge them / gate co-host editing) and, for
-    // host + co-hosts, the series' editable-field permissions.
-    if (s.series_id) {
-      const { data: chs } = await supabase.from('weekly_cohosts').select('user_id').eq('series_id', s.series_id)
-      setCohostIds(new Set((chs ?? []).map((r) => r.user_id)))
-      const { data: ws } = await supabase
-        .from('weekly_series')
-        .select('cohost_editable')
-        .eq('id', s.series_id)
-        .maybeSingle()
-      setSeriesEditable(ws?.cohost_editable ?? [])
-    } else {
-      setCohostIds(new Set())
-      setSeriesEditable([])
-    }
+    const amHost = s.host_id === user.id
+    const none = Promise.resolve({ data: null })
 
-    // Address — RLS returns a row only if we're the host or an approved guest.
-    const { data: addr } = await supabase
-      .from('session_addresses')
-      .select('full_address, maps_url')
-      .eq('session_id', id)
-      .maybeSingle()
-    setAddress(addr ?? null)
-
-    if (s.host_id === user.id) {
-      // Host: load every request with the guest's public name.
-      const { data: reqs } = await supabase
-        .from('join_requests')
-        .select('*, guest:profiles(nickname, display_name, avatar_url)')
-        .eq('session_id', id)
-        .order('created_at', { ascending: true })
-      setRequests(reqs ?? [])
-    } else {
-      // Guest: load only my own request, if any.
-      const { data: mine } = await supabase
-        .from('join_requests')
-        .select('*')
-        .eq('session_id', id)
-        .eq('guest_id', user.id)
-        .maybeSingle()
-      setMyRequest(mine ?? null)
-
+    // Everything below depends only on the session row, so it loads in one
+    // parallel burst — a single round trip of latency instead of six in a row.
+    const [chRes, wsRes, addrRes, reqsRes, mineRes, invRes, rtsRes, bgRes, plRes] = await Promise.all([
+      // Weekly: the co-hosts (to badge them / gate co-host editing) and, for
+      // host + co-hosts, the series' editable-field permissions.
+      s.series_id ? supabase.from('weekly_cohosts').select('user_id').eq('series_id', s.series_id) : none,
+      s.series_id
+        ? supabase.from('weekly_series').select('cohost_editable').eq('id', s.series_id).maybeSingle()
+        : none,
+      // Address — RLS returns a row only if we're the host or an approved guest.
+      supabase.from('session_addresses').select('full_address, maps_url').eq('session_id', id).maybeSingle(),
+      // Host: every request with the guest's public name.
+      amHost
+        ? supabase
+            .from('join_requests')
+            .select('*, guest:profiles(nickname, display_name, avatar_url)')
+            .eq('session_id', id)
+            .order('created_at', { ascending: true })
+        : none,
+      // Guest: only my own request, if any.
+      amHost
+        ? none
+        : supabase.from('join_requests').select('*').eq('session_id', id).eq('guest_id', user.id).maybeSingle(),
       // A pending invite addressed to me (someone already in the session asked
       // me to join). Drives the "you've been invited" banner below.
-      const { data: inv } = await supabase
-        .from('session_invites')
-        .select('id, status, inviter:profiles!session_invites_inviter_id_fkey(nickname, display_name, avatar_url)')
+      amHost
+        ? none
+        : supabase
+            .from('session_invites')
+            .select('id, status, inviter:profiles!session_invites_inviter_id_fkey(nickname, display_name, avatar_url)')
+            .eq('session_id', id)
+            .eq('invitee_id', user.id)
+            .eq('status', 'pending')
+            .maybeSingle(),
+      // Ratings — RLS returns rows only to participants of this session.
+      supabase
+        .from('session_ratings')
+        .select('id, user_id, rating, review, created_at, rater:profiles(nickname, display_name, avatar_url)')
         .eq('session_id', id)
-        .eq('invitee_id', user.id)
-        .eq('status', 'pending')
-        .maybeSingle()
-      setMyInvite(inv ?? null)
-    }
+        .order('created_at', { ascending: false }),
+      // Games participants pledged to bring — RLS returns rows only to this
+      // session's participants, so they fold into the board-games list for them.
+      supabase
+        .from('session_brought_games')
+        .select('id, game_name, user_id, bringer:profiles(nickname, display_name, avatar_url)')
+        .eq('session_id', id)
+        .order('created_at', { ascending: true }),
+      // Submitted game results — public, so they show for anyone. Loaded in full so
+      // they render inline as the collapsible Game Results accordion.
+      supabase.from('session_game_plays').select(PLAY_SELECT).eq('session_id', id).eq('status', 'submitted'),
+    ])
 
-    // Ratings — RLS returns rows only to participants of this session.
-    const { data: rts } = await supabase
-      .from('session_ratings')
-      .select('id, user_id, rating, review, created_at, rater:profiles(nickname, display_name, avatar_url)')
-      .eq('session_id', id)
-      .order('created_at', { ascending: false })
-    setRatings(rts ?? [])
-    const own = (rts ?? []).find((r) => r.user_id === user.id)
+    setCohostIds(new Set((chRes.data ?? []).map((r) => r.user_id)))
+    setSeriesEditable(wsRes.data?.cohost_editable ?? [])
+    setAddress(addrRes.data ?? null)
+    if (amHost) {
+      setRequests(reqsRes.data ?? [])
+    } else {
+      setMyRequest(mineRes.data ?? null)
+      setMyInvite(invRes.data ?? null)
+    }
+    const rts = rtsRes.data ?? []
+    setRatings(rts)
+    const own = rts.find((r) => r.user_id === user.id)
     setRatingValue(own?.rating ?? 0)
     setReviewText(own?.review ?? '')
-
-    // Games participants pledged to bring — RLS returns rows only to this
-    // session's participants, so they fold into the board-games list for them.
-    const { data: bg } = await supabase
-      .from('session_brought_games')
-      .select('id, game_name, user_id, bringer:profiles(nickname, display_name, avatar_url)')
-      .eq('session_id', id)
-      .order('created_at', { ascending: true })
-    setBrought(bg ?? [])
-
-    // Submitted game results — public, so they show for anyone. Loaded in full so
-    // they render inline as the collapsible Game Results accordion.
-    const { data: pl } = await supabase
-      .from('session_game_plays')
-      .select(PLAY_SELECT)
-      .eq('session_id', id)
-      .eq('status', 'submitted')
-    setPlays(pl ?? [])
+    setBrought(bgRes.data ?? [])
+    setPlays(plRes.data ?? [])
 
     setLoading(false)
   }, [id, user.id])

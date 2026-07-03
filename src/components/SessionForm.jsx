@@ -49,7 +49,7 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
           <input
             id="title"
             type="text"
-            maxLength={140}
+            maxLength={30}
             placeholder="e.g. Sunday Heavy Euro Night"
             value={form.title}
             onChange={update('title')}
@@ -78,7 +78,7 @@ export default function SessionForm({ initial, submitLabel, busy, onSubmit }) {
             <input
               id="maxPlayers"
               type="number"
-              min={1}
+              min={3}
               max={50}
               value={form.maxPlayers}
               onChange={update('maxPlayers')}

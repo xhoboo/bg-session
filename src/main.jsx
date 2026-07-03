@@ -16,7 +16,10 @@ initSentry()
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <BrowserRouter>
+      {/* Future flags: opt in to v7 behavior now — startTransition keeps
+          navigation responsive during heavy renders, and both silence the
+          upgrade warnings React Router logs in dev. */}
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <LanguageProvider>
           <AuthProvider>
             <App />
